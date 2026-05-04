@@ -1040,7 +1040,8 @@
           const score = scoreGame(g.questions.length, correctCount, mistakeCount, elapsedSeconds);
           const rank = rankFor(g.mode.id, score);
           const previousBest = readNumber(g.mode.bestKey);
-          const isNewRecord = g.variant === "normal" && score > previousBest;
+          const isRankedRun = g.variant === "normal" || g.variant === "ura";
+          const isNewRecord = isRankedRun && score > previousBest;
           const built = makeResult({
             mode: g.mode,
             variant: g.variant,
@@ -1065,15 +1066,18 @@
       function persistResult(res) {
         const mode = getMode(res.modeId);
         const oldBest = readNumber(mode.bestKey);
-        if (res.variant === "normal" && res.score > oldBest) {
+        const isRankedRun = res.variant === "normal" || res.variant === "ura";
+        if (isRankedRun && res.score > oldBest) {
           localStorage.setItem(mode.bestKey, String(res.score));
           localStorage.setItem(mode.elapsedKey, String(res.elapsedSeconds));
-          const previousRank = rankFor(res.modeId, oldBest);
-          if (!rankAtLeast(previousRank, "S") && rankAtLeast(res.rank, "S")) {
-            setUnlockFlash({ label: mode.label, variant: "ura" });
-          } else {
-            const next = nextUnlockedMode(res.modeId, res.rank);
-            if (next) setUnlockFlash({ label: next.label, variant: "normal" });
+          if (res.variant === "normal") {
+            const previousRank = rankFor(res.modeId, oldBest);
+            if (!rankAtLeast(previousRank, "S") && rankAtLeast(res.rank, "S")) {
+              setUnlockFlash({ label: mode.label, variant: "ura" });
+            } else {
+              const next = nextUnlockedMode(res.modeId, res.rank);
+              if (next) setUnlockFlash({ label: next.label, variant: "normal" });
+            }
           }
         }
         if (res.variant === "normal" && res.wrongQuestions.length) {

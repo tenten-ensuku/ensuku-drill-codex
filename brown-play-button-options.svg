@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" role="img" aria-label="大人風ブラウン系プレイボタン4案">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#06110f"/>
+      <stop offset="100%" stop-color="#0d2d27"/>
+    </linearGradient>
+    <linearGradient id="b1" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#d7b174"/>
+      <stop offset="46%" stop-color="#8e6335"/>
+      <stop offset="100%" stop-color="#402716"/>
+    </linearGradient>
+    <linearGradient id="b2" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#b18a62"/>
+      <stop offset="44%" stop-color="#5e4030"/>
+      <stop offset="100%" stop-color="#241712"/>
+    </linearGradient>
+    <linearGradient id="b3" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f0d7a5"/>
+      <stop offset="30%" stop-color="#84613e"/>
+      <stop offset="100%" stop-color="#20140d"/>
+    </linearGradient>
+    <linearGradient id="b4" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#a06f46"/>
+      <stop offset="45%" stop-color="#4b3021"/>
+      <stop offset="100%" stop-color="#15100d"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="50%" cy="0%" r="90%">
+      <stop offset="0%" stop-color="#fff1c6" stop-opacity=".48"/>
+      <stop offset="55%" stop-color="#fff1c6" stop-opacity=".08"/>
+      <stop offset="100%" stop-color="#fff1c6" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="14" stdDeviation="13" flood-color="#000" flood-opacity=".38"/>
+    </filter>
+    <style>
+      text { font-family: Inter, "Yu Gothic UI", Meiryo, sans-serif; }
+      .label { fill: #d7cbbb; font-size: 18px; font-weight: 900; }
+      .btn-text { font-size: 25px; font-weight: 900; letter-spacing: 0; }
+      .caption { fill: #a9b9b3; font-size: 15px; font-weight: 800; }
+      .edge { fill: none; stroke-width: 2.2; }
+      .hairline { fill: none; stroke: #fff4d4; stroke-opacity: .18; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <rect width="760" height="420" fill="url(#bg)"/>
+  <path d="M0 0h760v420H0z" fill="none" stroke="#d8a83c" stroke-opacity=".14"/>
+
+  <g transform="translate(46 42)" filter="url(#shadow)">
+    <text class="label" x="0" y="-12">案1  ブロンズ卓</text>
+    <rect x="0" y="0" width="300" height="74" rx="22" fill="url(#b1)"/>
+    <rect x="0" y="0" width="300" height="74" rx="22" fill="url(#shine)"/>
+    <path class="hairline" d="M20 9h260"/>
+    <rect class="edge" x="1.2" y="1.2" width="297.6" height="71.6" rx="21" stroke="#e2ba78" stroke-opacity=".74"/>
+    <text class="btn-text" x="150" y="47" text-anchor="middle" fill="#1b1109">プレイ</text>
+    <text class="caption" x="0" y="106">今の黄色ボタンに近いが、茶色を強めた案</text>
+  </g>
+
+  <g transform="translate(414 42)" filter="url(#shadow)">
+    <text class="label" x="0" y="-12">案2  燻し革</text>
+    <rect x="0" y="0" width="300" height="74" rx="18" fill="url(#b2)"/>
+    <rect x="0" y="0" width="300" height="74" rx="18" fill="url(#shine)" opacity=".72"/>
+    <path d="M16 18c48-10 92 13 138 2 52-12 86 8 130-2" fill="none" stroke="#fff3c6" stroke-opacity=".08" stroke-width="10" stroke-linecap="round"/>
+    <path class="hairline" d="M18 10h264"/>
+    <rect class="edge" x="1.2" y="1.2" width="297.6" height="71.6" rx="17" stroke="#c7a06f" stroke-opacity=".54"/>
+    <text class="btn-text" x="150" y="47" text-anchor="middle" fill="#f6f2df">プレイ</text>
+    <text class="caption" x="0" y="106">大人っぽさ優先。渋くて封印解除後にも合う</text>
+  </g>
+
+  <g transform="translate(46 236)" filter="url(#shadow)">
+    <text class="label" x="0" y="-12">案3  琥珀リム</text>
+    <rect x="0" y="0" width="300" height="74" rx="20" fill="url(#b3)"/>
+    <rect x="4" y="4" width="292" height="66" rx="17" fill="#21150e" opacity=".28"/>
+    <rect x="0" y="0" width="300" height="74" rx="20" fill="url(#shine)" opacity=".62"/>
+    <rect class="edge" x="1.2" y="1.2" width="297.6" height="71.6" rx="19" stroke="#e9c17a" stroke-opacity=".86"/>
+    <text class="btn-text" x="150" y="47" text-anchor="middle" fill="#fff1d0">プレイ</text>
+    <text class="caption" x="0" y="106">リムの高級感。アーケード感も少し残る</text>
+  </g>
+
+  <g transform="translate(414 236)" filter="url(#shadow)">
+    <text class="label" x="0" y="-12">案4  黒檀ゴールド</text>
+    <rect x="0" y="0" width="300" height="74" rx="14" fill="url(#b4)"/>
+    <rect x="0" y="0" width="300" height="74" rx="14" fill="url(#shine)" opacity=".42"/>
+    <path d="M22 58h256" stroke="#000" stroke-opacity=".32" stroke-width="8" stroke-linecap="round"/>
+    <path class="hairline" d="M20 10h260"/>
+    <rect class="edge" x="1.2" y="1.2" width="297.6" height="71.6" rx="13" stroke="#b98b55" stroke-opacity=".68"/>
+    <text class="btn-text" x="150" y="47" text-anchor="middle" fill="#f7e0a7">プレイ</text>
+    <text class="caption" x="0" y="106">一番暗め。裏モード紫との対比も強い</text>
+  </g>
+</svg>

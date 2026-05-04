@@ -515,7 +515,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 5;
+    const APP_VERSION = 6;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -847,7 +847,7 @@
 
     function rankComment(rank) {
       const comments = {
-        SSS: "卓上の情報が止まって見えています。文句なしの最高到達点。",
+        SSS: "卓上の情報が止まって見えています。神域の最高到達点。",
         SS: "鋭さと安定感が両立しています。ほとんど読み切っています。",
         S: "見事です。実戦でも頼れる待ち読みの速度です。",
         "A+": "かなり良い記録です。Sランクが見える位置まで来ています。",
@@ -861,6 +861,10 @@
         E: "ここからです。間違えた形をひとつずつ潰していきましょう。"
       };
       return comments[rank] || comments.E;
+    }
+
+    function displayRank(rank) {
+      return rank === "SSS" ? "神" : rank;
     }
 
     function makeResult({ mode, variant, sourceList, questionCount, score, rank, correctCount, mistakeCount, elapsedSeconds, wrongQuestions, previousBest, isNewRecord }) {
@@ -1325,7 +1329,7 @@
               </div>
               <p className="mt-1 text-sm text-[color:var(--muted)]">{formatBestLine(record, mode.questionCount)}</p>
             </div>
-            <div className={`text-3xl font-black ${rankClass(record.rank)}`}>{record.best ? record.rank : "未"}</div>
+            <div className={`text-3xl font-black ${rankClass(record.rank)}`}>{record.best ? displayRank(record.rank) : "未"}</div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             {normalUnlocked ? (
@@ -1593,7 +1597,7 @@
                     </svg>
                     <div className="score-gauge-center">
                       <div>
-                        <div className={`score-rank text-6xl font-black ${rankColor} ${showRank ? "show" : ""}`}>{result.rank}</div>
+                        <div className={`score-rank text-6xl font-black ${rankColor} ${showRank ? "show" : ""}`}>{displayRank(result.rank)}</div>
                         <div className="score-number mt-2 text-4xl font-black">{displayScore}<span className="text-base text-[color:var(--gold)]">pt</span></div>
                       </div>
                     </div>

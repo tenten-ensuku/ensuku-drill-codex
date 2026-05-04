@@ -342,6 +342,7 @@
       width: min(250px, 78vw);
       aspect-ratio: 1;
       margin: 0 auto;
+      overflow: visible;
     }
     .score-gauge svg {
       width: 100%;
@@ -420,16 +421,18 @@
     }
     .record-stamp {
       position: absolute;
-      right: -10px;
-      bottom: 8px;
-      width: 118px;
-      height: 92px;
+      z-index: 8;
+      right: 8px;
+      bottom: 20px;
+      width: 128px;
+      height: 96px;
       background-image: url("assets/record-stamps.png");
       background-repeat: no-repeat;
       background-size: 300% auto;
       background-position: 50% 39%;
-      mix-blend-mode: screen;
-      filter: drop-shadow(0 8px 12px rgba(0,0,0,0.42)) saturate(1.2);
+      pointer-events: none;
+      mix-blend-mode: normal;
+      filter: drop-shadow(0 10px 14px rgba(0,0,0,0.48)) saturate(1.18);
       animation: stamp-hit 500ms cubic-bezier(.16,.9,.2,1.12) both;
       transform-origin: center;
     }
@@ -541,7 +544,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 15;
+    const APP_VERSION = 16;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();

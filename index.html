@@ -387,6 +387,21 @@
     .score-rank.show {
       animation: rank-reveal 360ms cubic-bezier(.2,.9,.18,1.18) both;
     }
+    .god-rank {
+      display: inline-block;
+      width: 1.45em;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 999px;
+      filter: drop-shadow(0 0 12px rgba(242,210,123,0.48));
+      vertical-align: middle;
+    }
+    .god-rank.menu {
+      width: 48px;
+    }
+    .god-rank.result {
+      width: 92px;
+    }
     @keyframes rank-reveal {
       0% { opacity: 0; transform: scale(0.72) translateY(6px); }
       64% { opacity: 1; transform: scale(1.08) translateY(0); }
@@ -515,7 +530,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 6;
+    const APP_VERSION = 7;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -803,17 +818,16 @@
         S: "#d8a83c",
         SS: "url(#scoreGaugeRainbow)"
       };
-      const max = Math.max(topRankScore(modeId), 1);
       return order.map((rank, index) => {
-        const start = Math.max(0, rankThreshold(modeId, rank));
-        const end = rankThreshold(modeId, order[index + 1] || "SSS");
+        const start = index / order.length;
+        const end = (index + 1) / order.length;
         return {
           rank,
-          start: Math.max(0, Math.min(start / max, 1)),
-          end: Math.max(0, Math.min(end / max, 1)),
+          start,
+          end,
           color: colors[rank]
         };
-      }).filter(seg => seg.end > seg.start);
+      });
     }
 
     function rankAtLeast(actual, required) {
@@ -861,6 +875,13 @@
         E: "ここからです。間違えた形をひとつずつ潰していきましょう。"
       };
       return comments[rank] || comments.E;
+    }
+
+    function RankBadge({ rank, size = "menu", className = "" }) {
+      if (rank === "SSS") {
+        return <img className={`god-rank ${size} ${className}`} src="assets/god-rank.png" alt="神" />;
+      }
+      return <>{displayRank(rank)}</>;
     }
 
     function displayRank(rank) {
@@ -1329,7 +1350,7 @@
               </div>
               <p className="mt-1 text-sm text-[color:var(--muted)]">{formatBestLine(record, mode.questionCount)}</p>
             </div>
-            <div className={`text-3xl font-black ${rankClass(record.rank)}`}>{record.best ? displayRank(record.rank) : "未"}</div>
+            <div className={`text-3xl font-black ${rankClass(record.rank)}`}>{record.best ? <RankBadge rank={record.rank} size="menu" /> : "未"}</div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             {normalUnlocked ? (
@@ -1474,8 +1495,8 @@
         setDisplayScore(0);
         let frame = 0;
         const started = performance.now();
-        const duration = 2800;
-        const easeOut = t => 1 - Math.pow(1 - t, 4.2);
+        const duration = 3000;
+        const easeOut = t => t;
         function step(now) {
           const t = Math.min((now - started) / duration, 1);
           setDisplayScore(Math.round(result.score * easeOut(t)));
@@ -1597,7 +1618,7 @@
                     </svg>
                     <div className="score-gauge-center">
                       <div>
-                        <div className={`score-rank text-6xl font-black ${rankColor} ${showRank ? "show" : ""}`}>{displayRank(result.rank)}</div>
+                        <div className={`score-rank text-6xl font-black ${rankColor} ${showRank ? "show" : ""}`}><RankBadge rank={result.rank} size="result" /></div>
                         <div className="score-number mt-2 text-4xl font-black">{displayScore}<span className="text-base text-[color:var(--gold)]">pt</span></div>
                       </div>
                     </div>

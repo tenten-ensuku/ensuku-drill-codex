@@ -109,6 +109,40 @@
       z-index: 1;
       text-shadow: 0 2px 5px rgba(0,0,0,0.9), 0 0 10px rgba(242,210,123,0.35);
     }
+    .btn-sealed-normal {
+      position: relative;
+      overflow: hidden;
+      min-height: 50px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,0.24), transparent 60%),
+        linear-gradient(180deg, #f0d37a, #b6842d);
+      color: #1e1607;
+      border: 1px solid rgba(255,240,174,0.38);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 12px 22px rgba(0,0,0,0.24);
+    }
+    .btn-sealed-normal::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.18)),
+        url("assets/ura-lock-button.png") center / cover no-repeat;
+      opacity: 0.78;
+    }
+    .btn-sealed-normal::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(7,4,10,0.06), rgba(7,4,10,0.22));
+    }
+    .sealed-title {
+      position: relative;
+      z-index: 1;
+      opacity: 0.26;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.35);
+    }
     .locked-mode-wrap { position: relative; }
     .unlock-hint {
       position: absolute;
@@ -1011,8 +1045,8 @@
 
       function isUnlocked(mode, variant = "normal") {
         if (variant === "ura") {
-          const normalRank = records[mode.id]?.rank || "E";
-          return rankAtLeast(normalRank, "S");
+          const normalRecord = records[mode.id] || { best: 0, rank: "E" };
+          return normalRecord.best > 0 && rankAtLeast(normalRecord.rank, "S");
         }
         if (!mode.unlock) return true;
         const prevRank = records[mode.unlock.modeId]?.rank || "E";
@@ -1124,12 +1158,13 @@
     }
 
     function ModeCard({ mode, record, normalUnlocked, uraUnlocked, startMode, tap }) {
-      const [showUraHint, setShowUraHint] = useState(false);
+      const [showHint, setShowHint] = useState(null);
       const unlockLabel = mode.unlock ? `${getMode(mode.unlock.modeId)?.label || ""} ${mode.unlock.rank}で解放` : "";
+      const normalUnlockLabel = mode.unlock ? `${getMode(mode.unlock.modeId)?.label || ""}で${mode.unlock.rank}ランク以上を取ると開放` : "";
       const uraUnlockLabel = `${mode.label} 表モードでSランク以上を取ると開放`;
-      function showLockedHint() {
-        setShowUraHint(true);
-        setTimeout(() => setShowUraHint(false), 1500);
+      function showLockedHint(kind) {
+        setShowHint(kind);
+        setTimeout(() => setShowHint(null), 1500);
       }
       return (
         <div className="panel rounded-3xl p-4">
@@ -1144,18 +1179,32 @@
             <div className={`text-3xl font-black ${rankClass(record.rank)}`}>{record.best ? record.rank : "未"}</div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <button className={`pressable rounded-2xl px-4 py-3 text-sm font-black ${normalUnlocked ? "btn-main" : "btn-quiet opacity-60"}`} disabled={!normalUnlocked} {...tap(() => normalUnlocked && startMode(mode.id, "normal"))}>
-              {normalUnlocked ? "プレイ" : unlockLabel}
-            </button>
-            <div className={`locked-mode-wrap ${showUraHint ? "hint-open" : ""}`}>
+            {normalUnlocked ? (
+              <button className="pressable btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(mode.id, "normal"))}>
+                プレイ
+              </button>
+            ) : (
+              <div className={`locked-mode-wrap ${showHint === "normal" ? "hint-open" : ""}`}>
+                <div className="unlock-hint">{normalUnlockLabel || unlockLabel}</div>
+                <button
+                  className="pressable btn-sealed-normal w-full rounded-2xl px-4 py-3 text-sm font-black"
+                  aria-disabled="true"
+                  title={normalUnlockLabel || unlockLabel}
+                  {...tap(() => showLockedHint("normal"))}
+                >
+                  <span className="sealed-title">プレイ</span>
+                </button>
+              </div>
+            )}
+            <div className={`locked-mode-wrap ${showHint === "ura" ? "hint-open" : ""}`}>
               {!uraUnlocked && <div className="unlock-hint">{uraUnlockLabel}</div>}
               <button
                 className={`pressable w-full rounded-2xl px-4 py-3 text-sm font-black ${uraUnlocked ? "btn-ura" : "btn-locked"}`}
                 aria-disabled={!uraUnlocked}
                 title={uraUnlocked ? "裏モード" : uraUnlockLabel}
-                {...tap(() => uraUnlocked ? startMode(mode.id, "ura") : showLockedHint())}
+                {...tap(() => uraUnlocked ? startMode(mode.id, "ura") : showLockedHint("ura"))}
               >
-                <span className={uraUnlocked ? "" : "btn-locked-title"}>裏モード</span>
+                {uraUnlocked ? "裏モード" : <span className="sr-only">裏モード</span>}
               </button>
             </div>
           </div>

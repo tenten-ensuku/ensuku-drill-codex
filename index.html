@@ -76,6 +76,30 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 12px 22px rgba(0,0,0,0.24);
     }
     .btn-quiet { background: rgba(246,242,223,0.06); color: var(--cream); border: 1px solid rgba(246,242,223,0.12); }
+    .star-btn {
+      display: inline-grid;
+      place-items: center;
+      min-width: 42px;
+      min-height: 36px;
+      border-radius: 999px;
+      border: 1px solid rgba(246,242,223,0.12);
+      background: rgba(246,242,223,0.06);
+      color: rgba(246,242,223,0.76);
+      font-weight: 900;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .star-btn.active {
+      color: #1f1606;
+      background: linear-gradient(180deg, #f8dd84, #b98325);
+      border-color: rgba(255,255,255,0.28);
+      box-shadow: 0 0 0 3px rgba(242,210,123,0.18), 0 10px 20px rgba(0,0,0,0.22);
+    }
+    .star-btn.just-added { animation: star-pop 420ms cubic-bezier(.2,.9,.18,1.18) both; }
+    @keyframes star-pop {
+      0% { transform: scale(0.76); }
+      58% { transform: scale(1.18); }
+      100% { transform: scale(1); }
+    }
     .tile-img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 7px 7px rgba(0,0,0,0.26)); }
     .tile-fallback {
       width: 100%;
@@ -541,13 +565,14 @@
       return comments[rank] || comments.E;
     }
 
-    function makeResult({ mode, variant, score, rank, correctCount, mistakeCount, elapsedSeconds, wrongQuestions, previousBest, isNewRecord }) {
+    function makeResult({ mode, variant, sourceList, questionCount, score, rank, correctCount, mistakeCount, elapsedSeconds, wrongQuestions, previousBest, isNewRecord }) {
       return {
         modeId: mode.id,
         modeLabel: mode.label,
         tileCount: mode.tileCount,
-        questionCount: mode.questionCount,
+        questionCount: questionCount || mode.questionCount,
         variant,
+        sourceList,
         score,
         rank,
         correctCount,
@@ -572,6 +597,7 @@
       const [favorites, setFavorites] = useState(() => readJson(STORAGE.favorites, []));
       const [review, setReview] = useState(() => readJson(STORAGE.review, []));
       const [unlockFlash, setUnlockFlash] = useState(null);
+      const [favoriteFlash, setFavoriteFlash] = useState(null);
       const [tick, setTick] = useState(0);
       const audioRef = useRef(null);
       const touchRef = useRef(false);
@@ -664,11 +690,22 @@
           bases = shuffle(DATASETS[datasetKey]).slice(0, baseMode.questionCount);
         }
         if (!bases.length) return;
-        const questions = bases.map(q => transformQuestion(q));
+        const questions = sourceList?.length
+          ? bases.map((q, index) => ({
+              ...q,
+              instanceId: `${q.favoriteId || q.baseId || "saved"}-${Date.now()}-${index}`,
+              baseId: q.baseId || `${q.tileCount || q.tiles.length}-saved-${index}`,
+              tileCount: q.tileCount || q.tiles.length,
+              tiles: [...q.tiles],
+              answers: uniqueSorted(q.answers),
+              suit: q.suit || "m"
+            }))
+          : bases.map(q => transformQuestion(q));
         setGame({
           mode: baseMode,
           variant,
           questions,
+          sourceList: sourceList ? sourceList.map(normalizeSavedQuestion) : null,
           index: 0,
           selected: [],
           correctCount: 0,
@@ -766,6 +803,8 @@
           const built = makeResult({
             mode: g.mode,
             variant: g.variant,
+            sourceList: g.sourceList,
+            questionCount: g.questions.length,
             score,
             rank,
             correctCount,
@@ -791,14 +830,16 @@
           const next = nextUnlockedMode(res.modeId, res.rank);
           if (next) setUnlockFlash(next.label);
         }
-        if (res.wrongQuestions.length) {
+        if (res.variant === "normal" && res.wrongQuestions.length) {
           const bucket = readJson(STORAGE.review, []);
           const merged = dedupeQuestions([...res.wrongQuestions.map(q => normalizeSavedQuestion(q)), ...bucket]).slice(0, 120);
           writeJson(STORAGE.review, merged);
           setReview(merged);
         }
-        const history = readJson(STORAGE.results, []);
-        writeJson(STORAGE.results, [res, ...history].slice(0, 50));
+        if (res.variant === "normal" || res.variant === "ura") {
+          const history = readJson(STORAGE.results, []);
+          writeJson(STORAGE.results, [res, ...history].slice(0, 50));
+        }
       }
 
       function nextUnlockedMode(modeId, rank) {
@@ -811,7 +852,15 @@
         const merged = dedupeQuestions([saved, ...favorites]).slice(0, 80);
         writeJson(STORAGE.favorites, merged);
         setFavorites(merged);
+        setFavoriteFlash(saved.favoriteId);
+        setTimeout(() => setFavoriteFlash(null), 500);
         tone("tap");
+      }
+
+      function isFavorite(q) {
+        if (!q) return false;
+        const id = normalizeSavedQuestion(q).favoriteId;
+        return favorites.some(f => f.favoriteId === id);
       }
 
       function removeFavorite(id) {
@@ -861,8 +910,10 @@
               selectAnswer={selectAnswer}
               confirmAnswer={confirmAnswer}
               addFavorite={addFavorite}
+              isFavorite={isFavorite}
+              favoriteFlash={favoriteFlash}
               quit={() => setScreen("home")}
-              retry={() => startMode(game.mode.id, game.variant)}
+              retry={() => startMode(game.mode.id, game.variant, game.sourceList)}
               tap={tap}
             />
           )}
@@ -871,6 +922,8 @@
               result={result}
               favorites={favorites}
               addFavorite={addFavorite}
+              isFavorite={isFavorite}
+              favoriteFlash={favoriteFlash}
               startMode={startMode}
               goHome={() => setScreen("home")}
               tap={tap}
@@ -988,7 +1041,7 @@
       );
     }
 
-    function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, quit, retry, tap }) {
+    function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, isFavorite, favoriteFlash, quit, retry, tap }) {
       const counts = q.tiles.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {});
       const isUra = game.variant === "ura";
       return (
@@ -1009,7 +1062,7 @@
           <section className="panel panel-tight mb-4 rounded-3xl p-4">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm font-bold text-[color:var(--muted)]">牌姿</span>
-              <button className="btn-quiet rounded-full px-3 py-2 text-xs font-bold" {...tap(() => addFavorite(q))}>お気に入り</button>
+              <StarFavoriteButton active={isFavorite(q)} justAdded={favoriteFlash === normalizeSavedQuestion(q).favoriteId} onPress={() => addFavorite(q)} tap={tap} label="お気に入りに追加" />
             </div>
             <Hand q={q} />
           </section>
@@ -1043,13 +1096,14 @@
       );
     }
 
-    function Result({ result, addFavorite, startMode, goHome, tap }) {
+    function Result({ result, addFavorite, isFavorite, favoriteFlash, startMode, goHome, tap }) {
       const [showPost, setShowPost] = useState(false);
       const [name, setName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
       const [copied, setCopied] = useState(false);
       const canStamp = rankAtLeast(result.rank, "S");
       const rankColor = rankClass(result.rank);
       const averageTime = formatAverageTime(result.elapsedSeconds, result.questionCount);
+      const isPractice = result.variant === "favorite" || result.variant === "review";
       const publicPayload = {
         playerName: name.trim() || "名無し",
         submittedAt: new Date().toISOString(),
@@ -1085,13 +1139,13 @@
             <div className="relative">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-black text-[color:var(--gold-2)]">{result.isNewRecord ? "NEW RECORD" : "RESULT"}</p>
-                  <h1 className="mt-1 text-3xl font-black">{result.isNewRecord ? "新記録更新" : "成績"}</h1>
+                  <p className="text-sm font-black text-[color:var(--gold-2)]">{isPractice ? "PRACTICE" : result.isNewRecord ? "NEW RECORD" : "RESULT"}</p>
+                  <h1 className="mt-1 text-3xl font-black">{isPractice ? "練習完了" : result.isNewRecord ? "新記録更新" : "成績"}</h1>
                 </div>
                 <div className="rounded-full border border-white/10 bg-black/24 px-3 py-2 text-xs font-black text-[color:var(--muted)]">{result.modeLabel}</div>
               </div>
 
-              {result.isNewRecord && (
+              {result.isNewRecord && !isPractice && (
                 <div className="new-record-banner mt-5 rounded-2xl px-4 py-3 text-center">
                   <div className="text-xs font-black">NEW RECORD</div>
                   <div className="mt-1 text-2xl font-black">自己ベスト更新</div>
@@ -1099,14 +1153,22 @@
                 </div>
               )}
 
-              <div className="mt-6 rounded-3xl border border-white/10 bg-black/30 p-5 text-center">
-                <p className="text-sm font-bold text-[color:var(--muted)]">SCORE</p>
-                <div className="mt-2 text-7xl font-black">{result.score}<span className="text-2xl text-[color:var(--gold)]">pt</span></div>
-                <div className={`mx-auto mt-5 inline-block text-5xl font-black ${rankColor}`}>{result.rank}</div>
-                <p className="mx-auto mt-4 max-w-xs text-sm font-bold leading-6 text-[color:var(--muted)]">{rankComment(result.rank)}</p>
-              </div>
+              {!isPractice ? (
+                <div className="mt-6 rounded-3xl border border-white/10 bg-black/30 p-5 text-center">
+                  <p className="text-sm font-bold text-[color:var(--muted)]">SCORE</p>
+                  <div className="mt-2 text-7xl font-black">{result.score}<span className="text-2xl text-[color:var(--gold)]">pt</span></div>
+                  <div className={`mx-auto mt-5 inline-block text-5xl font-black ${rankColor}`}>{result.rank}</div>
+                  <p className="mx-auto mt-4 max-w-xs text-sm font-bold leading-6 text-[color:var(--muted)]">{rankComment(result.rank)}</p>
+                </div>
+              ) : (
+                <div className="mt-6 rounded-3xl border border-white/10 bg-black/30 p-5 text-center">
+                  <p className="text-sm font-bold text-[color:var(--muted)]">{result.variant === "favorite" ? "お気に入り練習" : "復習"}</p>
+                  <div className="mt-2 text-5xl font-black">{result.correctCount}<span className="text-xl text-[color:var(--gold)]"> / {result.questionCount}</span></div>
+                  <p className="mx-auto mt-4 max-w-xs text-sm font-bold leading-6 text-[color:var(--muted)]">採点なしの練習を完了しました。気になる形は星で保存できます。</p>
+                </div>
+              )}
             </div>
-            {canStamp && (
+            {canStamp && !isPractice && (
               <div className="hanko mt-5 flex justify-center">
                 <div className={`rank-stamp text-3xl font-black ${rankColor}`}>{result.rank} 合格</div>
               </div>
@@ -1131,7 +1193,7 @@
                     <MiniHand q={item} compact />
                     <div className="mt-2 flex items-center justify-between gap-2">
                       <p className="min-w-0 text-xs text-[color:var(--muted)]">正解 {item.answers.join(", ")} / 選択 {(item.selected || []).join(", ") || "-"}</p>
-                      <button className="btn-quiet shrink-0 rounded-full px-3 py-1.5 text-xs font-bold" {...tap(() => addFavorite(item))}>お気に入り</button>
+                      <StarFavoriteButton active={isFavorite(item)} justAdded={favoriteFlash === normalizeSavedQuestion(item).favoriteId} onPress={() => addFavorite(item)} tap={tap} label="お気に入りに追加" small />
                     </div>
                   </div>
                 ))}
@@ -1152,7 +1214,7 @@
           </section>
 
           <footer className="mt-4 grid grid-cols-2 gap-2 pb-4">
-            <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant))}>もう一度</button>
+            <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant, result.sourceList))}>もう一度</button>
             <button className="btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(goHome)}>メニュー</button>
           </footer>
         </div>
@@ -1165,6 +1227,19 @@
           <p className="text-xs font-bold text-[color:var(--muted)]">{label}</p>
           <p className="mt-1 text-lg font-black">{value}</p>
         </div>
+      );
+    }
+
+    function StarFavoriteButton({ active, justAdded, onPress, tap, label, small = false }) {
+      return (
+        <button
+          className={`star-btn pressable ${active ? "active" : ""} ${justAdded ? "just-added" : ""} ${small ? "text-base" : "text-lg"}`}
+          aria-label={label}
+          title={label}
+          {...tap(onPress)}
+        >
+          {active ? "★" : "☆"}
+        </button>
       );
     }
 

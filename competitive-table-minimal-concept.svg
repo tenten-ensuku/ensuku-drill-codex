@@ -1,0 +1,194 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050">
+  <defs>
+    <linearGradient id="felt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b2f28"/>
+      <stop offset="0.55" stop-color="#0f493c"/>
+      <stop offset="1" stop-color="#071f1c"/>
+    </linearGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#101716"/>
+      <stop offset="1" stop-color="#050807"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff1b8"/>
+      <stop offset="0.45" stop-color="#d8a83c"/>
+      <stop offset="1" stop-color="#8d6420"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff665c"/>
+      <stop offset="1" stop-color="#b91c1c"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000000" flood-opacity="0.24"/>
+    </filter>
+    <pattern id="feltNoise" width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="transparent"/>
+      <path d="M0 4H10M2 0V10" stroke="#ffffff" stroke-opacity="0.018" stroke-width="1"/>
+    </pattern>
+    <style>
+      .jp { font-family: "Inter", "Yu Gothic UI", "Meiryo", sans-serif; }
+      .small { font-size: 18px; letter-spacing: 0; }
+      .label { font-size: 22px; letter-spacing: 0; font-weight: 700; }
+      .title { font-size: 40px; letter-spacing: 0; font-weight: 800; }
+      .tileText { font-size: 34px; font-weight: 800; fill: #1a1a1a; }
+      .muted { fill: #9aa9a4; }
+      .cream { fill: #f6f2df; }
+      .panelStroke { stroke: #d6c58a; stroke-opacity: 0.22; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1050" fill="#07120f"/>
+  <rect x="0" y="0" width="1600" height="1050" fill="url(#felt)"/>
+  <rect x="0" y="0" width="1600" height="1050" fill="url(#feltNoise)"/>
+  <path d="M-80 850C260 760 470 910 820 770C1160 635 1320 760 1680 625" fill="none" stroke="#f5d77a" stroke-opacity="0.07" stroke-width="2"/>
+  <path d="M-120 240C240 325 470 210 730 290C1060 390 1260 260 1710 340" fill="none" stroke="#ffffff" stroke-opacity="0.045" stroke-width="2"/>
+
+  <text x="92" y="88" class="jp title cream">競技卓ミニマル UI コンセプト</text>
+  <text x="94" y="124" class="jp small muted">麻雀卓の集中感、競技アプリの情報密度、ランク演出の高揚感を同じ画面文法にまとめる方向性</text>
+
+  <g transform="translate(90 170)" filter="url(#shadow)">
+    <rect x="0" y="0" width="420" height="760" rx="28" fill="url(#ink)" stroke="#e7cf7a" stroke-opacity="0.18"/>
+    <rect x="22" y="24" width="376" height="712" rx="22" fill="#0c1715" stroke="#ffffff" stroke-opacity="0.06"/>
+    <text x="44" y="74" class="jp small muted">ENSUKU DRILL</text>
+    <text x="44" y="122" class="jp title cream">待ち読み卓</text>
+    <text x="44" y="158" class="jp small muted">今日の集中を選ぶ</text>
+
+    <g transform="translate(44 204)">
+      <rect width="332" height="104" rx="14" fill="#f6f2df" filter="url(#soft)"/>
+      <text x="22" y="38" class="jp label" fill="#0b1715">六枚形</text>
+      <text x="22" y="70" class="jp small" fill="#50615c">13問 / 基礎卓</text>
+      <text x="256" y="48" class="jp label" fill="#b91c1c">A+</text>
+      <rect x="248" y="60" width="58" height="7" rx="4" fill="#d8a83c"/>
+    </g>
+    <g transform="translate(44 326)">
+      <rect width="332" height="104" rx="14" fill="#12231f" stroke="#e7cf7a" stroke-opacity="0.24"/>
+      <text x="22" y="38" class="jp label cream">七枚形</text>
+      <text x="22" y="70" class="jp small muted">19問 / 解放済み</text>
+      <text x="252" y="48" class="jp label" fill="#d8a83c">S</text>
+    </g>
+    <g transform="translate(44 448)">
+      <rect width="332" height="104" rx="14" fill="#0a100f" stroke="#ffffff" stroke-opacity="0.08"/>
+      <text x="22" y="38" class="jp label" fill="#8b9692">十枚形</text>
+      <text x="22" y="70" class="jp small" fill="#66726e">七枚形 A で解放</text>
+      <path d="M270 32h25v-9a13 13 0 0 0-26 0v9h-7v34h40V32z" fill="#6b7280"/>
+    </g>
+    <g transform="translate(44 594)">
+      <rect width="332" height="62" rx="31" fill="url(#red)"/>
+      <text x="106" y="40" class="jp label" fill="#fff8e8">裏モードへ</text>
+    </g>
+    <text x="62" y="700" class="jp small muted">お気に入り 8   復習 12</text>
+  </g>
+
+  <g transform="translate(590 170)" filter="url(#shadow)">
+    <rect x="0" y="0" width="420" height="760" rx="28" fill="#07100e" stroke="#e7cf7a" stroke-opacity="0.2"/>
+    <rect x="20" y="22" width="380" height="716" rx="22" fill="#0f2721" stroke="#ffffff" stroke-opacity="0.05"/>
+    <g transform="translate(42 54)">
+      <text x="0" y="0" class="jp small muted">07 / 13</text>
+      <text x="276" y="0" class="jp small" fill="#f6f2df">00:42</text>
+      <rect x="0" y="24" width="334" height="6" rx="3" fill="#07100e"/>
+      <rect x="0" y="24" width="182" height="6" rx="3" fill="#d8a83c"/>
+    </g>
+
+    <g transform="translate(42 138)">
+      <rect width="334" height="168" rx="18" fill="#0b1715" stroke="#e7cf7a" stroke-opacity="0.15"/>
+      <text x="28" y="45" class="jp small muted">牌姿</text>
+      <g transform="translate(28 72)">
+        <g>
+          <rect x="0" y="0" width="44" height="64" rx="6" fill="#f8f3df"/>
+          <text x="13" y="42" class="jp tileText">3</text>
+        </g>
+        <g transform="translate(48 0)">
+          <rect x="0" y="0" width="44" height="64" rx="6" fill="#f8f3df"/>
+          <text x="13" y="42" class="jp tileText">3</text>
+        </g>
+        <g transform="translate(96 0)">
+          <rect x="0" y="0" width="44" height="64" rx="6" fill="#f8f3df"/>
+          <text x="13" y="42" class="jp tileText">4</text>
+        </g>
+        <g transform="translate(144 0)">
+          <rect x="0" y="0" width="44" height="64" rx="6" fill="#f8f3df"/>
+          <text x="13" y="42" class="jp tileText">5</text>
+        </g>
+        <g transform="translate(192 0)">
+          <rect x="0" y="0" width="44" height="64" rx="6" fill="#f8f3df"/>
+          <text x="13" y="42" class="jp tileText">5</text>
+        </g>
+        <g transform="translate(240 0)">
+          <rect x="0" y="0" width="44" height="64" rx="6" fill="#f8f3df"/>
+          <text x="13" y="42" class="jp tileText">6</text>
+        </g>
+      </g>
+    </g>
+
+    <g transform="translate(42 354)">
+      <text x="0" y="0" class="jp small muted">待ち牌を選択</text>
+      <g transform="translate(0 28)">
+        <rect width="96" height="76" rx="18" fill="#f6f2df"/>
+        <text x="39" y="50" class="jp label" fill="#0b1715">1</text>
+        <rect x="119" width="96" height="76" rx="18" fill="#f6f2df"/>
+        <text x="158" y="50" class="jp label" fill="#0b1715">2</text>
+        <rect x="238" width="96" height="76" rx="18" fill="#d8a83c"/>
+        <text x="277" y="50" class="jp label" fill="#1f1606">3</text>
+      </g>
+      <g transform="translate(0 120)">
+        <rect width="96" height="76" rx="18" fill="#d8a83c"/>
+        <text x="39" y="50" class="jp label" fill="#1f1606">4</text>
+        <rect x="119" width="96" height="76" rx="18" fill="#f6f2df"/>
+        <text x="158" y="50" class="jp label" fill="#0b1715">5</text>
+        <rect x="238" width="96" height="76" rx="18" fill="#f6f2df"/>
+        <text x="277" y="50" class="jp label" fill="#0b1715">6</text>
+      </g>
+      <g transform="translate(0 212)">
+        <rect width="96" height="76" rx="18" fill="#d8a83c"/>
+        <text x="39" y="50" class="jp label" fill="#1f1606">7</text>
+        <rect x="119" width="96" height="76" rx="18" fill="#f6f2df"/>
+        <text x="158" y="50" class="jp label" fill="#0b1715">8</text>
+        <rect x="238" width="96" height="76" rx="18" fill="#f6f2df"/>
+        <text x="277" y="50" class="jp label" fill="#0b1715">9</text>
+      </g>
+    </g>
+    <g transform="translate(42 682)">
+      <rect width="160" height="44" rx="22" fill="#09110f" stroke="#ffffff" stroke-opacity="0.1"/>
+      <text x="36" y="29" class="jp small muted">メニュー</text>
+      <rect x="174" width="160" height="44" rx="22" fill="#09110f" stroke="#ffffff" stroke-opacity="0.1"/>
+      <text x="218" y="29" class="jp small muted">リトライ</text>
+    </g>
+  </g>
+
+  <g transform="translate(1090 170)" filter="url(#shadow)">
+    <rect x="0" y="0" width="420" height="760" rx="28" fill="#050807" stroke="#e7cf7a" stroke-opacity="0.22"/>
+    <rect x="22" y="24" width="376" height="712" rx="22" fill="#0c1312" stroke="#ffffff" stroke-opacity="0.05"/>
+    <text x="54" y="82" class="jp small muted">RESULT</text>
+    <text x="54" y="132" class="jp title cream">記録判定</text>
+
+    <g transform="translate(54 188)">
+      <circle cx="156" cy="156" r="136" fill="#07100e" stroke="#e7cf7a" stroke-opacity="0.2" stroke-width="2"/>
+      <circle cx="156" cy="156" r="112" fill="none" stroke="#d8a83c" stroke-width="12" stroke-linecap="round" stroke-dasharray="560 704" transform="rotate(-92 156 156)"/>
+      <text x="74" y="142" class="jp small muted">SCORE</text>
+      <text x="52" y="206" class="jp" font-size="76" font-weight="900" fill="#f6f2df">545</text>
+      <text x="176" y="207" class="jp label" fill="#d8a83c">pt</text>
+    </g>
+
+    <g transform="translate(72 485) rotate(-8 136 58)">
+      <rect x="0" y="0" width="272" height="116" rx="8" fill="none" stroke="#d8a83c" stroke-width="5"/>
+      <rect x="11" y="11" width="250" height="94" rx="5" fill="none" stroke="#d8a83c" stroke-opacity="0.72" stroke-width="2"/>
+      <text x="58" y="76" class="jp" font-size="58" font-weight="900" fill="#d8a83c">S RANK</text>
+    </g>
+
+    <text x="76" y="654" class="jp small muted">七枚形 / 19問 / 01:55</text>
+    <g transform="translate(54 688)">
+      <rect width="150" height="48" rx="24" fill="#f6f2df"/>
+      <text x="42" y="31" class="jp small" fill="#0b1715">再挑戦</text>
+      <rect x="166" width="156" height="48" rx="24" fill="url(#gold)"/>
+      <text x="198" y="31" class="jp small" fill="#1f1606">保存する</text>
+    </g>
+  </g>
+
+  <g transform="translate(92 970)">
+    <rect width="1418" height="1" fill="#f6f2df" opacity="0.14"/>
+    <text x="0" y="42" class="jp small" fill="#d6c58a">方向性: 深緑の卓面 / 墨色の操作面 / 生成りの牌とボタン / 金の記録演出 / 赤は裏モードや失敗時だけに限定</text>
+  </g>
+</svg>

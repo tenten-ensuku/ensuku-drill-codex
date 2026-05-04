@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Ensuku Drill Codex</title>
+  <meta name="description" content="麻雀の待ち牌を読むタイムアタックドリル。" />
+  <meta property="og:title" content="Ensuku Drill Codex" />
+  <meta property="og:description" content="競技卓ミニマル版の待ち牌ドリル。" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --felt-0: #06110f;
+      --felt-1: #0b2f28;
+      --felt-2: #0f493c;
+      --ink: #07100e;
+      --ink-2: #0c1715;
+      --cream: #f6f2df;
+      --muted: #9aa9a4;
+      --gold: #d8a83c;
+      --gold-2: #f2d27b;
+      --red: #c7372f;
+      --green: #36a371;
+    }
+    * { box-sizing: border-box; }
+    html, body, #root { min-height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, "Yu Gothic UI", Meiryo, sans-serif;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(242, 210, 123, 0.13), transparent 34rem),
+        linear-gradient(135deg, var(--felt-1), var(--felt-2) 48%, var(--felt-0));
+      color: var(--cream);
+      overscroll-behavior: none;
+      touch-action: manipulation;
+      letter-spacing: 0;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 18px 18px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15));
+    }
+    button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .app-shell { min-height: 100vh; min-height: 100dvh; }
+    .panel {
+      background: linear-gradient(180deg, rgba(7,16,14,0.94), rgba(12,23,21,0.94));
+      border: 1px solid rgba(242, 210, 123, 0.18);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.34);
+    }
+    .pressable { transform: translateY(0); transition: transform 120ms ease, filter 120ms ease, background 120ms ease; }
+    .pressable:active { transform: translateY(2px) scale(0.99); }
+    .btn-main {
+      background: linear-gradient(180deg, #f0d37a, #b6842d);
+      color: #1e1607;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 12px 22px rgba(0,0,0,0.24);
+    }
+    .btn-danger {
+      background: linear-gradient(180deg, #e05248, #9f211d);
+      color: #fff7ed;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 12px 22px rgba(0,0,0,0.24);
+    }
+    .btn-quiet { background: rgba(246,242,223,0.06); color: var(--cream); border: 1px solid rgba(246,242,223,0.12); }
+    .tile-img { width: auto; height: 100%; display: block; filter: drop-shadow(0 7px 7px rgba(0,0,0,0.26)); }
+    .tile-fallback {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      color: #1f1a10;
+      background: linear-gradient(180deg, #fffdf0, #e7ddc7);
+      border: 1px solid rgba(60, 45, 20, 0.18);
+      font-weight: 900;
+      box-shadow: 0 8px 12px rgba(0,0,0,0.22);
+    }
+    .answer-btn {
+      min-height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #fffdf0, #e6dcc4);
+      color: #16120a;
+      font-weight: 900;
+      font-size: 24px;
+      border: 1px solid rgba(255,255,255,0.45);
+      box-shadow: 0 10px 16px rgba(0,0,0,0.2);
+    }
+    .answer-btn.selected {
+      background: linear-gradient(180deg, #f2d27b, #bd8b2f);
+      color: #1f1606;
+      box-shadow: 0 0 0 3px rgba(242,210,123,0.28), 0 12px 22px rgba(0,0,0,0.28);
+    }
+    .answer-btn.disabled {
+      opacity: 0.28;
+      filter: grayscale(1);
+    }
+    .answer-btn.ura {
+      background: #050807;
+      color: #f6f2df;
+      border-color: rgba(246,242,223,0.14);
+    }
+    .feedback {
+      height: 48px;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      border-radius: 999px;
+      transform-origin: center;
+    }
+    .feedback.ok { background: rgba(54,163,113,0.18); color: #b9f5d5; animation: feedback-pop 480ms ease both; }
+    .feedback.ng { background: rgba(199,55,47,0.20); color: #ffd7d3; animation: shake 360ms ease both; }
+    @keyframes feedback-pop {
+      0% { transform: scale(0.78); opacity: 0; }
+      62% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      22% { transform: translateX(-8px); }
+      48% { transform: translateX(7px); }
+      72% { transform: translateX(-3px); }
+    }
+    @keyframes resultPop {
+      0% { transform: scale(0.6); opacity: 0; }
+      60% { transform: scale(1.08); }
+      100% { transform: scale(1); opacity: 0.95; }
+    }
+    .result-pop { animation: resultPop 520ms cubic-bezier(.2,.9,.2,1) both; }
+    .record-card {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(242,210,123,0.2), transparent 13rem),
+        linear-gradient(180deg, rgba(8,18,16,0.98), rgba(4,8,7,0.98));
+    }
+    .record-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(120deg, transparent 8%, rgba(255,255,255,0.18) 18%, transparent 28%);
+      transform: translateX(-120%);
+      animation: result-sheen 1.25s ease 220ms both;
+    }
+    @keyframes result-sheen {
+      to { transform: translateX(120%); }
+    }
+    .new-record-banner {
+      background: linear-gradient(180deg, #fff0ad, #d8a83c 52%, #91651e);
+      color: #241806;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.28) inset, 0 16px 32px rgba(0,0,0,0.28);
+      animation: new-record-drop 720ms cubic-bezier(.2,.9,.18,1.18) both;
+    }
+    @keyframes new-record-drop {
+      0% { transform: translateY(-18px) scale(0.86); opacity: 0; }
+      58% { transform: translateY(4px) scale(1.03); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .record-rays {
+      position: absolute;
+      inset: -30%;
+      opacity: 0;
+      pointer-events: none;
+      background:
+        conic-gradient(from 0deg, transparent 0 8deg, rgba(242,210,123,0.15) 8deg 12deg, transparent 12deg 24deg);
+      animation: rays-spin 1.6s ease-out 120ms both;
+    }
+    @keyframes rays-spin {
+      0% { transform: rotate(0deg) scale(0.7); opacity: 0; }
+      24% { opacity: 1; }
+      100% { transform: rotate(32deg) scale(1.12); opacity: 0; }
+    }
+    @keyframes hanko-press {
+      0% { transform: rotate(-8deg) scale(2.1) translateY(-14px); opacity: 0; }
+      45% { transform: rotate(-8deg) scale(0.88) translateY(4px); opacity: 1; }
+      62% { transform: rotate(-8deg) scale(1.06) translateY(-1px); }
+      78% { transform: rotate(-8deg) scale(0.97) translateY(1px); }
+      100% { transform: rotate(-8deg) scale(1) translateY(0); opacity: 1; }
+    }
+    .hanko { animation: hanko-press 720ms cubic-bezier(.2,.9,.2,1) 260ms both; }
+    .rainbow-text {
+      background: linear-gradient(to right, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6, #ef4444);
+      background-size: 200% auto;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbow 3s linear infinite;
+    }
+    @keyframes rainbow { to { background-position: 200% center; } }
+    .gold-text { color: #d8a83c; text-shadow: 0 0 8px rgba(216,168,60,0.25); }
+    .unlock-overlay { animation: unlock-fade 1.7s ease both; }
+    .key-action { animation: key-action 1.7s ease both; transform-origin: center; }
+    .shackle-pop { animation: shackle-pop 1.7s ease both; }
+    @keyframes unlock-fade { 0%, 88% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes key-action {
+      0% { transform: translateX(40px) rotate(0deg); opacity: 0; }
+      30% { transform: translateX(0) rotate(0deg); opacity: 1; }
+      65% { transform: translateX(0) rotate(90deg); }
+      100% { transform: translateX(18px) translateY(10px) rotate(115deg); opacity: 0; }
+    }
+    @keyframes shackle-pop { 0%, 64% { transform: translateY(0); } 72%, 100% { transform: translateY(-7px); } }
+    .rank-stamp {
+      border: 4px solid currentColor;
+      border-radius: 8px;
+      padding: 12px 18px;
+      letter-spacing: 0;
+    }
+    @media (max-width: 420px) {
+      .answer-btn { min-height: 58px; border-radius: 14px; }
+    }
+    @media (max-height: 720px) {
+      .answer-btn { min-height: 50px; border-radius: 13px; font-size: 22px; }
+      .feedback { height: 38px; }
+      .panel { box-shadow: 0 16px 36px rgba(0,0,0,0.28); }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useRef, useState } = React;
+
+    const RAW_6 = `
+334556-347
+344568-257
+223446-35
+333445-23456
+445678-3469
+111233-1234
+445567-346
+334445-2345
+344456-2457
+334568-37
+134568-27
+344567-2458
+234446-145`;
+
+    const RAW_7 = `
+5556777-45678
+2345678-258
+2345699-147
+2345777-256
+2333456-1247
+3334455-3456
+5666777-4567
+2456777-23
+5566677-567
+3345555-346
+3455777-256
+3334456-2457
+3334567-24578
+4556777-356
+2345567-258
+4566667-4578
+3344445-2356
+3335777-456
+1166678-169`;
+
+    const RAW_10 = `
+2233445599-259
+2233334445-246
+2345677999-1478
+1112346888-567
+2223456667-25678
+2333344599-69
+2223344455-3456
+1166778888-15
+2222334444-135
+4566667888-345789
+1112345678-235689
+2345678889-1479
+2233344456-23467
+2344555678-13469
+6677778888-569
+2345677888-14769
+1112346678-569
+1134567888-1258
+2222344456-1437
+1234678999-145
+2334444556-17
+4556677778-36958
+3455677778-25869
+4445678888-3695
+2233344457-67
+5666677888-45789
+3334567888-23456789
+2224567999-3478
+1112345679-89
+1234555678-14369
+2345666789-12457
+3456666788-2587
+2222333444-1345
+2223456677-5678
+5677778888-569
+2222344567-1347
+2224444666-35
+4566777788-36958
+3456677888-25678
+4455667788-4578
+3456777788-25869
+4456677788-569
+2224444567-37
+2344445567-25836
+2222344666-1345
+2223334445-23456
+2345666678-147258
+2224445566-34567
+2223444567-123458
+3456677778-258369
+2344567888-147369
+3456667788-36789
+1234567999-1478
+2223445666-23456
+2223456778-679
+2223344456-23457
+5566777888-45679
+1166777888-169
+2223334567-234578
+2224566667-34578
+2223455677-467
+2223334456-23457
+2345555678-28
+4566667788-3789
+1145666678-139
+2223444566-456
+3455578999-2569
+5666677778-4589
+2223333444-1245
+2222334445-1346
+2223444556-3647
+2345667888-1476
+3455667888-3647
+4566677778-36958
+2233344445-1236
+1113456678-2369
+2223333456-1467
+4566667778-3789
+2333345678-14258
+2233334455-256`;
+
+    const SUIT_PREFIX = { m: "man", p: "pin", s: "sou", z: "ji" };
+    const IMG_BASE = "tiles/";
+    const STORAGE = {
+      best6: "mahjong_best_6",
+      best7: "mahjong_best_7",
+      best1020: "mahjong_best_10_20",
+      best10all: "mahjong_best_10_all",
+      elapsed6: "mahjong_elapsed_6",
+      elapsed7: "mahjong_elapsed_7",
+      elapsed1020: "mahjong_elapsed_10_20",
+      elapsed10all: "mahjong_elapsed_10_all",
+      favorites: "mahjong_favorites",
+      review: "mahjong_review_bucket",
+      results: "mahjong_results_history",
+      playerName: "mahjong_player_name"
+    };
+
+    const DATASETS = {
+      "6": parseData(RAW_6, 6),
+      "7": parseData(RAW_7, 7),
+      "10": parseData(RAW_10, 10)
+    };
+
+    const MODES = [
+      { id: "6", label: "六枚形", tileCount: 6, questionCount: 13, bestKey: STORAGE.best6, elapsedKey: STORAGE.elapsed6, unlock: null, rankKey: "6" },
+      { id: "7", label: "七枚形", tileCount: 7, questionCount: 19, bestKey: STORAGE.best7, elapsedKey: STORAGE.elapsed7, unlock: { modeId: "6", rank: "A" }, rankKey: "7" },
+      { id: "10_20", label: "十枚形 20問", tileCount: 10, questionCount: 20, bestKey: STORAGE.best1020, elapsedKey: STORAGE.elapsed1020, unlock: { modeId: "7", rank: "A" }, rankKey: "10_20" },
+      { id: "10_all", label: "十枚形 80問", tileCount: 10, questionCount: 80, bestKey: STORAGE.best10all, elapsedKey: STORAGE.elapsed10all, unlock: { modeId: "10_20", rank: "A" }, rankKey: "10_all" }
+    ];
+
+    const RANKS = {
+      "6": [
+        ["SSS", 374], ["SS", 365], ["S", 355], ["A+", 345], ["A", 335], ["A-", 325],
+        ["B+", 315], ["B", 305], ["B-", 295], ["C", 285], ["D", 275], ["E", -Infinity]
+      ],
+      "7": [
+        ["SSS", 545], ["SS", 535], ["S", 520], ["A+", 510], ["A", 500], ["A-", 490],
+        ["B+", 480], ["B", 470], ["B-", 460], ["C", 450], ["D", 440], ["E", -Infinity]
+      ],
+      "10_20": [
+        ["SSS", 560], ["SS", 530], ["S", 500], ["A+", 460], ["A", 420], ["A-", 385],
+        ["B+", 350], ["B", 315], ["B-", 280], ["C", 230], ["D", 170], ["E", -Infinity]
+      ],
+      "10_all": [
+        ["SSS", 2240], ["SS", 2120], ["S", 2000], ["A+", 1800], ["A", 1600], ["A-", 1400],
+        ["B+", 1200], ["B", 1000], ["B-", 800], ["C", 600], ["D", 400], ["E", -Infinity]
+      ]
+    };
+
+    function parseData(raw, tileCount) {
+      return raw.trim().split("\n").filter(line => line.includes("-")).map((line, index) => {
+        const [q, a] = line.trim().split("-");
+        return {
+          id: `${tileCount}-${index}`,
+          baseId: `${tileCount}-${index}`,
+          tileCount,
+          tiles: q.split("").map(Number),
+          answers: a.split("").map(Number)
+        };
+      });
+    }
+
+    function readNumber(key, fallback = 0) {
+      const raw = localStorage.getItem(key);
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function readJson(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function writeJson(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function uniqueSorted(nums) {
+      return [...new Set(nums)].sort((a, b) => a - b);
+    }
+
+    function getValidShifts(tiles, answers) {
+      const minTile = Math.min(...tiles);
+      const maxTile = Math.max(...tiles);
+      const minAns = Math.min(...answers);
+      const maxAns = Math.max(...answers);
+      const minK = Math.max(-3, 1 - minTile, 1 - minAns);
+      const maxK = Math.min(3, 9 - maxTile, 9 - maxAns);
+      const shifts = [];
+      for (let k = minK; k <= maxK; k++) shifts.push(k);
+      if (shifts.length === 0) shifts.push(0);
+      return shifts;
+    }
+
+    function transformQuestion(base) {
+      const suit = ["m", "p", "s"][Math.floor(Math.random() * 3)];
+      const mirrored = Math.random() < 0.5;
+      const mirror = n => mirrored ? 10 - n : n;
+      const mirroredTiles = base.tiles.map(mirror);
+      const mirroredAnswers = base.answers.map(mirror);
+      const shifts = getValidShifts(mirroredTiles, mirroredAnswers);
+      const k = shifts[Math.floor(Math.random() * shifts.length)];
+      const tiles = mirroredTiles.map(n => n + k).sort((a, b) => a - b);
+      const answers = uniqueSorted(mirroredAnswers.map(n => n + k));
+      return {
+        ...base,
+        instanceId: `${base.baseId}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        tiles,
+        answers,
+        suit,
+        mirrored,
+        shift: k
+      };
+    }
+
+    function getMode(modeId) {
+      return MODES.find(m => m.id === modeId);
+    }
+
+    function rankFor(modeId, score) {
+      const key = getMode(modeId)?.rankKey || modeId;
+      return (RANKS[key] || RANKS["6"]).find(([, threshold]) => score >= threshold)?.[0] || "E";
+    }
+
+    function rankAtLeast(actual, required) {
+      const order = ["E", "D", "C", "B-", "B", "B+", "A-", "A", "A+", "S", "SS", "SSS"];
+      return order.indexOf(actual) >= order.indexOf(required);
+    }
+
+    function scoreGame(questionCount, correctCount, mistakes, elapsedSeconds) {
+      const timeBonus = Math.max(0, questionCount * 20 - elapsedSeconds);
+      return Math.max(0, correctCount * 10 - mistakes * 20 + timeBonus);
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, "0");
+      const s = Math.floor(sec % 60).toString().padStart(2, "0");
+      return `${m}:${s}`;
+    }
+
+    function formatAverageTime(elapsedSeconds, questionCount) {
+      if (!questionCount) return "-";
+      return `${(elapsedSeconds / questionCount).toFixed(2)}秒`;
+    }
+
+    function rankComment(rank) {
+      const comments = {
+        SSS: "卓上の情報が止まって見えています。文句なしの最高到達点。",
+        SS: "鋭さと安定感が両立しています。ほとんど読み切っています。",
+        S: "見事です。実戦でも頼れる待ち読みの速度です。",
+        "A+": "かなり良い記録です。Sランクが見える位置まで来ています。",
+        A: "安定した合格ラインです。この調子で精度を上げましょう。",
+        "A-": "基礎は十分です。あと少しの短縮で上位ランクに届きます。",
+        "B+": "良い手応えです。迷った形を復習すると伸びます。",
+        B: "標準ラインです。正解牌の抜けを少しずつ減らしましょう。",
+        "B-": "もう一押しです。焦らず形ごとの待ちを整理しましょう。",
+        C: "練習の効果が出やすい段階です。復習から始めるのがおすすめです。",
+        D: "まずは牌姿に慣れるところから。速度より正確さを優先しましょう。",
+        E: "ここからです。間違えた形をひとつずつ潰していきましょう。"
+      };
+      return comments[rank] || comments.E;
+    }
+
+    function makeResult({ mode, variant, score, rank, correctCount, mistakeCount, elapsedSeconds, wrongQuestions, previousBest, isNewRecord }) {
+      return {
+        modeId: mode.id,
+        modeLabel: mode.label,
+        tileCount: mode.tileCount,
+        questionCount: mode.questionCount,
+        variant,
+        score,
+        rank,
+        correctCount,
+        mistakeCount,
+        elapsedSeconds,
+        previousBest,
+        isNewRecord,
+        wrongQuestions,
+        finishedAt: new Date().toISOString(),
+        clientVersion: "codex-table-minimal-v1"
+      };
+    }
+
+    function tilePath(suit, num) {
+      return `${IMG_BASE}${SUIT_PREFIX[suit]}${num}-66-90-l.png`;
+    }
+
+    function App() {
+      const [screen, setScreen] = useState("home");
+      const [game, setGame] = useState(null);
+      const [result, setResult] = useState(null);
+      const [favorites, setFavorites] = useState(() => readJson(STORAGE.favorites, []));
+      const [review, setReview] = useState(() => readJson(STORAGE.review, []));
+      const [unlockFlash, setUnlockFlash] = useState(null);
+      const [tick, setTick] = useState(0);
+      const audioRef = useRef(null);
+      const touchRef = useRef(false);
+
+      useEffect(() => {
+        preloadTiles();
+      }, []);
+
+      useEffect(() => {
+        if (screen !== "game" || !game || game.ended) return;
+        const id = setInterval(() => setTick(v => v + 1), 250);
+        return () => clearInterval(id);
+      }, [screen, game]);
+
+      const nowElapsed = useMemo(() => {
+        if (!game) return 0;
+        return Math.floor((Date.now() - game.startedAt) / 1000);
+      }, [game, tick]);
+
+      const records = useMemo(() => {
+        const out = {};
+        for (const mode of MODES) {
+          const best = readNumber(mode.bestKey);
+          out[mode.id] = { best, rank: rankFor(mode.id, best), elapsed: readNumber(mode.elapsedKey) };
+        }
+        return out;
+      }, [screen, result, unlockFlash]);
+
+      function tap(handler) {
+        return {
+          onTouchStart: () => { touchRef.current = true; handler(); },
+          onClick: () => {
+            if (touchRef.current) { touchRef.current = false; return; }
+            handler();
+          }
+        };
+      }
+
+      function ensureAudio() {
+        try {
+          if (!audioRef.current) audioRef.current = new (window.AudioContext || window.webkitAudioContext)();
+          if (audioRef.current.state === "suspended") audioRef.current.resume();
+        } catch {}
+      }
+
+      function tone(type) {
+        ensureAudio();
+        const ctx = audioRef.current;
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        if (type === "ok") {
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(660, now);
+          osc.frequency.exponentialRampToValueAtTime(990, now + 0.12);
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+          osc.start(now);
+          osc.stop(now + 0.18);
+        } else if (type === "ng") {
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(190, now);
+          osc.frequency.exponentialRampToValueAtTime(92, now + 0.2);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.23);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else {
+          osc.type = "square";
+          osc.frequency.setValueAtTime(520, now);
+          gain.gain.setValueAtTime(0.035, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+          osc.start(now);
+          osc.stop(now + 0.055);
+        }
+      }
+
+      function startMode(modeId, variant = "normal", sourceList = null) {
+        ensureAudio();
+        const baseMode = getMode(modeId) || MODES[0];
+        let bases;
+        if (sourceList?.length) {
+          bases = shuffle(sourceList).slice(0, Math.min(sourceList.length, baseMode.questionCount));
+        } else {
+          const datasetKey = baseMode.tileCount === 10 ? "10" : String(baseMode.tileCount);
+          bases = shuffle(DATASETS[datasetKey]).slice(0, baseMode.questionCount);
+        }
+        if (!bases.length) return;
+        const questions = bases.map(q => transformQuestion(q));
+        setGame({
+          mode: baseMode,
+          variant,
+          questions,
+          index: 0,
+          selected: [],
+          correctCount: 0,
+          mistakeCount: 0,
+          wrongQuestions: [],
+          feedback: null,
+          startedAt: Date.now(),
+          ended: false
+        });
+        setTick(v => v + 1);
+        setScreen("game");
+      }
+
+      function currentQuestion() {
+        return game?.questions[game.index] || null;
+      }
+
+      function selectAnswer(num) {
+        if (!game || game.feedback) return;
+        const q = currentQuestion();
+        const counts = q.tiles.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {});
+        if ((counts[num] || 0) >= 4) return;
+        tone("tap");
+        const selected = game.selected.includes(num)
+          ? game.selected.filter(n => n !== num)
+          : uniqueSorted([...game.selected, num]);
+        if (game.variant === "ura") {
+          const hit = q.answers.includes(num);
+          const completed = sameSet(selected, q.answers);
+          if (hit && completed) {
+            tone("ok");
+            setGame(g => ({ ...g, selected, correctCount: g.correctCount + 1 }));
+            setTimeout(() => advanceUra(true), 120);
+          } else if (hit) {
+            setGame(g => ({ ...g, selected }));
+          } else {
+            tone("ng");
+            finishGame({ forcedWrong: q, selected, uraFailed: true });
+          }
+          return;
+        }
+        setGame(g => ({ ...g, selected }));
+      }
+
+      function confirmAnswer() {
+        if (!game || game.feedback) return;
+        const q = currentQuestion();
+        const ok = sameSet(game.selected, q.answers);
+        tone(ok ? "ok" : "ng");
+        const wrong = ok ? null : { ...q, selected: [...game.selected] };
+        setGame(g => ({
+          ...g,
+          correctCount: g.correctCount + (ok ? 1 : 0),
+          mistakeCount: g.mistakeCount + (ok ? 0 : 1),
+          wrongQuestions: wrong ? [...g.wrongQuestions, wrong] : g.wrongQuestions,
+          feedback: ok ? "ok" : "ng"
+        }));
+        setTimeout(() => advanceNormal(), 35);
+      }
+
+      function advanceNormal() {
+        setGame(g => {
+          if (!g) return g;
+          if (g.index + 1 >= g.questions.length) {
+            setTimeout(() => finishGame(), 0);
+            return { ...g, ended: true };
+          }
+          return { ...g, index: g.index + 1, selected: [], feedback: null };
+        });
+      }
+
+      function advanceUra() {
+        setGame(g => {
+          if (!g) return g;
+          if (g.index + 1 >= g.questions.length) {
+            setTimeout(() => finishGame(), 0);
+            return { ...g, ended: true };
+          }
+          return { ...g, index: g.index + 1, selected: [], feedback: null };
+        });
+      }
+
+      function finishGame(extra = {}) {
+        setGame(g => {
+          if (!g) return g;
+          const elapsedSeconds = Math.floor((Date.now() - g.startedAt) / 1000);
+          const forcedWrong = extra.forcedWrong ? [{ ...extra.forcedWrong, selected: extra.selected || [] }] : [];
+          const correctCount = extra.uraFailed ? g.correctCount : g.correctCount;
+          const mistakeCount = g.mistakeCount + forcedWrong.length;
+          const wrongQuestions = [...g.wrongQuestions, ...forcedWrong];
+          const score = scoreGame(g.questions.length, correctCount, mistakeCount, elapsedSeconds);
+          const rank = rankFor(g.mode.id, score);
+          const previousBest = readNumber(g.mode.bestKey);
+          const isNewRecord = g.variant === "normal" && score > previousBest;
+          const built = makeResult({
+            mode: g.mode,
+            variant: g.variant,
+            score,
+            rank,
+            correctCount,
+            mistakeCount,
+            elapsedSeconds,
+            previousBest,
+            isNewRecord,
+            wrongQuestions
+          });
+          persistResult(built);
+          setResult(built);
+          setScreen("result");
+          return { ...g, ended: true };
+        });
+      }
+
+      function persistResult(res) {
+        const mode = getMode(res.modeId);
+        const oldBest = readNumber(mode.bestKey);
+        if (res.variant === "normal" && res.score > oldBest) {
+          localStorage.setItem(mode.bestKey, String(res.score));
+          localStorage.setItem(mode.elapsedKey, String(res.elapsedSeconds));
+          const next = nextUnlockedMode(res.modeId, res.rank);
+          if (next) setUnlockFlash(next.label);
+        }
+        if (res.wrongQuestions.length) {
+          const bucket = readJson(STORAGE.review, []);
+          const merged = dedupeQuestions([...res.wrongQuestions.map(q => normalizeSavedQuestion(q)), ...bucket]).slice(0, 120);
+          writeJson(STORAGE.review, merged);
+          setReview(merged);
+        }
+        const history = readJson(STORAGE.results, []);
+        writeJson(STORAGE.results, [res, ...history].slice(0, 50));
+      }
+
+      function nextUnlockedMode(modeId, rank) {
+        return MODES.find(m => m.unlock?.modeId === modeId && rankAtLeast(rank, m.unlock.rank));
+      }
+
+      function addFavorite(q = currentQuestion()) {
+        if (!q) return;
+        const saved = normalizeSavedQuestion(q);
+        const merged = dedupeQuestions([saved, ...favorites]).slice(0, 80);
+        writeJson(STORAGE.favorites, merged);
+        setFavorites(merged);
+        tone("tap");
+      }
+
+      function removeFavorite(id) {
+        const next = favorites.filter(f => f.favoriteId !== id);
+        writeJson(STORAGE.favorites, next);
+        setFavorites(next);
+      }
+
+      function clearReview() {
+        writeJson(STORAGE.review, []);
+        setReview([]);
+      }
+
+      function isUnlocked(mode, variant = "normal") {
+        if (variant === "ura") {
+          const normalRank = records[mode.id]?.rank || "E";
+          return rankAtLeast(normalRank, "S");
+        }
+        if (!mode.unlock) return true;
+        const prevRank = records[mode.unlock.modeId]?.rank || "E";
+        return rankAtLeast(prevRank, mode.unlock.rank);
+      }
+
+      const q = currentQuestion();
+
+      return (
+        <main className={`app-shell ${game?.variant === "ura" ? "bg-black/45" : ""}`}>
+          {screen === "home" && (
+            <Home
+              records={records}
+              favorites={favorites}
+              review={review}
+              isUnlocked={isUnlocked}
+              startMode={startMode}
+              removeFavorite={removeFavorite}
+              clearReview={clearReview}
+              tap={tap}
+              unlockFlash={unlockFlash}
+              setUnlockFlash={setUnlockFlash}
+            />
+          )}
+          {screen === "game" && game && q && (
+            <Game
+              game={game}
+              q={q}
+              elapsed={nowElapsed}
+              selectAnswer={selectAnswer}
+              confirmAnswer={confirmAnswer}
+              addFavorite={addFavorite}
+              quit={() => setScreen("home")}
+              retry={() => startMode(game.mode.id, game.variant)}
+              tap={tap}
+            />
+          )}
+          {screen === "result" && result && (
+            <Result
+              result={result}
+              favorites={favorites}
+              addFavorite={addFavorite}
+              startMode={startMode}
+              goHome={() => setScreen("home")}
+              tap={tap}
+            />
+          )}
+        </main>
+      );
+    }
+
+    function Home({ records, favorites, review, isUnlocked, startMode, removeFavorite, clearReview, tap, unlockFlash, setUnlockFlash }) {
+      const [tab, setTab] = useState("modes");
+      return (
+        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
+          {unlockFlash && <UnlockFlash label={unlockFlash} onDone={() => setUnlockFlash(null)} />}
+          <header className="mb-5 pt-2">
+            <p className="text-sm font-bold text-[color:var(--gold-2)]">ENSUKU DRILL CODEX</p>
+            <h1 className="mt-1 text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル</h1>
+            <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">競技卓ミニマル版。牌姿を読み、待ち牌だけを選ぶ。</p>
+          </header>
+
+          <div className="mb-4 grid grid-cols-3 gap-2 rounded-full bg-black/20 p-1">
+            {[
+              ["modes", "卓"],
+              ["favorite", `お気に入り ${favorites.length}`],
+              ["review", `復習 ${review.length}`]
+            ].map(([id, label]) => (
+              <button key={id} className={`rounded-full px-3 py-2 text-sm font-extrabold ${tab === id ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(id))}>{label}</button>
+            ))}
+          </div>
+
+          {tab === "modes" && (
+            <section className="space-y-3">
+              {MODES.map(mode => (
+                <ModeCard key={mode.id} mode={mode} record={records[mode.id]} normalUnlocked={isUnlocked(mode, "normal")} uraUnlocked={isUnlocked(mode, "ura")} startMode={startMode} tap={tap} />
+              ))}
+            </section>
+          )}
+
+          {tab === "favorite" && (
+            <QuestionList
+              empty="保存した牌姿はまだありません。ゲーム中や結果画面から追加できます。"
+              items={favorites}
+              actionLabel="まとめて練習"
+              onStart={() => startMode(inferModeFromList(favorites), "favorite", favorites)}
+              onRemove={removeFavorite}
+              tap={tap}
+            />
+          )}
+
+          {tab === "review" && (
+            <QuestionList
+              empty="間違えた牌姿はまだありません。ミスした問題が自動で入ります。"
+              items={review}
+              actionLabel="復習する"
+              onStart={() => startMode(inferModeFromList(review), "review", review)}
+              onRemove={null}
+              onClear={clearReview}
+              tap={tap}
+            />
+          )}
+        </div>
+      );
+    }
+
+    function ModeCard({ mode, record, normalUnlocked, uraUnlocked, startMode, tap }) {
+      return (
+        <div className="panel rounded-3xl p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-black">{mode.label}</h2>
+                <span className="rounded-full border border-white/10 px-2 py-0.5 text-xs font-bold text-[color:var(--muted)]">{mode.questionCount}問</span>
+              </div>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">Best {record.best || "-"} pt / Rank {record.best ? record.rank : "-"}</p>
+            </div>
+            <div className={`text-3xl font-black ${rankClass(record.rank)}`}>{record.best ? record.rank : "未"}</div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button className={`pressable rounded-2xl px-4 py-3 text-sm font-black ${normalUnlocked ? "btn-main" : "btn-quiet opacity-60"}`} disabled={!normalUnlocked} {...tap(() => normalUnlocked && startMode(mode.id, "normal"))}>
+              {normalUnlocked ? "プレイ" : `${mode.unlock?.rank}で解放`}
+            </button>
+            <button className={`pressable rounded-2xl px-4 py-3 text-sm font-black ${uraUnlocked ? "btn-danger" : "btn-quiet opacity-60"}`} disabled={!uraUnlocked} {...tap(() => uraUnlocked && startMode(mode.id, "ura"))}>
+              {uraUnlocked ? "裏モード" : "裏モード Sで解放"}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function QuestionList({ empty, items, actionLabel, onStart, onRemove, onClear, tap }) {
+      return (
+        <section className="panel rounded-3xl p-4">
+          {items.length === 0 ? (
+            <p className="py-8 text-center text-sm leading-6 text-[color:var(--muted)]">{empty}</p>
+          ) : (
+            <>
+              <div className="mb-4 flex gap-2">
+                <button className="pressable btn-main flex-1 rounded-2xl px-4 py-3 text-sm font-black" {...tap(onStart)}>{actionLabel}</button>
+                {onClear && <button className="pressable btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(onClear)}>空にする</button>}
+              </div>
+              <div className="space-y-3">
+                {items.slice(0, 20).map(item => (
+                  <div key={item.favoriteId} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <MiniHand q={item} />
+                      {onRemove && <button className="btn-quiet rounded-full px-3 py-2 text-xs font-bold" {...tap(() => onRemove(item.favoriteId))}>削除</button>}
+                    </div>
+                    <p className="mt-2 text-xs text-[color:var(--muted)]">待ち {item.answers.join(", ")}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      );
+    }
+
+    function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, quit, retry, tap }) {
+      const counts = q.tiles.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {});
+      const isUra = game.variant === "ura";
+      return (
+        <div className="mx-auto flex h-screen max-h-screen w-full max-w-md flex-col overflow-hidden px-4 py-3">
+          <header className="mb-4 flex items-center justify-between gap-2">
+            <div>
+              <div className="text-sm font-black text-[color:var(--gold-2)]">{game.index + 1} / {game.questions.length}</div>
+              <div className="mt-2 h-1.5 w-36 rounded-full bg-black/35">
+                <div className="h-1.5 rounded-full bg-[color:var(--gold)]" style={{ width: `${((game.index + 1) / game.questions.length) * 100}%` }} />
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-black">{formatTime(elapsed)}</div>
+              <div className="text-xs font-bold text-[color:var(--muted)]">{isUra ? "裏モード" : game.mode.label}</div>
+            </div>
+          </header>
+
+          <section className="panel mb-4 rounded-3xl p-4">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-sm font-bold text-[color:var(--muted)]">牌姿</span>
+              <button className="btn-quiet rounded-full px-3 py-2 text-xs font-bold" {...tap(() => addFavorite(q))}>お気に入り</button>
+            </div>
+            <Hand q={q} />
+          </section>
+
+          <div className={`feedback mb-4 ${game.feedback === "ok" ? "ok" : game.feedback === "ng" ? "ng" : "bg-black/20 text-[color:var(--muted)]"}`}>
+            {game.feedback === "ok" ? "正解" : game.feedback === "ng" ? `待ち ${q.answers.join(", ")}` : isUra ? "正解牌をすべて選ぶ / 外すと終了" : "待ち牌を選択"}
+          </div>
+
+          <section className="grid grid-cols-3 content-start gap-3">
+            {[1,2,3,4,5,6,7,8,9].map(num => {
+              const disabled = (counts[num] || 0) >= 4;
+              const selected = game.selected.includes(num);
+              return (
+                <button key={num} disabled={disabled || !!game.feedback} className={`answer-btn pressable ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${isUra && !selected ? "ura" : ""}`} {...tap(() => selectAnswer(num))}>
+                  {num}
+                </button>
+              );
+            })}
+          </section>
+
+          <div className="mt-3">
+            {!isUra && <button className="btn-main pressable w-full rounded-2xl px-4 py-4 text-lg font-black disabled:opacity-40" disabled={game.selected.length === 0 || !!game.feedback} {...tap(confirmAnswer)}>確定</button>}
+            {isUra && <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-center text-lg font-black text-[color:var(--muted)]">即判定</div>}
+          </div>
+
+          <footer className="mt-3 grid grid-cols-2 gap-2">
+            <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black" {...tap(quit)}>メニュー</button>
+            <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black" {...tap(retry)}>再挑戦</button>
+          </footer>
+        </div>
+      );
+    }
+
+    function Result({ result, startMode, goHome, tap }) {
+      const [showPost, setShowPost] = useState(false);
+      const [name, setName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
+      const [copied, setCopied] = useState(false);
+      const canStamp = rankAtLeast(result.rank, "S");
+      const rankColor = rankClass(result.rank);
+      const averageTime = formatAverageTime(result.elapsedSeconds, result.questionCount);
+      const publicPayload = {
+        playerName: name.trim() || "名無し",
+        submittedAt: new Date().toISOString(),
+        rankingScope: "future",
+        result: {
+          modeId: result.modeId,
+          modeLabel: result.modeLabel,
+          variant: result.variant,
+          score: result.score,
+          rank: result.rank,
+          isNewRecord: result.isNewRecord,
+          previousBest: result.previousBest,
+          correctCount: result.correctCount,
+          mistakeCount: result.mistakeCount,
+          elapsedSeconds: result.elapsedSeconds,
+          finishedAt: result.finishedAt,
+          clientVersion: result.clientVersion
+        }
+      };
+      async function copyPayload() {
+        localStorage.setItem(STORAGE.playerName, name);
+        try {
+          await navigator.clipboard.writeText(JSON.stringify(publicPayload, null, 2));
+          setCopied(true);
+        } catch {
+          setCopied(false);
+        }
+      }
+      return (
+        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
+          <section className="panel record-card result-pop rounded-3xl p-5">
+            {result.isNewRecord && <div className="record-rays" />}
+            <div className="relative">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-black text-[color:var(--gold-2)]">{result.isNewRecord ? "NEW RECORD" : "RESULT"}</p>
+                  <h1 className="mt-1 text-3xl font-black">{result.isNewRecord ? "新記録更新" : "成績"}</h1>
+                </div>
+                <div className="rounded-full border border-white/10 bg-black/24 px-3 py-2 text-xs font-black text-[color:var(--muted)]">{result.modeLabel}</div>
+              </div>
+
+              {result.isNewRecord && (
+                <div className="new-record-banner mt-5 rounded-2xl px-4 py-3 text-center">
+                  <div className="text-xs font-black">NEW RECORD</div>
+                  <div className="mt-1 text-2xl font-black">自己ベスト更新</div>
+                  <div className="mt-1 text-xs font-extrabold opacity-80">前回 {result.previousBest || 0} pt から更新</div>
+                </div>
+              )}
+
+              <div className="mt-6 rounded-3xl border border-white/10 bg-black/30 p-5 text-center">
+                <p className="text-sm font-bold text-[color:var(--muted)]">SCORE</p>
+                <div className="mt-2 text-7xl font-black">{result.score}<span className="text-2xl text-[color:var(--gold)]">pt</span></div>
+                <div className={`mx-auto mt-5 inline-block text-5xl font-black ${rankColor}`}>{result.rank}</div>
+                <p className="mx-auto mt-4 max-w-xs text-sm font-bold leading-6 text-[color:var(--muted)]">{rankComment(result.rank)}</p>
+              </div>
+            </div>
+            {canStamp && (
+              <div className="hanko mt-5 flex justify-center">
+                <div className={`rank-stamp text-3xl font-black ${rankColor}`}>{result.rank} 合格</div>
+              </div>
+            )}
+            <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+              <Stat label="正解" value={result.correctCount} />
+              <Stat label="ミス" value={result.mistakeCount} />
+              <Stat label="時間" value={formatTime(result.elapsedSeconds)} />
+            </div>
+            <div className="mt-2 rounded-2xl bg-black/22 p-3 text-center">
+              <p className="text-xs font-bold text-[color:var(--muted)]">1問平均</p>
+              <p className="mt-1 text-xl font-black">{averageTime}</p>
+            </div>
+          </section>
+
+          {result.wrongQuestions.length > 0 && (
+            <section className="panel mt-4 rounded-3xl p-4">
+              <h2 className="text-lg font-black">残念牌姿</h2>
+              <div className="mt-3 space-y-3">
+                {result.wrongQuestions.slice(0, 5).map(item => (
+                  <div key={item.instanceId} className="rounded-2xl bg-black/20 p-3">
+                    <MiniHand q={item} />
+                    <p className="mt-2 text-xs text-[color:var(--muted)]">正解 {item.answers.join(", ")} / 選択 {(item.selected || []).join(", ") || "-"}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="panel mt-4 rounded-3xl p-4">
+            <button className="btn-quiet w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => setShowPost(v => !v))}>ランキング投稿の準備</button>
+            {showPost && (
+              <div className="mt-3 space-y-3">
+                <p className="text-sm leading-6 text-[color:var(--muted)]">オンライン投稿は将来実装です。今は公開APIへ送る予定のデータ形を確認できます。</p>
+                <input className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 font-bold outline-none focus:border-[color:var(--gold)]" value={name} onChange={e => setName(e.target.value)} placeholder="名前 任意" />
+                <button className="btn-main w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(copyPayload)}>投稿データをコピー</button>
+                {copied && <p className="text-center text-sm font-bold text-[color:var(--gold-2)]">コピーしました</p>}
+              </div>
+            )}
+          </section>
+
+          <footer className="mt-4 grid grid-cols-2 gap-2 pb-4">
+            <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant))}>もう一度</button>
+            <button className="btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(goHome)}>メニュー</button>
+          </footer>
+        </div>
+      );
+    }
+
+    function Stat({ label, value }) {
+      return (
+        <div className="rounded-2xl bg-black/22 p-3">
+          <p className="text-xs font-bold text-[color:var(--muted)]">{label}</p>
+          <p className="mt-1 text-lg font-black">{value}</p>
+        </div>
+      );
+    }
+
+    function Hand({ q }) {
+      const height = q.tiles.length >= 10 ? 50 : q.tiles.length === 7 ? 58 : 66;
+      return (
+        <div className="flex items-center justify-center gap-px overflow-hidden">
+          {q.tiles.map((num, idx) => (
+            <Tile key={`${idx}-${num}`} suit={q.suit} num={num} height={height} />
+          ))}
+        </div>
+      );
+    }
+
+    function MiniHand({ q }) {
+      return (
+        <div className="flex items-center gap-1 overflow-hidden">
+          {q.tiles.map((num, idx) => <Tile key={`${idx}-${num}`} suit={q.suit} num={num} height={34} />)}
+        </div>
+      );
+    }
+
+    function Tile({ suit, num, height }) {
+      const [error, setError] = useState(false);
+      const color = suit === "m" ? "#b91c1c" : suit === "p" ? "#1d4ed8" : "#047857";
+      return (
+        <div style={{ height, width: height * 0.733 }} className="shrink-0">
+          {!error ? (
+            <img className="tile-img" src={tilePath(suit, num)} alt={`${suit}${num}`} onError={() => setError(true)} />
+          ) : (
+            <div className="tile-fallback" style={{ fontSize: Math.max(16, height * 0.43), color }}>{num}</div>
+          )}
+        </div>
+      );
+    }
+
+    function UnlockFlash({ label, onDone }) {
+      useEffect(() => {
+        const id = setTimeout(onDone, 1800);
+        return () => clearTimeout(id);
+      }, []);
+      return (
+        <div className="unlock-overlay fixed inset-0 z-50 grid place-items-center bg-black/65">
+          <div className="panel rounded-3xl p-8 text-center">
+            <div className="mx-auto mb-4 h-20 w-20">
+              <svg viewBox="0 0 100 100" className="h-full w-full">
+                <g className="shackle-pop" fill="none" stroke="#d8a83c" strokeWidth="8" strokeLinecap="round">
+                  <path d="M28 46V31a22 22 0 0 1 42 0" />
+                </g>
+                <rect x="22" y="42" width="56" height="38" rx="8" fill="#f6f2df" />
+                <path className="key-action" d="M67 56h25m-7 0v-8m0 8v8" stroke="#d8a83c" strokeWidth="7" strokeLinecap="round" />
+              </svg>
+            </div>
+            <p className="text-sm font-bold text-[color:var(--muted)]">解放</p>
+            <p className="mt-1 text-2xl font-black">{label}</p>
+          </div>
+        </div>
+      );
+    }
+
+    function sameSet(a, b) {
+      const aa = uniqueSorted(a);
+      const bb = uniqueSorted(b);
+      return aa.length === bb.length && aa.every((v, i) => v === bb[i]);
+    }
+
+    function normalizeSavedQuestion(q) {
+      return {
+        favoriteId: `${q.baseId}-${q.suit}-${q.tiles.join("")}-${q.answers.join("")}`,
+        baseId: q.baseId,
+        tileCount: q.tileCount,
+        tiles: [...q.tiles],
+        answers: [...q.answers],
+        suit: q.suit || "m"
+      };
+    }
+
+    function dedupeQuestions(items) {
+      const seen = new Set();
+      const out = [];
+      for (const item of items) {
+        const key = item.favoriteId || `${item.baseId}-${item.suit}-${item.tiles.join("")}-${item.answers.join("")}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ ...item, favoriteId: key });
+      }
+      return out;
+    }
+
+    function inferModeFromList(items) {
+      const max = Math.max(...items.map(item => item.tileCount || item.tiles.length), 6);
+      if (max >= 10) return items.length > 20 ? "10_all" : "10_20";
+      if (max >= 7) return "7";
+      return "6";
+    }
+
+    function rankClass(rank) {
+      if (rank === "SSS" || rank === "SS") return "rainbow-text";
+      if (rank === "S") return "gold-text";
+      if (rank?.startsWith("A")) return "text-red-300";
+      if (rank?.startsWith("B")) return "text-emerald-300";
+      if (rank === "C") return "text-sky-300";
+      return "text-slate-300";
+    }
+
+    function preloadTiles() {
+      ["m", "p", "s"].forEach(suit => {
+        for (let n = 1; n <= 9; n++) {
+          const img = new Image();
+          img.src = tilePath(suit, n);
+        }
+      });
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

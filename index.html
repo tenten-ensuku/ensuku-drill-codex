@@ -444,6 +444,12 @@
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
 
+    if (new URLSearchParams(window.location.search).has("reset")) {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+
     const RAW_6 = `
 334556-347
 344568-257

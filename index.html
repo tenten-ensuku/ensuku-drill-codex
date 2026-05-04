@@ -350,9 +350,18 @@
       overflow: visible;
       filter: drop-shadow(0 16px 22px rgba(0,0,0,0.38));
     }
-    .score-gauge-track { stroke: rgba(246,242,223,0.12); }
+    .score-gauge-track { stroke: rgba(246,242,223,0.08); }
+    .score-gauge-segment {
+      opacity: 0.72;
+      stroke-linecap: butt;
+    }
+    .score-gauge-segment.cap {
+      opacity: 0.95;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 7px rgba(255,255,255,0.28));
+    }
     .score-gauge-fill {
-      stroke: url(#scoreGaugeGold);
+      stroke: url(#scoreGaugeFill);
       stroke-linecap: round;
       transition: stroke-dashoffset 80ms linear;
     }
@@ -506,7 +515,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 4;
+    const APP_VERSION = 5;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -772,6 +781,39 @@
     function topRankScore(modeId) {
       const key = getMode(modeId)?.rankKey || modeId;
       return (RANKS[key] || RANKS["6"])[0][1];
+    }
+
+    function rankThreshold(modeId, rank) {
+      const key = getMode(modeId)?.rankKey || modeId;
+      return (RANKS[key] || RANKS["6"]).find(([r]) => r === rank)?.[1] ?? 0;
+    }
+
+    function rankGaugeSegments(modeId) {
+      const order = ["E", "D", "C", "B-", "B", "B+", "A-", "A", "A+", "S", "SS"];
+      const colors = {
+        E: "#64748b",
+        D: "#6b7280",
+        C: "#38bdf8",
+        "B-": "#34d399",
+        B: "#10b981",
+        "B+": "#22c55e",
+        "A-": "#fca5a5",
+        A: "#f87171",
+        "A+": "#ef4444",
+        S: "#d8a83c",
+        SS: "url(#scoreGaugeRainbow)"
+      };
+      const max = Math.max(topRankScore(modeId), 1);
+      return order.map((rank, index) => {
+        const start = Math.max(0, rankThreshold(modeId, rank));
+        const end = rankThreshold(modeId, order[index + 1] || "SSS");
+        return {
+          rank,
+          start: Math.max(0, Math.min(start / max, 1)),
+          end: Math.max(0, Math.min(end / max, 1)),
+          color: colors[rank]
+        };
+      }).filter(seg => seg.end > seg.start);
     }
 
     function rankAtLeast(actual, required) {
@@ -1417,6 +1459,7 @@
       const gaugeMax = Math.max(topRankScore(result.modeId), result.score, 1);
       const gaugeProgress = isPractice ? 0 : Math.min(displayScore / gaugeMax, 1);
       const gaugeOffset = gaugeCircumference * (1 - gaugeProgress);
+      const gaugeSegments = rankGaugeSegments(result.modeId);
       useEffect(() => {
         if (isPractice) {
           setDisplayScore(result.score);
@@ -1493,13 +1536,50 @@
                   <div className="score-gauge">
                     <svg viewBox="0 0 240 240" aria-hidden="true">
                       <defs>
-                        <linearGradient id="scoreGaugeGold" x1="0" x2="1" y1="0" y2="1">
-                          <stop offset="0%" stopColor="#fff1c6" />
-                          <stop offset="48%" stopColor="#d8a83c" />
-                          <stop offset="100%" stopColor="#7c5218" />
+                        <linearGradient id="scoreGaugeFill" x1="0" x2="1" y1="0" y2="1">
+                          <stop offset="0%" stopColor="#fffdf0" />
+                          <stop offset="45%" stopColor="#f2d27b" />
+                          <stop offset="100%" stopColor="#ffffff" />
+                        </linearGradient>
+                        <linearGradient id="scoreGaugeRainbow" x1="0" x2="1" y1="0" y2="1">
+                          <stop offset="0%" stopColor="#ef4444" />
+                          <stop offset="20%" stopColor="#f59e0b" />
+                          <stop offset="42%" stopColor="#10b981" />
+                          <stop offset="64%" stopColor="#3b82f6" />
+                          <stop offset="84%" stopColor="#8b5cf6" />
+                          <stop offset="100%" stopColor="#f472b6" />
                         </linearGradient>
                       </defs>
                       <circle className="score-gauge-track" cx="120" cy="120" r={gaugeRadius} fill="none" strokeWidth="14" />
+                      {gaugeSegments.map(seg => {
+                        const length = Math.max(0.01, (seg.end - seg.start) * gaugeCircumference);
+                        const offset = -seg.start * gaugeCircumference;
+                        return (
+                          <circle
+                            key={seg.rank}
+                            className="score-gauge-segment"
+                            cx="120"
+                            cy="120"
+                            r={gaugeRadius}
+                            fill="none"
+                            stroke={seg.color}
+                            strokeWidth="10"
+                            strokeDasharray={`${length} ${gaugeCircumference - length}`}
+                            strokeDashoffset={offset}
+                          />
+                        );
+                      })}
+                      <circle
+                        className="score-gauge-segment cap"
+                        cx="120"
+                        cy="120"
+                        r={gaugeRadius}
+                        fill="none"
+                        stroke="url(#scoreGaugeRainbow)"
+                        strokeWidth="13"
+                        strokeDasharray={`10 ${gaugeCircumference - 10}`}
+                        strokeDashoffset={-gaugeCircumference + 5}
+                      />
                       <circle
                         className="score-gauge-fill"
                         cx="120"

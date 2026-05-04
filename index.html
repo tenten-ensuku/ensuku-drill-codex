@@ -495,7 +495,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 2;
+    const APP_VERSION = 3;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1416,8 +1416,8 @@
         setDisplayScore(0);
         let frame = 0;
         const started = performance.now();
-        const duration = 1250;
-        const easeOut = t => 1 - Math.pow(1 - t, 3);
+        const duration = 2800;
+        const easeOut = t => 1 - Math.pow(1 - t, 4.2);
         function step(now) {
           const t = Math.min((now - started) / duration, 1);
           setDisplayScore(Math.round(result.score * easeOut(t)));

@@ -271,17 +271,69 @@
     }
     @keyframes rainbow { to { background-position: 200% center; } }
     .gold-text { color: #d8a83c; text-shadow: 0 0 8px rgba(216,168,60,0.25); }
-    .unlock-overlay { animation: unlock-fade 1.7s ease both; }
-    .key-action { animation: key-action 1.7s ease both; transform-origin: center; }
-    .shackle-pop { animation: shackle-pop 1.7s ease both; }
-    @keyframes unlock-fade { 0%, 88% { opacity: 1; } 100% { opacity: 0; } }
-    @keyframes key-action {
-      0% { transform: translateX(40px) rotate(0deg); opacity: 0; }
-      30% { transform: translateX(0) rotate(0deg); opacity: 1; }
-      65% { transform: translateX(0) rotate(90deg); }
-      100% { transform: translateX(18px) translateY(10px) rotate(115deg); opacity: 0; }
+    .unlock-overlay { animation: unlock-fade 2.65s ease both; }
+    .unlock-card {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.25), transparent 12rem),
+        linear-gradient(180deg, rgba(17,10,27,0.98), rgba(4,5,10,0.98));
+      box-shadow: 0 28px 90px rgba(0,0,0,0.58), 0 0 0 1px rgba(216,168,60,0.16) inset;
     }
-    @keyframes shackle-pop { 0%, 64% { transform: translateY(0); } 72%, 100% { transform: translateY(-7px); } }
+    .unlock-card::before {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      opacity: 0;
+      pointer-events: none;
+      background: conic-gradient(from 0deg, transparent 0 10deg, rgba(242,210,123,0.14) 10deg 13deg, transparent 13deg 26deg);
+      animation: unlock-rays 1.55s ease-out 1.05s both;
+    }
+    .unlock-stage { filter: drop-shadow(0 18px 28px rgba(0,0,0,0.45)); }
+    .unlock-button-plate { animation: unlock-plate-glow 2.35s ease both; }
+    .unlock-key { animation: unlock-key-turn 2.35s cubic-bezier(.2,.72,.16,1) both; transform-origin: 134px 78px; }
+    .unlock-lock { animation: unlock-lock-release 2.35s cubic-bezier(.2,.72,.16,1) both; transform-origin: 134px 78px; }
+    .unlock-chain-left { animation: unlock-chain-left 2.35s cubic-bezier(.2,.72,.16,1) both; transform-origin: 94px 78px; }
+    .unlock-chain-right { animation: unlock-chain-right 2.35s cubic-bezier(.2,.72,.16,1) both; transform-origin: 174px 78px; }
+    .unlock-spark { opacity: 0; animation: unlock-spark 2.35s ease both; transform-origin: center; }
+    @keyframes unlock-fade { 0%, 90% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes unlock-rays {
+      0% { opacity: 0; transform: rotate(0deg) scale(0.65); }
+      24%, 72% { opacity: 1; }
+      100% { opacity: 0; transform: rotate(35deg) scale(1.08); }
+    }
+    @keyframes unlock-plate-glow {
+      0%, 42% { filter: brightness(0.78) saturate(0.9); }
+      58% { filter: brightness(1.28) saturate(1.24); }
+      100% { filter: brightness(1.08) saturate(1.08); }
+    }
+    @keyframes unlock-key-turn {
+      0% { transform: translateX(88px) rotate(0deg); opacity: 0; }
+      22% { transform: translateX(0) rotate(0deg); opacity: 1; }
+      43% { transform: translateX(0) rotate(0deg); opacity: 1; }
+      58% { transform: translateX(0) rotate(92deg); opacity: 1; }
+      72%, 100% { transform: translateX(-8px) translateY(6px) rotate(104deg); opacity: 0; }
+    }
+    @keyframes unlock-lock-release {
+      0%, 54% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      70% { transform: translateY(-12px) rotate(-7deg); opacity: 1; }
+      100% { transform: translateY(-22px) rotate(-11deg); opacity: 0; }
+    }
+    @keyframes unlock-chain-left {
+      0%, 52% { transform: translateX(0) translateY(0) rotate(0deg); opacity: 1; }
+      76% { transform: translateX(-30px) translateY(16px) rotate(-14deg); opacity: 1; }
+      100% { transform: translateX(-52px) translateY(24px) rotate(-20deg); opacity: 0; }
+    }
+    @keyframes unlock-chain-right {
+      0%, 52% { transform: translateX(0) translateY(0) rotate(0deg); opacity: 1; }
+      76% { transform: translateX(30px) translateY(16px) rotate(14deg); opacity: 1; }
+      100% { transform: translateX(52px) translateY(24px) rotate(20deg); opacity: 0; }
+    }
+    @keyframes unlock-spark {
+      0%, 44% { opacity: 0; transform: scale(0.45); }
+      55% { opacity: 1; transform: scale(1.08); }
+      82%, 100% { opacity: 0; transform: scale(1.55); }
+    }
     .rank-stamp {
       border: 4px solid currentColor;
       border-radius: 8px;
@@ -866,8 +918,13 @@
         if (res.variant === "normal" && res.score > oldBest) {
           localStorage.setItem(mode.bestKey, String(res.score));
           localStorage.setItem(mode.elapsedKey, String(res.elapsedSeconds));
-          const next = nextUnlockedMode(res.modeId, res.rank);
-          if (next) setUnlockFlash(next.label);
+          const previousRank = rankFor(res.modeId, oldBest);
+          if (!rankAtLeast(previousRank, "S") && rankAtLeast(res.rank, "S")) {
+            setUnlockFlash({ label: mode.label, variant: "ura" });
+          } else {
+            const next = nextUnlockedMode(res.modeId, res.rank);
+            if (next) setUnlockFlash({ label: next.label, variant: "normal" });
+          }
         }
         if (res.variant === "normal" && res.wrongQuestions.length) {
           const bucket = readJson(STORAGE.review, []);
@@ -1327,24 +1384,72 @@
     }
 
     function UnlockFlash({ label, onDone }) {
+      const payload = typeof label === "string" ? { label, variant: "normal" } : label;
+      const modeLabel = payload?.label || "裏モード";
+      const isUra = payload?.variant === "ura";
       useEffect(() => {
-        const id = setTimeout(onDone, 1800);
+        const id = setTimeout(onDone, 2650);
         return () => clearTimeout(id);
       }, []);
       return (
-        <div className="unlock-overlay fixed inset-0 z-50 grid place-items-center bg-black/65">
-          <div className="panel rounded-3xl p-8 text-center">
-            <div className="mx-auto mb-4 h-20 w-20">
-              <svg viewBox="0 0 100 100" className="h-full w-full">
-                <g className="shackle-pop" fill="none" stroke="#d8a83c" strokeWidth="8" strokeLinecap="round">
-                  <path d="M28 46V31a22 22 0 0 1 42 0" />
+        <div className="unlock-overlay fixed inset-0 z-50 grid place-items-center bg-black/75 px-4">
+          <div className="panel unlock-card w-full max-w-sm rounded-3xl p-6 text-center">
+            <div className="relative mx-auto mb-5 h-36 w-full max-w-xs">
+              <svg viewBox="0 0 268 150" className="unlock-stage h-full w-full" role="img" aria-label="裏モード解放">
+                <defs>
+                  <linearGradient id="unlockPlate" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#3a1f58" />
+                    <stop offset="48%" stopColor="#211134" />
+                    <stop offset="100%" stopColor="#0c0715" />
+                  </linearGradient>
+                  <linearGradient id="unlockGold" x1="0" x2="1" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#fff0ae" />
+                    <stop offset="52%" stopColor="#d8a83c" />
+                    <stop offset="100%" stopColor="#7c5218" />
+                  </linearGradient>
+                  <linearGradient id="unlockSteel" x1="0" x2="1" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#e7e1d4" />
+                    <stop offset="45%" stopColor="#878b92" />
+                    <stop offset="100%" stopColor="#282d35" />
+                  </linearGradient>
+                  <filter id="unlockInnerShadow">
+                    <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#000" floodOpacity="0.45" />
+                  </filter>
+                </defs>
+
+                <rect className="unlock-button-plate" x="18" y="34" width="232" height="84" rx="18" fill="url(#unlockPlate)" stroke="#8e6ade" strokeWidth="2" filter="url(#unlockInnerShadow)" />
+                <path d="M24 42h220" stroke="#ffffff" strokeOpacity="0.14" strokeWidth="2" />
+                <text x="134" y="86" textAnchor="middle" fill="#f6f2df" fontSize="24" fontWeight="900">裏モード</text>
+
+                <g className="unlock-chain-left" fill="none" stroke="url(#unlockSteel)" strokeWidth="9" strokeLinecap="round">
+                  <path d="M12 54 C54 42, 78 62, 114 76" />
+                  <path d="M18 101 C58 86, 80 92, 118 78" />
                 </g>
-                <rect x="22" y="42" width="56" height="38" rx="8" fill="#f6f2df" />
-                <path className="key-action" d="M67 56h25m-7 0v-8m0 8v8" stroke="#d8a83c" strokeWidth="7" strokeLinecap="round" />
+                <g className="unlock-chain-right" fill="none" stroke="url(#unlockSteel)" strokeWidth="9" strokeLinecap="round">
+                  <path d="M256 54 C214 42, 190 62, 154 76" />
+                  <path d="M250 101 C210 86, 188 92, 150 78" />
+                </g>
+
+                <g className="unlock-lock">
+                  <path d="M112 70V56c0-14 10-24 22-24s22 10 22 24v14" fill="none" stroke="#d9d5ca" strokeWidth="9" strokeLinecap="round" />
+                  <rect x="105" y="66" width="58" height="44" rx="9" fill="url(#unlockSteel)" stroke="#f7ecd0" strokeOpacity="0.5" />
+                  <path d="M118 74h34" stroke="#fff" strokeOpacity="0.42" strokeWidth="3" strokeLinecap="round" />
+                  <path d="M134 83c-4 0-7 3-7 7 0 3 2 5 4 6l-3 8h12l-3-8c3-1 4-3 4-6 0-4-3-7-7-7Z" fill="#130b1d" />
+                </g>
+
+                <g className="unlock-key">
+                  <circle cx="204" cy="78" r="11" fill="none" stroke="url(#unlockGold)" strokeWidth="7" />
+                  <path d="M192 78h-58" stroke="url(#unlockGold)" strokeWidth="7" strokeLinecap="round" />
+                  <path d="M150 78v12m13-12v9" stroke="url(#unlockGold)" strokeWidth="7" strokeLinecap="round" />
+                </g>
+
+                <g className="unlock-spark" fill="none" stroke="#f2d27b" strokeWidth="4" strokeLinecap="round">
+                  <path d="M134 22v14M134 118v14M91 78H77M191 78h-14M102 46l-10-10M166 46l10-10M102 110l-10 10M166 110l10 10" />
+                </g>
               </svg>
             </div>
-            <p className="text-sm font-bold text-[color:var(--muted)]">解放</p>
-            <p className="mt-1 text-2xl font-black">{label}</p>
+            <p className="text-sm font-bold text-[color:var(--gold-2)]">UNLOCKED</p>
+            <p className="mt-1 text-2xl font-black">{isUra ? `${modeLabel} 裏モード` : modeLabel}</p>
           </div>
         </div>
       );

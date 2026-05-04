@@ -431,7 +431,7 @@
 
     const MODES = [
       { id: "6", label: "六枚形", tileCount: 6, questionCount: 13, bestKey: STORAGE.best6, elapsedKey: STORAGE.elapsed6, unlock: null, rankKey: "6" },
-      { id: "7", label: "七枚形", tileCount: 7, questionCount: 19, bestKey: STORAGE.best7, elapsedKey: STORAGE.elapsed7, unlock: { modeId: "6", rank: "A" }, rankKey: "7" },
+      { id: "7", label: "七枚形", tileCount: 7, questionCount: 19, bestKey: STORAGE.best7, elapsedKey: STORAGE.elapsed7, unlock: null, rankKey: "7" },
       { id: "10_20", label: "十枚形 20問", tileCount: 10, questionCount: 20, bestKey: STORAGE.best1020, elapsedKey: STORAGE.elapsed1020, unlock: { modeId: "7", rank: "A" }, rankKey: "10_20" },
       { id: "10_all", label: "十枚形 80問", tileCount: 10, questionCount: 80, bestKey: STORAGE.best10all, elapsedKey: STORAGE.elapsed10all, unlock: { modeId: "10_20", rank: "A" }, rankKey: "10_all" }
     ];
@@ -963,7 +963,7 @@
 
           <div className="mb-4 grid grid-cols-3 gap-2 rounded-full bg-black/20 p-1">
             {[
-              ["modes", "卓"],
+              ["modes", "挑戦"],
               ["favorite", `お気に入り ${favorites.length}`],
               ["review", `復習 ${review.length}`]
             ].map(([id, label]) => (
@@ -1006,6 +1006,7 @@
     }
 
     function ModeCard({ mode, record, normalUnlocked, uraUnlocked, startMode, tap }) {
+      const unlockLabel = mode.unlock ? `${getMode(mode.unlock.modeId)?.label || ""} ${mode.unlock.rank}で解放` : "";
       return (
         <div className="panel rounded-3xl p-4">
           <div className="flex items-start justify-between gap-3">
@@ -1020,7 +1021,7 @@
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button className={`pressable rounded-2xl px-4 py-3 text-sm font-black ${normalUnlocked ? "btn-main" : "btn-quiet opacity-60"}`} disabled={!normalUnlocked} {...tap(() => normalUnlocked && startMode(mode.id, "normal"))}>
-              {normalUnlocked ? "プレイ" : `${mode.unlock?.rank}で解放`}
+              {normalUnlocked ? "プレイ" : unlockLabel}
             </button>
             <button className={`pressable rounded-2xl px-4 py-3 text-sm font-black ${uraUnlocked ? "btn-danger" : "btn-quiet opacity-60"}`} disabled={!uraUnlocked} {...tap(() => uraUnlocked && startMode(mode.id, "ura"))}>
               {uraUnlocked ? "裏モード" : "裏モード Sで解放"}

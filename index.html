@@ -529,7 +529,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 12;
+    const APP_VERSION = 13;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -827,6 +827,36 @@
           color: colors[rank]
         };
       });
+    }
+
+    function scoreGaugeProgress(modeId, score) {
+      const key = getMode(modeId)?.rankKey || modeId;
+      const thresholds = Object.fromEntries((RANKS[key] || RANKS["6"]).map(([rank, value]) => [rank, value]));
+      const bands = [
+        { startRank: null, endRank: "D", start: 0, end: 2 / 12 },
+        { startRank: "D", endRank: "C", start: 2 / 12, end: 3 / 12 },
+        { startRank: "C", endRank: "B-", start: 3 / 12, end: 4 / 12 },
+        { startRank: "B-", endRank: "B", start: 4 / 12, end: 5 / 12 },
+        { startRank: "B", endRank: "B+", start: 5 / 12, end: 6 / 12 },
+        { startRank: "B+", endRank: "A-", start: 6 / 12, end: 7 / 12 },
+        { startRank: "A-", endRank: "A", start: 7 / 12, end: 8 / 12 },
+        { startRank: "A", endRank: "A+", start: 8 / 12, end: 9 / 12 },
+        { startRank: "A+", endRank: "S", start: 9 / 12, end: 10 / 12 },
+        { startRank: "S", endRank: "SS", start: 10 / 12, end: 11 / 12 },
+        { startRank: "SS", endRank: "SSS", start: 11 / 12, end: 1 }
+      ];
+      const safeScore = Math.max(0, Number(score) || 0);
+      for (const band of bands) {
+        const low = band.startRank ? thresholds[band.startRank] : 0;
+        const high = thresholds[band.endRank];
+        if (!Number.isFinite(high)) continue;
+        if (safeScore < high) {
+          const span = Math.max(1, high - low);
+          const t = Math.min(Math.max((safeScore - low) / span, 0), 1);
+          return band.start + (band.end - band.start) * t;
+        }
+      }
+      return 1;
     }
 
     function rankAtLeast(actual, required) {
@@ -1480,8 +1510,7 @@
       const isPractice = result.variant === "favorite" || result.variant === "review";
       const gaugeRadius = 104;
       const gaugeCircumference = 2 * Math.PI * gaugeRadius;
-      const gaugeMax = Math.max(topRankScore(result.modeId), result.score, 1);
-      const gaugeProgress = isPractice ? 0 : Math.min(displayScore / gaugeMax, 1);
+      const gaugeProgress = isPractice ? 0 : scoreGaugeProgress(result.modeId, displayScore);
       const gaugeOffset = gaugeCircumference * (1 - gaugeProgress);
       const gaugeSegments = rankGaugeSegments(result.modeId);
       useEffect(() => {

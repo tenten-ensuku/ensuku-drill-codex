@@ -91,13 +91,13 @@
     }
     .answer-btn {
       min-height: 64px;
-      border-radius: 16px;
+      border-radius: 0;
       background: linear-gradient(180deg, #fffdf0, #e6dcc4);
       color: #16120a;
       font-weight: 900;
       font-size: 24px;
-      border: 1px solid rgba(255,255,255,0.45);
-      box-shadow: 0 10px 16px rgba(0,0,0,0.2);
+      border: 0;
+      box-shadow: inset 0 0 0 1px rgba(22,18,10,0.1);
     }
     .answer-btn.selected {
       background: linear-gradient(180deg, #f2d27b, #bd8b2f);
@@ -112,6 +112,12 @@
       background: #050807;
       color: #f6f2df;
       border-color: rgba(246,242,223,0.14);
+    }
+    .answer-pad {
+      overflow: hidden;
+      border-radius: 18px;
+      box-shadow: 0 12px 22px rgba(0,0,0,0.22);
+      background: rgba(246,242,223,0.22);
     }
     .feedback {
       height: 48px;
@@ -220,7 +226,7 @@
       letter-spacing: 0;
     }
     @media (max-width: 420px) {
-      .answer-btn { min-height: 58px; border-radius: 14px; }
+      .answer-btn { min-height: 58px; border-radius: 0; }
     }
     @media (max-width: 340px) {
       .app-pad { padding-left: 8px; padding-right: 8px; }
@@ -229,7 +235,7 @@
       .answer-btn { min-height: 52px; }
     }
     @media (max-height: 720px) {
-      .answer-btn { min-height: 50px; border-radius: 13px; font-size: 22px; }
+      .answer-btn { min-height: 50px; border-radius: 0; font-size: 22px; }
       .feedback { height: 38px; }
       .panel { box-shadow: 0 16px 36px rgba(0,0,0,0.28); }
     }
@@ -1012,7 +1018,7 @@
             {game.feedback === "ok" ? "正解" : game.feedback === "ng" ? `待ち ${q.answers.join(", ")}` : isUra ? "正解牌をすべて選ぶ / 外すと終了" : game.mode.tileCount === 6 ? "二面子完成の受け入れ" : "待ち牌を選択"}
           </div>
 
-          <section className="grid grid-cols-3 content-start gap-3">
+          <section className="answer-pad grid grid-cols-3 content-start gap-0">
             {[1,2,3,4,5,6,7,8,9].map(num => {
               const disabled = (counts[num] || 0) >= 4;
               const selected = game.selected.includes(num);

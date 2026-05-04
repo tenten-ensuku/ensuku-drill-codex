@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="620" viewBox="0 0 980 620" fill="none">
+  <defs>
+    <style>
+      .jp { font-family: "Inter", "Yu Gothic UI", "Meiryo", sans-serif; letter-spacing: 0; }
+      .label { font-size: 24px; font-weight: 800; fill: #f6f2df; }
+      .note { font-size: 16px; font-weight: 700; fill: #98aaa5; }
+      .btnText { font-size: 18px; font-weight: 900; }
+      .small { font-size: 14px; font-weight: 700; }
+    </style>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect width="980" height="620" rx="32" fill="#07120f"/>
+  <rect width="980" height="620" fill="url(#grid)" opacity=".25"/>
+  <text x="52" y="62" class="jp label">お気に入り追加ボタン案</text>
+  <text x="52" y="92" class="jp note">横長・小さめ・誤答問題カード内で使いやすい想定。左が未追加、右が追加済み。</text>
+
+  <g transform="translate(52 130)">
+    <rect width="876" height="78" rx="22" fill="#0c1715" stroke="#f6f2df" stroke-opacity=".08"/>
+    <text x="24" y="32" class="jp note">案1: 添付画像寄せの淡色ピル</text>
+    <g transform="translate(410 20)">
+      <rect width="108" height="38" rx="14" fill="#f2f5f7"/>
+      <text x="18" y="25" class="jp btnText" fill="#5f7380">★ 追加</text>
+      <text x="20" y="25" class="jp btnText" fill="#f5c542">★</text>
+    </g>
+    <g transform="translate(534 20)">
+      <rect width="92" height="38" rx="14" fill="#f7e8a6"/>
+      <text x="18" y="25" class="jp btnText" fill="#9a7b10">★ 済</text>
+    </g>
+    <g transform="translate(642 20)">
+      <rect width="94" height="38" rx="14" fill="#f2f5f7"/>
+      <text x="19" y="25" class="jp btnText" fill="#8a9aa3">× 削除</text>
+    </g>
+  </g>
+
+  <g transform="translate(52 230)">
+    <rect width="876" height="78" rx="22" fill="#0c1715" stroke="#f6f2df" stroke-opacity=".08"/>
+    <text x="24" y="32" class="jp note">案2: 白地に黄色スター、追加済みはグレーアウト</text>
+    <g transform="translate(410 20)">
+      <rect width="122" height="38" rx="19" fill="#fbfaf2" stroke="#e5dfc7"/>
+      <text x="19" y="25" class="jp btnText" fill="#26302d">★ 追加</text>
+      <text x="20" y="25" class="jp btnText" fill="#facc15">★</text>
+    </g>
+    <g transform="translate(550 20)" opacity=".72">
+      <rect width="122" height="38" rx="19" fill="#eef2f3" stroke="#d7e0df"/>
+      <text x="19" y="25" class="jp btnText" fill="#78868a">★ 追加済</text>
+    </g>
+  </g>
+
+  <g transform="translate(52 330)">
+    <rect width="876" height="78" rx="22" fill="#0c1715" stroke="#f6f2df" stroke-opacity=".08"/>
+    <text x="24" y="32" class="jp note">案3: 透明ボタン、星だけ黄色で控えめ</text>
+    <g transform="translate(410 20)">
+      <rect width="112" height="38" rx="14" fill="#ffffff" fill-opacity=".07" stroke="#ffffff" stroke-opacity=".11"/>
+      <text x="17" y="25" class="jp btnText" fill="#dce7e2">★ 追加</text>
+      <text x="18" y="25" class="jp btnText" fill="#facc15">★</text>
+    </g>
+    <g transform="translate(540 20)">
+      <rect width="112" height="38" rx="14" fill="#ffffff" fill-opacity=".04" stroke="#ffffff" stroke-opacity=".08"/>
+      <text x="17" y="25" class="jp btnText" fill="#7f8c88">★ 済み</text>
+    </g>
+  </g>
+
+  <g transform="translate(52 430)">
+    <rect width="876" height="78" rx="22" fill="#0c1715" stroke="#f6f2df" stroke-opacity=".08"/>
+    <text x="24" y="32" class="jp note">案4: ゴールド枠の競技感、追加済みは反転グレー</text>
+    <g transform="translate(410 20)">
+      <rect width="124" height="38" rx="10" fill="#101a18" stroke="#d8a83c" stroke-width="2"/>
+      <text x="17" y="25" class="jp btnText" fill="#f7e4a4">★ 追加</text>
+      <text x="18" y="25" class="jp btnText" fill="#facc15">★</text>
+    </g>
+    <g transform="translate(552 20)">
+      <rect width="124" height="38" rx="10" fill="#2c3431" stroke="#7d8784"/>
+      <text x="17" y="25" class="jp btnText" fill="#b8c2bf">★ 追加済</text>
+    </g>
+  </g>
+
+  <g transform="translate(52 530)">
+    <rect width="876" height="58" rx="22" fill="#0c1715" stroke="#f6f2df" stroke-opacity=".08"/>
+    <text x="24" y="36" class="jp note">案5: アイコンを左に分離したカード内ツール風</text>
+    <g transform="translate(410 10)">
+      <rect width="132" height="38" rx="14" fill="#f3f6f4"/>
+      <circle cx="24" cy="19" r="13" fill="#fff3bf"/>
+      <text x="17" y="25" class="jp btnText" fill="#eab308">★</text>
+      <text x="44" y="25" class="jp btnText" fill="#52635f">追加</text>
+    </g>
+    <g transform="translate(560 10)">
+      <rect width="132" height="38" rx="14" fill="#e8eef0"/>
+      <circle cx="24" cy="19" r="13" fill="#d5dde0"/>
+      <text x="17" y="25" class="jp btnText" fill="#849096">★</text>
+      <text x="44" y="25" class="jp btnText" fill="#849096">追加済</text>
+    </g>
+  </g>
+</svg>

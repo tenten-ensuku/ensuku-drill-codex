@@ -77,26 +77,40 @@
     }
     .btn-quiet { background: rgba(246,242,223,0.06); color: var(--cream); border: 1px solid rgba(246,242,223,0.12); }
     .star-btn {
-      display: inline-grid;
-      place-items: center;
-      min-width: 38px;
-      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-width: 100px;
+      min-height: 38px;
+      padding: 0 14px;
       border-radius: 999px;
-      border: 1px solid rgba(246,242,223,0.10);
-      background: rgba(0,0,0,0.12);
-      color: #facc15;
+      border: 1px solid #e5dfc7;
+      background: #fbfaf2;
+      color: #26302d;
       font-weight: 900;
-      text-shadow: 0 1px 0 rgba(0,0,0,0.28);
+      font-size: 14px;
+      line-height: 1;
+      text-shadow: none;
       box-shadow: none;
     }
+    .star-btn .star-mark { color: #facc15; font-size: 15px; transform: translateY(-0.5px); }
     .star-btn.active {
-      color: #d1d5db;
-      background: rgba(148,163,184,0.14);
-      border-color: rgba(148,163,184,0.18);
+      color: #78868a;
+      background: #eef2f3;
+      border-color: #d7e0df;
       opacity: 0.72;
       filter: grayscale(0.35);
       text-shadow: none;
     }
+    .star-btn.active .star-mark { color: #94a3b8; }
+    .star-btn-small {
+      min-width: 86px;
+      min-height: 32px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+    .star-btn-small .star-mark { font-size: 13px; }
     .star-btn.just-added { animation: star-pop 420ms cubic-bezier(.2,.9,.18,1.18) both; }
     @keyframes star-pop {
       0% { transform: scale(0.76); }
@@ -1236,12 +1250,13 @@
     function StarFavoriteButton({ active, justAdded, onPress, tap, label, small = false }) {
       return (
         <button
-          className={`star-btn pressable ${active ? "active" : ""} ${justAdded ? "just-added" : ""} ${small ? "text-base" : "text-lg"}`}
+          className={`star-btn pressable ${active ? "active" : ""} ${justAdded ? "just-added" : ""} ${small ? "star-btn-small" : ""}`}
           aria-label={label}
           title={label}
           {...tap(onPress)}
         >
-          {active ? "★" : "☆"}
+          <span className="star-mark">★</span>
+          <span>{active ? "追加済" : "追加"}</span>
         </button>
       );
     }

@@ -363,7 +363,6 @@
     .score-gauge-fill {
       stroke: url(#scoreGaugeFill);
       stroke-linecap: round;
-      transition: stroke-dashoffset 80ms linear;
     }
     .score-gauge-center {
       position: absolute;
@@ -530,7 +529,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 7;
+    const APP_VERSION = 8;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -804,7 +803,7 @@
     }
 
     function rankGaugeSegments(modeId) {
-      const order = ["E", "D", "C", "B-", "B", "B+", "A-", "A", "A+", "S", "SS"];
+      const order = ["E", "D", "C", "B-", "B", "B+", "A-", "A", "A+", "S", "SS", "SSS"];
       const colors = {
         E: "#64748b",
         D: "#6b7280",
@@ -816,11 +815,12 @@
         A: "#f87171",
         "A+": "#ef4444",
         S: "#d8a83c",
-        SS: "url(#scoreGaugeRainbow)"
+        SS: "url(#scoreGaugeRainbow)",
+        SSS: "url(#scoreGaugeRainbow)"
       };
       return order.map((rank, index) => {
-        const start = index / order.length;
-        const end = (index + 1) / order.length;
+        const start = index === 0 ? 0 : (1 / 12) + ((index - 1) * (11 / 12)) / 11;
+        const end = index === 0 ? 1 / 12 : (1 / 12) + (index * (11 / 12)) / 11;
         return {
           rank,
           start,
@@ -1594,17 +1594,6 @@
                           />
                         );
                       })}
-                      <circle
-                        className="score-gauge-segment cap"
-                        cx="120"
-                        cy="120"
-                        r={gaugeRadius}
-                        fill="none"
-                        stroke="url(#scoreGaugeRainbow)"
-                        strokeWidth="13"
-                        strokeDasharray={`10 ${gaugeCircumference - 10}`}
-                        strokeDashoffset={-gaugeCircumference + 5}
-                      />
                       <circle
                         className="score-gauge-fill"
                         cx="120"

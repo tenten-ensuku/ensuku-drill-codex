@@ -711,6 +711,14 @@
       return `${(elapsedSeconds / questionCount).toFixed(2)}秒`;
     }
 
+    function formatBestLine(record, questionCount) {
+      if (!record?.best) return "Best -";
+      const average = record.elapsed > 0 && questionCount
+        ? `　${(record.elapsed / questionCount).toFixed(1)}秒／問`
+        : "";
+      return `Best ${record.best}pt${average}`;
+    }
+
     function rankComment(rank) {
       const comments = {
         SSS: "卓上の情報が止まって見えています。文句なしの最高到達点。",
@@ -1174,7 +1182,7 @@
                 <h2 className="text-xl font-black">{mode.label}</h2>
                 <span className="rounded-full border border-white/10 px-2 py-0.5 text-xs font-bold text-[color:var(--muted)]">{mode.questionCount}問</span>
               </div>
-              <p className="mt-1 text-sm text-[color:var(--muted)]">Best {record.best || "-"} pt / Rank {record.best ? record.rank : "-"}</p>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">{formatBestLine(record, mode.questionCount)}</p>
             </div>
             <div className={`text-3xl font-black ${rankClass(record.rank)}`}>{record.best ? record.rank : "未"}</div>
           </div>

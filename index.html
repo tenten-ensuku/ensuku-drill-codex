@@ -541,7 +541,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 14;
+    const APP_VERSION = 15;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1535,11 +1535,24 @@
         setDisplayScore(0);
         let frame = 0;
         const started = performance.now();
-        const duration = 3000;
-        const easeOut = t => t;
+        const eClearScore = Math.min(result.score, Math.max(0, rankThreshold(result.modeId, "D")));
+        const eClearDuration = 500;
+        const rankClimbDuration = 2500;
+        const totalDuration = result.score <= eClearScore ? eClearDuration : eClearDuration + rankClimbDuration;
+        function animatedScore(elapsed) {
+          if (result.score <= eClearScore) {
+            return result.score * Math.min(elapsed / eClearDuration, 1);
+          }
+          if (elapsed <= eClearDuration) {
+            return eClearScore * Math.min(elapsed / eClearDuration, 1);
+          }
+          const rankT = Math.min((elapsed - eClearDuration) / rankClimbDuration, 1);
+          return eClearScore + (result.score - eClearScore) * rankT;
+        }
         function step(now) {
-          const t = Math.min((now - started) / duration, 1);
-          setDisplayScore(Math.round(result.score * easeOut(t)));
+          const elapsed = Math.min(now - started, totalDuration);
+          setDisplayScore(Math.round(animatedScore(elapsed)));
+          const t = elapsed / totalDuration;
           if (t < 1) {
             frame = requestAnimationFrame(step);
           } else {

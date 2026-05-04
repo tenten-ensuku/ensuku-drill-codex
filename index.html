@@ -362,6 +362,18 @@
       font-variant-numeric: tabular-nums;
       text-shadow: 0 0 16px rgba(242,210,123,0.24);
     }
+    .score-rank {
+      opacity: 0;
+      transform: scale(0.72);
+    }
+    .score-rank.show {
+      animation: rank-reveal 360ms cubic-bezier(.2,.9,.18,1.18) both;
+    }
+    @keyframes rank-reveal {
+      0% { opacity: 0; transform: scale(0.72) translateY(6px); }
+      64% { opacity: 1; transform: scale(1.08) translateY(0); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
     .record-stamp {
       position: absolute;
       right: -10px;
@@ -483,7 +495,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 1;
+    const APP_VERSION = 2;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1384,6 +1396,7 @@
       const [name, setName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
       const [copied, setCopied] = useState(false);
       const [displayScore, setDisplayScore] = useState(result.variant === "favorite" || result.variant === "review" ? result.score : 0);
+      const [showRank, setShowRank] = useState(result.variant === "favorite" || result.variant === "review");
       const [showRecordStamp, setShowRecordStamp] = useState(false);
       const rankColor = rankClass(result.rank);
       const averageTime = formatAverageTime(result.elapsedSeconds, result.questionCount);
@@ -1399,6 +1412,7 @@
           return;
         }
         setShowRecordStamp(false);
+        setShowRank(false);
         setDisplayScore(0);
         let frame = 0;
         const started = performance.now();
@@ -1409,11 +1423,14 @@
           setDisplayScore(Math.round(result.score * easeOut(t)));
           if (t < 1) {
             frame = requestAnimationFrame(step);
-          } else if (result.isNewRecord) {
-            setTimeout(() => {
-              tone?.("stamp");
-              setShowRecordStamp(true);
-            }, 120);
+          } else {
+            setTimeout(() => setShowRank(true), 120);
+            if (result.isNewRecord) {
+              setTimeout(() => {
+                tone?.("stamp");
+                setShowRecordStamp(true);
+              }, 540);
+            }
           }
         }
         frame = requestAnimationFrame(step);
@@ -1485,13 +1502,12 @@
                     </svg>
                     <div className="score-gauge-center">
                       <div>
-                        <p className="text-xs font-black text-[color:var(--muted)]">SCORE</p>
-                        <div className="score-number mt-1 text-6xl font-black">{displayScore}<span className="text-xl text-[color:var(--gold)]">pt</span></div>
+                        <div className={`score-rank text-6xl font-black ${rankColor} ${showRank ? "show" : ""}`}>{result.rank}</div>
+                        <div className="score-number mt-2 text-4xl font-black">{displayScore}<span className="text-base text-[color:var(--gold)]">pt</span></div>
                       </div>
                     </div>
                     {showRecordStamp && <div className="record-stamp" aria-label="記録更新" />}
                   </div>
-                  <div className={`mx-auto mt-5 inline-block text-5xl font-black ${rankColor}`}>{result.rank}</div>
                   <p className="mx-auto mt-4 max-w-xs text-sm font-bold leading-6 text-[color:var(--muted)]">{rankComment(result.rank)}</p>
                 </div>
               ) : (

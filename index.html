@@ -66,9 +66,13 @@
     .pressable { transform: translateY(0); transition: transform 120ms ease, filter 120ms ease, background 120ms ease; }
     .pressable:active { transform: translateY(2px) scale(0.99); }
     .btn-main {
-      background: linear-gradient(180deg, #f0d37a, #b6842d);
-      color: #1e1607;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 12px 22px rgba(0,0,0,0.24);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,241,198,0.42), transparent 72%),
+        linear-gradient(180deg, #a06f46, #4b3021 48%, #15100d);
+      color: #f7e0a7;
+      border: 1px solid rgba(185,139,85,0.68);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 24px rgba(0,0,0,0.30);
+      text-shadow: 0 2px 4px rgba(0,0,0,0.72);
     }
     .btn-danger {
       background: linear-gradient(180deg, #e05248, #9f211d);

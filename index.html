@@ -360,6 +360,18 @@
       stroke-linecap: round;
       filter: drop-shadow(0 0 7px rgba(255,255,255,0.28));
     }
+    .score-gauge-segment.rainbow {
+      opacity: 1;
+      stroke-width: 12;
+      filter:
+        drop-shadow(0 0 6px rgba(255,45,130,0.48))
+        drop-shadow(0 0 10px rgba(0,200,255,0.34));
+      animation: rainbow-band-pulse 1.6s ease-in-out infinite alternate;
+    }
+    @keyframes rainbow-band-pulse {
+      0% { opacity: 0.78; filter: drop-shadow(0 0 4px rgba(255,45,130,0.35)) drop-shadow(0 0 8px rgba(0,200,255,0.22)); }
+      100% { opacity: 1; filter: drop-shadow(0 0 9px rgba(255,45,130,0.72)) drop-shadow(0 0 14px rgba(0,200,255,0.48)); }
+    }
     .score-gauge-fill {
       stroke: url(#scoreGaugeFill);
       stroke-linecap: round;
@@ -529,7 +541,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 13;
+    const APP_VERSION = 14;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1602,6 +1614,7 @@
                           <stop offset="64%" stopColor="#00c8ff" />
                           <stop offset="82%" stopColor="#8b5cf6" />
                           <stop offset="100%" stopColor="#ff4fd8" />
+                          <animateTransform attributeName="gradientTransform" type="rotate" from="0 .5 .5" to="360 .5 .5" dur="2.4s" repeatCount="indefinite" />
                         </linearGradient>
                       </defs>
                       <circle className="score-gauge-track" cx="120" cy="120" r={gaugeRadius} fill="none" strokeWidth="14" />
@@ -1611,13 +1624,13 @@
                         return (
                           <circle
                             key={seg.rank}
-                            className="score-gauge-segment"
+                            className={`score-gauge-segment ${seg.rank === "SS" ? "rainbow" : ""}`}
                             cx="120"
                             cy="120"
                             r={gaugeRadius}
                             fill="none"
                             stroke={seg.color}
-                            strokeWidth="10"
+                            strokeWidth={seg.rank === "SS" ? "12" : "10"}
                             strokeDasharray={`${length} ${gaugeCircumference - length}`}
                             strokeDashoffset={offset}
                           />

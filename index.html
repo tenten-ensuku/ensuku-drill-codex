@@ -1043,7 +1043,7 @@
       );
     }
 
-    function Result({ result, startMode, goHome, tap }) {
+    function Result({ result, addFavorite, startMode, goHome, tap }) {
       const [showPost, setShowPost] = useState(false);
       const [name, setName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
       const [copied, setCopied] = useState(false);
@@ -1129,7 +1129,10 @@
                 {result.wrongQuestions.map(item => (
                   <div key={item.instanceId} className="rounded-2xl bg-black/20 p-3">
                     <MiniHand q={item} compact />
-                    <p className="mt-2 text-xs text-[color:var(--muted)]">正解 {item.answers.join(", ")} / 選択 {(item.selected || []).join(", ") || "-"}</p>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <p className="min-w-0 text-xs text-[color:var(--muted)]">正解 {item.answers.join(", ")} / 選択 {(item.selected || []).join(", ") || "-"}</p>
+                      <button className="btn-quiet shrink-0 rounded-full px-3 py-1.5 text-xs font-bold" {...tap(() => addFavorite(item))}>お気に入り</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1167,7 +1170,11 @@
 
     function Hand({ q }) {
       const count = q.tiles.length;
-      const width = count >= 10 ? "clamp(25px, 8.2vw, 40px)" : count === 7 ? "clamp(32px, 10vw, 46px)" : "clamp(38px, 12vw, 52px)";
+      const width = count >= 10
+        ? "min(40px, calc((100% - 9px) / 10))"
+        : count === 7
+          ? "min(48px, calc((100% - 6px) / 7))"
+          : "min(54px, calc((100% - 5px) / 6))";
       return (
         <div className="flex w-full items-center justify-center gap-px overflow-hidden">
           {q.tiles.map((num, idx) => (

@@ -1009,7 +1009,7 @@
           </section>
 
           <div className={`feedback mb-4 ${game.feedback === "ok" ? "ok" : game.feedback === "ng" ? "ng" : "bg-black/20 text-[color:var(--muted)]"}`}>
-            {game.feedback === "ok" ? "正解" : game.feedback === "ng" ? `待ち ${q.answers.join(", ")}` : isUra ? "正解牌をすべて選ぶ / 外すと終了" : "待ち牌を選択"}
+            {game.feedback === "ok" ? "正解" : game.feedback === "ng" ? `待ち ${q.answers.join(", ")}` : isUra ? "正解牌をすべて選ぶ / 外すと終了" : game.mode.tileCount === 6 ? "二面子完成の受け入れ" : "待ち牌を選択"}
           </div>
 
           <section className="grid grid-cols-3 content-start gap-3">

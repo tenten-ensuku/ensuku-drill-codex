@@ -222,6 +222,12 @@
     @media (max-width: 420px) {
       .answer-btn { min-height: 58px; border-radius: 14px; }
     }
+    @media (max-width: 340px) {
+      .app-pad { padding-left: 8px; padding-right: 8px; }
+      .play-pad { padding-left: 10px; padding-right: 10px; }
+      .panel-tight { padding-left: 12px; padding-right: 12px; }
+      .answer-btn { min-height: 52px; }
+    }
     @media (max-height: 720px) {
       .answer-btn { min-height: 50px; border-radius: 13px; font-size: 22px; }
       .feedback { height: 38px; }
@@ -871,7 +877,7 @@
     function Home({ records, favorites, review, isUnlocked, startMode, removeFavorite, clearReview, tap, unlockFlash, setUnlockFlash }) {
       const [tab, setTab] = useState("modes");
       return (
-        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
+        <div className="app-pad mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={() => setUnlockFlash(null)} />}
           <header className="mb-5 pt-2">
             <p className="text-sm font-bold text-[color:var(--gold-2)]">ENSUKU DRILL CODEX</p>
@@ -980,7 +986,7 @@
       const counts = q.tiles.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {});
       const isUra = game.variant === "ura";
       return (
-        <div className="mx-auto flex h-screen max-h-screen w-full max-w-md flex-col overflow-hidden px-4 py-3">
+        <div className="play-pad mx-auto flex h-screen max-h-screen w-full max-w-md flex-col overflow-hidden px-4 py-3">
           <header className="mb-4 flex items-center justify-between gap-2">
             <div>
               <div className="text-sm font-black text-[color:var(--gold-2)]">{game.index + 1} / {game.questions.length}</div>
@@ -994,7 +1000,7 @@
             </div>
           </header>
 
-          <section className="panel mb-4 rounded-3xl p-4">
+          <section className="panel panel-tight mb-4 rounded-3xl p-4">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm font-bold text-[color:var(--muted)]">牌姿</span>
               <button className="btn-quiet rounded-full px-3 py-2 text-xs font-bold" {...tap(() => addFavorite(q))}>お気に入り</button>
@@ -1067,7 +1073,7 @@
         }
       }
       return (
-        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
+        <div className="app-pad mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
           <section className="panel record-card result-pop rounded-3xl p-5">
             {result.isNewRecord && <div className="record-rays" />}
             <div className="relative">
@@ -1114,9 +1120,9 @@
             <section className="panel mt-4 rounded-3xl p-4">
               <h2 className="text-lg font-black">残念牌姿</h2>
               <div className="mt-3 space-y-3">
-                {result.wrongQuestions.slice(0, 5).map(item => (
+                {result.wrongQuestions.map(item => (
                   <div key={item.instanceId} className="rounded-2xl bg-black/20 p-3">
-                    <MiniHand q={item} />
+                    <MiniHand q={item} compact />
                     <p className="mt-2 text-xs text-[color:var(--muted)]">正解 {item.answers.join(", ")} / 選択 {(item.selected || []).join(", ") || "-"}</p>
                   </div>
                 ))}
@@ -1165,10 +1171,13 @@
       );
     }
 
-    function MiniHand({ q }) {
+    function MiniHand({ q, compact = false }) {
+      const width = compact
+        ? q.tiles.length >= 10 ? "clamp(18px, 6.4vw, 23px)" : q.tiles.length >= 7 ? "clamp(20px, 7vw, 25px)" : 24
+        : 24;
       return (
-        <div className="flex items-center gap-1 overflow-hidden">
-          {q.tiles.map((num, idx) => <Tile key={`${idx}-${num}`} suit={q.suit} num={num} width={24} />)}
+        <div className="flex w-full items-center gap-px overflow-hidden">
+          {q.tiles.map((num, idx) => <Tile key={`${idx}-${num}`} suit={q.suit} num={num} width={width} />)}
         </div>
       );
     }

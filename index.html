@@ -576,6 +576,174 @@
       0%, 52% { opacity: 0; transform: translateY(18px); }
       100% { opacity: 1; transform: translateY(0); }
     }
+    .ura-gameover-screen {
+      position: relative;
+      width: 100%;
+      max-width: 448px;
+      min-height: 100vh;
+      max-height: 100vh;
+      margin: 0 auto;
+      overflow: hidden;
+      padding: 8px;
+      background:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+        radial-gradient(circle at 50% 18%, rgba(242,210,123,0.1), transparent 34%),
+        linear-gradient(180deg, rgba(4,24,19,0.98), rgba(0,0,0,0.96));
+      background-size: 18px 18px, 18px 18px, auto, auto;
+    }
+    .ura-fail-play {
+      position: absolute;
+      inset: 0;
+      padding: 26px 18px;
+      animation: ura-play-dim 3.2s ease both;
+    }
+    .ura-fail-hand {
+      margin-top: 42px;
+      border-radius: 24px;
+      background: rgba(0,0,0,0.32);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 18px 14px;
+    }
+    .ura-fail-pad {
+      width: min(74vw, 264px);
+      margin-left: auto;
+      overflow: hidden;
+      border-radius: 18px;
+      box-shadow: 0 14px 28px rgba(0,0,0,0.32), 0 0 0 1px rgba(246,242,223,0.16);
+      background: rgba(246,242,223,0.22);
+    }
+    .ura-fail-pad.size-large {
+      width: 100%;
+      margin-left: 0;
+    }
+    .ura-fail-pad.size-small {
+      width: min(50vw, 186px);
+    }
+    .ura-blackout,
+    .ura-slash,
+    .ura-crack {
+      position: absolute;
+      pointer-events: none;
+    }
+    .ura-blackout {
+      z-index: 5;
+      inset: 0;
+      opacity: 0;
+      background:
+        radial-gradient(circle at 78% 62%, rgba(255,49,90,0.2), transparent 22%),
+        linear-gradient(180deg, rgba(4,0,0,0.1), rgba(0,0,0,0.9));
+      animation: ura-blackout 3.2s ease both;
+    }
+    .ura-slash {
+      z-index: 7;
+      inset: -20%;
+      opacity: 0;
+      background:
+        linear-gradient(118deg, transparent 43%, rgba(255,49,90,0.96) 48%, rgba(255,255,255,0.58) 50%, transparent 55%),
+        linear-gradient(118deg, transparent 50%, rgba(140,0,24,0.7) 51%, transparent 53%);
+      filter: drop-shadow(0 0 18px rgba(255,49,90,0.72));
+      animation: ura-red-scan 3.2s cubic-bezier(.18,.9,.2,1) both;
+    }
+    .ura-crack {
+      z-index: 8;
+      inset: 10% 6%;
+      opacity: 0;
+      background:
+        linear-gradient(135deg, transparent 48%, rgba(255,255,255,0.7) 49%, transparent 50%),
+        linear-gradient(71deg, transparent 54%, rgba(255,49,90,0.92) 55%, transparent 56%),
+        linear-gradient(25deg, transparent 58%, rgba(255,255,255,0.45) 59%, transparent 60%);
+      filter: drop-shadow(0 0 14px rgba(255,49,90,0.65));
+      animation: ura-crack 3.2s ease both;
+    }
+    .ura-gameover-layer {
+      position: absolute;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      align-content: start;
+      justify-items: center;
+      padding: 22px 18px 18px;
+      opacity: 0;
+      animation: ura-gameover-in 3.2s ease both;
+    }
+    .ura-gameover-stats,
+    .ura-gameover-review,
+    .ura-gameover-actions {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      animation: ura-stats-in 3.2s ease both;
+    }
+    .ura-gameover-stats {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .ura-gameover-review {
+      margin-top: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      background: rgba(0,0,0,0.34);
+      padding: 10px;
+    }
+    .ura-gameover-actions {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .play-pad.game-over-active {
+      position: relative;
+    }
+    .play-content {
+      position: relative;
+      z-index: 1;
+    }
+    .play-pad.game-over-active .play-content {
+      animation: ura-play-dim 3.2s ease both;
+    }
+    .play-gameover-overlay {
+      position: absolute;
+      z-index: 40;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .play-gameover-overlay .ura-gameover-layer,
+    .play-gameover-overlay .ura-gameover-actions,
+    .play-gameover-overlay .ura-gameover-review,
+    .play-gameover-overlay .favorite-pill,
+    .play-gameover-overlay button {
+      pointer-events: auto;
+    }
+    @keyframes ura-play-dim {
+      0%, 28% { opacity: 1; transform: scale(1); filter: blur(0); }
+      48%, 100% { opacity: 0.2; transform: scale(0.98); filter: blur(3px); }
+    }
+    @keyframes ura-blackout {
+      0%, 32% { opacity: 0; }
+      45%, 100% { opacity: 1; }
+    }
+    @keyframes ura-red-scan {
+      0%, 30% { opacity: 0; transform: translateX(-42%) translateY(-18%); }
+      38%, 58% { opacity: 1; }
+      76%, 100% { opacity: 0; transform: translateX(44%) translateY(20%); }
+    }
+    @keyframes ura-crack {
+      0%, 46% { opacity: 0; transform: scale(0.9); }
+      56%, 78% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0.34; transform: scale(1.02); }
+    }
+    @keyframes ura-gameover-in {
+      0%, 44% { opacity: 0; }
+      52%, 100% { opacity: 1; }
+    }
+    @keyframes ura-stats-in {
+      0%, 72% { opacity: 0; transform: translateY(18px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
     .rainbow-text {
       background: linear-gradient(to right, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6, #ef4444);
       background-size: 200% auto;
@@ -662,6 +830,9 @@
       .answer-action { width: min(76vw, 252px); }
       .answer-action.size-large { width: 100%; }
       .answer-action.size-small { width: min(50vw, 178px); }
+      .ura-fail-pad { width: min(76vw, 252px); }
+      .ura-fail-pad.size-large { width: 100%; }
+      .ura-fail-pad.size-small { width: min(50vw, 178px); }
       .answer-btn { border-radius: 0; }
     }
     @media (max-width: 340px) {
@@ -674,6 +845,9 @@
       .answer-action { width: min(76vw, 232px); }
       .answer-action.size-large { width: 100%; }
       .answer-action.size-small { width: min(50vw, 164px); }
+      .ura-fail-pad { width: min(76vw, 232px); }
+      .ura-fail-pad.size-large { width: 100%; }
+      .ura-fail-pad.size-small { width: min(50vw, 164px); }
     }
     @media (max-height: 720px) {
       .answer-pad { width: min(68vw, 232px); }
@@ -682,6 +856,9 @@
       .answer-action { width: min(68vw, 232px); }
       .answer-action.size-large { width: 100%; }
       .answer-action.size-small { width: min(48vw, 168px); }
+      .ura-fail-pad { width: min(68vw, 232px); }
+      .ura-fail-pad.size-large { width: 100%; }
+      .ura-fail-pad.size-small { width: min(48vw, 168px); }
       .answer-confirm { min-height: 58px; }
       .answer-btn { border-radius: 0; font-size: 22px; }
       .feedback { height: 38px; }
@@ -694,7 +871,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 20;
+    const APP_VERSION = 21;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1276,8 +1453,14 @@
             setGame(g => ({ ...g, selected }));
           } else {
             tone("ng");
-            setGame(g => ({ ...g, selected, feedback: "ng", gameOverWrong: num }));
-            setTimeout(() => finishGame({ forcedWrong: q, selected, uraFailed: true, gameOver: true }), 1000);
+            setGame(g => ({
+              ...g,
+              selected,
+              feedback: "ng",
+              gameOverWrong: num,
+              gameOverQuestion: { ...q, selected },
+              ended: true
+            }));
           }
           return;
         }
@@ -1472,6 +1655,7 @@
               favoriteFlash={favoriteFlash}
               startMode={startMode}
               goHome={() => setScreen("home")}
+              answerPadSize={answerPadSize}
               tap={tap}
             />
           )}
@@ -1670,103 +1854,192 @@
     function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, isFavorite, favoriteFlash, quit, retry, answerPadSize, tap }) {
       const counts = q.tiles.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {});
       const isUra = game.variant === "ura";
+      const showGameOver = isUra && game.gameOverWrong;
       return (
-        <div className="play-pad mx-auto flex h-screen max-h-screen w-full max-w-md flex-col overflow-hidden px-4 py-3">
-          <header className="mb-4 flex items-center justify-between gap-2">
-            <div>
-              <div className="text-sm font-black text-[color:var(--gold-2)]">{game.index + 1} / {game.questions.length}</div>
-              <div className="mt-2 h-1.5 w-36 rounded-full bg-black/35">
-                <div className="h-1.5 rounded-full bg-[color:var(--gold)]" style={{ width: `${((game.index + 1) / game.questions.length) * 100}%` }} />
+        <div className={`play-pad mx-auto flex h-screen max-h-screen w-full max-w-md flex-col overflow-hidden px-4 py-3 ${showGameOver ? "game-over-active" : ""}`}>
+          <div className="play-content flex min-h-0 flex-1 flex-col">
+            <header className="mb-4 flex items-center justify-between gap-2">
+              <div>
+                <div className="text-sm font-black text-[color:var(--gold-2)]">{game.index + 1} / {game.questions.length}</div>
+                <div className="mt-2 h-1.5 w-36 rounded-full bg-black/35">
+                  <div className="h-1.5 rounded-full bg-[color:var(--gold)]" style={{ width: `${((game.index + 1) / game.questions.length) * 100}%` }} />
+                </div>
               </div>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-black">{formatTime(elapsed)}</div>
-              <div className="text-xs font-bold text-[color:var(--muted)]">{isUra ? "裏モード" : game.mode.label}</div>
-            </div>
-          </header>
+              <div className="text-right">
+                <div className="text-2xl font-black">{formatTime(elapsed)}</div>
+                <div className="text-xs font-bold text-[color:var(--muted)]">{isUra ? "裏モード" : game.mode.label}</div>
+              </div>
+            </header>
 
-          <section className="panel panel-tight mb-4 rounded-3xl p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-bold text-[color:var(--muted)]">牌姿</span>
-              <StarFavoriteButton active={isFavorite(q)} justAdded={favoriteFlash === normalizeSavedQuestion(q).favoriteId} onPress={() => addFavorite(q)} tap={tap} label="お気に入りに追加" />
-            </div>
-            <Hand q={q} />
-          </section>
+            <section className={`panel panel-tight ${isUra ? "mb-2" : "mb-4"} rounded-3xl p-4`}>
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-sm font-bold text-[color:var(--muted)]">牌姿</span>
+                <StarFavoriteButton active={isFavorite(q)} justAdded={favoriteFlash === normalizeSavedQuestion(q).favoriteId} onPress={() => addFavorite(q)} tap={tap} label="お気に入りに追加" />
+              </div>
+              <Hand q={q} />
+            </section>
 
-          <div className={`feedback mb-4 ${game.feedback === "ok" ? "ok" : game.feedback === "ng" ? "ng" : "bg-black/20 text-[color:var(--muted)]"}`}>
-            {game.feedback === "ok" ? "正解" : game.feedback === "ng" ? `待ち ${q.answers.join(", ")}` : isUra ? "正解牌をすべて選ぶ / 外すと終了" : game.mode.tileCount === 6 ? "二面子完成の受け入れ" : "待ち牌を選択"}
+            {!isUra && (
+              <div className={`feedback mb-4 ${game.feedback === "ok" ? "ok" : game.feedback === "ng" ? "ng" : "bg-black/20 text-[color:var(--muted)]"}`}>
+                {game.feedback === "ok" ? "正解" : game.feedback === "ng" ? `待ち ${q.answers.join(", ")}` : game.mode.tileCount === 6 ? "二面子完成の受け入れ" : "待ち牌を選択"}
+              </div>
+            )}
+
+            <section className={`answer-pad size-${answerPadSize} grid grid-cols-3 content-start gap-0`}>
+              {[1,2,3,4,5,6,7,8,9].map(num => {
+                const disabled = (counts[num] || 0) >= 4;
+                const selected = game.selected.includes(num);
+                return (
+                  <button key={num} disabled={disabled || !!game.feedback} className={`answer-btn pressable ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${isUra && !selected ? "ura" : ""} ${game.gameOverWrong === num ? "wrong" : ""}`} {...tap(() => selectAnswer(num))}>
+                    {num}
+                  </button>
+                );
+              })}
+            </section>
+
+            {!isUra && (
+              <div className={`answer-action size-${answerPadSize} mt-1.5`}>
+                <button className="answer-confirm btn-main pressable w-full px-4 py-4 text-lg font-black disabled:opacity-40" disabled={game.selected.length === 0 || !!game.feedback} {...tap(confirmAnswer)}>確定</button>
+              </div>
+            )}
+
+            <footer className="mt-3 grid grid-cols-2 gap-2">
+              <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(quit)}>メニュー</button>
+              <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(retry)}>再挑戦</button>
+            </footer>
           </div>
-
-          <section className={`answer-pad size-${answerPadSize} grid grid-cols-3 content-start gap-0`}>
-            {[1,2,3,4,5,6,7,8,9].map(num => {
-              const disabled = (counts[num] || 0) >= 4;
-              const selected = game.selected.includes(num);
-              return (
-                <button key={num} disabled={disabled || !!game.feedback} className={`answer-btn pressable ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${isUra && !selected ? "ura" : ""} ${game.gameOverWrong === num ? "wrong" : ""}`} {...tap(() => selectAnswer(num))}>
-                  {num}
-                </button>
-              );
-            })}
-          </section>
-
-          <div className={`answer-action size-${answerPadSize} mt-1.5`}>
-            {!isUra && <button className="answer-confirm btn-main pressable w-full px-4 py-4 text-lg font-black disabled:opacity-40" disabled={game.selected.length === 0 || !!game.feedback} {...tap(confirmAnswer)}>確定</button>}
-            {isUra && <div className="answer-confirm grid place-items-center border border-white/10 bg-black/20 px-4 py-4 text-center text-lg font-black text-[color:var(--muted)]">即判定</div>}
-          </div>
-
-          <footer className="mt-3 grid grid-cols-2 gap-2">
-            <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(quit)}>メニュー</button>
-            <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(retry)}>再挑戦</button>
-          </footer>
+          {showGameOver && (
+            <PlayGameOverOverlay
+              game={game}
+              q={game.gameOverQuestion || q}
+              elapsed={elapsed}
+              addFavorite={addFavorite}
+              isFavorite={isFavorite}
+              favoriteFlash={favoriteFlash}
+              quit={quit}
+              retry={retry}
+              tap={tap}
+            />
+          )}
         </div>
       );
     }
 
-    function GameOverResult({ result, addFavorite, isFavorite, favoriteFlash, startMode, goHome, tap }) {
+    function PlayGameOverOverlay({ game, q, elapsed, addFavorite, isFavorite, favoriteFlash, quit, retry, tap }) {
+      const selected = q?.selected || game.selected || [];
       return (
-        <div className="app-pad mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
-          <section className="panel record-card result-pop rounded-3xl p-4">
-            <div className="flex items-start justify-between gap-3">
+        <div className="play-gameover-overlay">
+          <div className="ura-blackout"></div>
+          <div className="ura-slash"></div>
+          <div className="ura-crack"></div>
+
+          <div className="ura-gameover-layer">
+            <div className="gameover-logo">
+              <div className="gameover-label">GAME<br />OVER</div>
+            </div>
+
+            <div className="ura-gameover-stats text-center">
+              <Stat label="連続正解" value={game.correctCount} />
+              <Stat label="時間" value={formatTime(elapsed)} />
+            </div>
+
+            <section className="ura-gameover-review">
+              <h2 className="text-sm font-black">誤答問題</h2>
+              <div className="mt-2 rounded-2xl bg-black/20 p-2">
+                <MiniHand q={q} compact />
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="min-w-0 text-xs text-[color:var(--muted)]">正解 {q.answers.join(", ")} / 選択 {selected.join(", ") || "-"}</p>
+                  <StarFavoriteButton active={isFavorite(q)} justAdded={favoriteFlash === normalizeSavedQuestion(q).favoriteId} onPress={() => addFavorite(q)} tap={tap} label="お気に入りに追加" small />
+                </div>
+              </div>
+            </section>
+
+            <footer className="ura-gameover-actions">
+              <button className="btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(quit)}>メニュー</button>
+              <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(retry)}>再挑戦</button>
+            </footer>
+          </div>
+        </div>
+      );
+    }
+
+    function GameOverResult({ result, addFavorite, isFavorite, favoriteFlash, startMode, goHome, answerPadSize, tap }) {
+      const wrong = result.wrongQuestions[0];
+      const selected = wrong?.selected || [];
+      const wrongPick = selected.find(num => !wrong?.answers.includes(num));
+      return (
+        <div className="ura-gameover-screen">
+          <div className="ura-fail-play">
+            <header className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm font-black text-[color:var(--gold-2)]">URA MODE</p>
-                <h1 className="mt-1 text-3xl font-black">GAME OVER</h1>
+                <div className="text-sm font-black text-[color:var(--gold-2)]">{result.correctCount}連続</div>
+                <div className="mt-2 h-1.5 w-36 rounded-full bg-black/35">
+                  <div className="h-1.5 rounded-full bg-[color:var(--gold)]" style={{ width: `${Math.min(100, ((result.correctCount + 1) / result.questionCount) * 100)}%` }} />
+                </div>
               </div>
-              <div className="rounded-full border border-white/10 bg-black/24 px-3 py-2 text-xs font-black text-[color:var(--muted)]">{result.modeLabel}</div>
+              <div className="text-right">
+                <div className="text-2xl font-black">{formatTime(result.elapsedSeconds)}</div>
+                <div className="text-xs font-bold text-[color:var(--muted)]">裏モード</div>
+              </div>
+            </header>
+
+            <section className="ura-fail-hand">
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-sm font-bold text-[color:var(--muted)]">牌姿</span>
+              </div>
+              {wrong && <Hand q={wrong} />}
+            </section>
+
+            <div className="feedback ng my-4">待ち {wrong?.answers.join(", ")}</div>
+
+            <section className={`ura-fail-pad size-${answerPadSize} grid grid-cols-3 content-start gap-0`}>
+              {[1,2,3,4,5,6,7,8,9].map(num => {
+                const disabled = wrong ? (wrong.tiles.filter(n => n === num).length >= 4) : false;
+                return (
+                  <button
+                    key={num}
+                    disabled
+                    className={`answer-btn ${disabled ? "disabled" : "ura"} ${selected.includes(num) ? "selected" : ""} ${wrongPick === num ? "wrong" : ""}`}
+                  >
+                    {num}
+                  </button>
+                );
+              })}
+            </section>
+          </div>
+
+          <div className="ura-blackout"></div>
+          <div className="ura-slash"></div>
+          <div className="ura-crack"></div>
+
+          <div className="ura-gameover-layer">
+            <div className="gameover-logo">
+              <div className="gameover-label">GAME<br />OVER</div>
             </div>
 
-            <div className="mt-3">
-              <div className="gameover-logo">
-                <div className="gameover-label">GAME<br />OVER</div>
-              </div>
-            </div>
-
-            <div className="gameover-stat mt-3 grid grid-cols-2 gap-2 text-center">
+            <div className="ura-gameover-stats text-center">
               <Stat label="連続正解" value={result.correctCount} />
               <Stat label="時間" value={formatTime(result.elapsedSeconds)} />
             </div>
-          </section>
 
-          {result.wrongQuestions.length > 0 && (
-            <section className="panel mt-4 rounded-3xl p-4">
-              <h2 className="text-lg font-black">誤答問題</h2>
-              <div className="mt-3 space-y-3">
-                {result.wrongQuestions.map(item => (
-                  <div key={item.instanceId} className="rounded-2xl bg-black/20 p-3">
-                    <MiniHand q={item} compact />
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <p className="min-w-0 text-xs text-[color:var(--muted)]">正解 {item.answers.join(", ")} / 選択 {(item.selected || []).join(", ") || "-"}</p>
-                      <StarFavoriteButton active={isFavorite(item)} justAdded={favoriteFlash === normalizeSavedQuestion(item).favoriteId} onPress={() => addFavorite(item)} tap={tap} label="お気に入りに追加" small />
-                    </div>
+            {wrong && (
+              <section className="ura-gameover-review">
+                <h2 className="text-sm font-black">誤答問題</h2>
+                <div className="mt-2 rounded-2xl bg-black/20 p-2">
+                  <MiniHand q={wrong} compact />
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p className="min-w-0 text-xs text-[color:var(--muted)]">正解 {wrong.answers.join(", ")} / 選択 {selected.join(", ") || "-"}</p>
+                    <StarFavoriteButton active={isFavorite(wrong)} justAdded={favoriteFlash === normalizeSavedQuestion(wrong).favoriteId} onPress={() => addFavorite(wrong)} tap={tap} label="お気に入りに追加" small />
                   </div>
-                ))}
-              </div>
-            </section>
-          )}
+                </div>
+              </section>
+            )}
 
-          <footer className="mt-4 grid grid-cols-2 gap-2 pb-4">
-            <button className="btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(goHome)}>メニュー</button>
-            <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant, result.sourceList))}>再挑戦</button>
-          </footer>
+            <footer className="ura-gameover-actions">
+              <button className="btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(goHome)}>メニュー</button>
+              <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant, result.sourceList))}>再挑戦</button>
+            </footer>
+          </div>
         </div>
       );
     }

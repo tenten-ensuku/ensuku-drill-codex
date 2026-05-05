@@ -294,6 +294,44 @@
       box-shadow: 0 14px 28px rgba(0,0,0,0.32), 0 0 0 1px rgba(246,242,223,0.16);
       background: rgba(246,242,223,0.22);
     }
+    .answer-pad.size-large {
+      width: 100%;
+      max-width: none;
+      margin-left: 0;
+    }
+    .settings-preview .answer-pad.size-large {
+      width: 100%;
+      max-width: 312px;
+      margin-left: 0;
+    }
+    .settings-preview .answer-pad.size-normal {
+      width: 82%;
+      max-width: 264px;
+      margin-left: auto;
+    }
+    .answer-pad.size-small {
+      width: min(50vw, 186px);
+    }
+    .settings-preview .answer-pad.size-small {
+      width: 58%;
+      max-width: 186px;
+    }
+    .answer-action {
+      width: min(74vw, 264px);
+      margin-left: auto;
+    }
+    .answer-action.size-large {
+      width: 100%;
+      max-width: none;
+      margin-left: 0;
+    }
+    .answer-action.size-small {
+      width: min(50vw, 186px);
+    }
+    .answer-confirm {
+      min-height: 62px;
+      border-radius: 0 0 18px 18px;
+    }
     .feedback {
       height: 48px;
       display: grid;
@@ -619,6 +657,11 @@
     }
     @media (max-width: 420px) {
       .answer-pad { width: min(76vw, 252px); }
+      .answer-pad.size-large { width: 100%; }
+      .answer-pad.size-small { width: min(50vw, 178px); }
+      .answer-action { width: min(76vw, 252px); }
+      .answer-action.size-large { width: 100%; }
+      .answer-action.size-small { width: min(50vw, 178px); }
       .answer-btn { border-radius: 0; }
     }
     @media (max-width: 340px) {
@@ -626,9 +669,20 @@
       .play-pad { padding-left: 10px; padding-right: 10px; }
       .panel-tight { padding-left: 12px; padding-right: 12px; }
       .answer-pad { width: min(76vw, 232px); }
+      .answer-pad.size-large { width: 100%; }
+      .answer-pad.size-small { width: min(50vw, 164px); }
+      .answer-action { width: min(76vw, 232px); }
+      .answer-action.size-large { width: 100%; }
+      .answer-action.size-small { width: min(50vw, 164px); }
     }
     @media (max-height: 720px) {
       .answer-pad { width: min(68vw, 232px); }
+      .answer-pad.size-large { width: 100%; }
+      .answer-pad.size-small { width: min(48vw, 168px); }
+      .answer-action { width: min(68vw, 232px); }
+      .answer-action.size-large { width: 100%; }
+      .answer-action.size-small { width: min(48vw, 168px); }
+      .answer-confirm { min-height: 58px; }
       .answer-btn { border-radius: 0; font-size: 22px; }
       .feedback { height: 38px; }
       .panel { box-shadow: 0 16px 36px rgba(0,0,0,0.28); }
@@ -640,7 +694,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 19;
+    const APP_VERSION = 20;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -780,7 +834,8 @@
       favorites: "mahjong_favorites",
       review: "mahjong_review_bucket",
       results: "mahjong_results_history",
-      playerName: "mahjong_player_name"
+      playerName: "mahjong_player_name",
+      answerPadSize: "mahjong_answer_pad_size"
     };
 
     const DATASETS = {
@@ -1062,6 +1117,7 @@
       const [review, setReview] = useState(() => readJson(STORAGE.review, []));
       const [unlockFlash, setUnlockFlash] = useState(null);
       const [favoriteFlash, setFavoriteFlash] = useState(null);
+      const [answerPadSize, setAnswerPadSize] = useState(() => localStorage.getItem(STORAGE.answerPadSize) || "normal");
       const [tick, setTick] = useState(0);
       const audioRef = useRef(null);
       const touchRef = useRef(false);
@@ -1069,6 +1125,10 @@
       useEffect(() => {
         preloadTiles();
       }, []);
+
+      useEffect(() => {
+        localStorage.setItem(STORAGE.answerPadSize, answerPadSize);
+      }, [answerPadSize]);
 
       useEffect(() => {
         if (screen !== "game" || !game || game.ended) return;
@@ -1381,6 +1441,8 @@
               startMode={startMode}
               removeFavorite={removeFavorite}
               clearReview={clearReview}
+              answerPadSize={answerPadSize}
+              setAnswerPadSize={setAnswerPadSize}
               tap={tap}
               unlockFlash={unlockFlash}
               setUnlockFlash={setUnlockFlash}
@@ -1398,6 +1460,7 @@
               favoriteFlash={favoriteFlash}
               quit={() => setScreen("home")}
               retry={() => startMode(game.mode.id, game.variant, game.sourceList)}
+              answerPadSize={answerPadSize}
               tap={tap}
             />
           )}
@@ -1429,8 +1492,13 @@
       );
     }
 
-    function Home({ records, favorites, review, isUnlocked, startMode, removeFavorite, clearReview, tap, unlockFlash, setUnlockFlash }) {
+    function Home({ records, favorites, review, isUnlocked, startMode, removeFavorite, clearReview, answerPadSize, setAnswerPadSize, tap, unlockFlash, setUnlockFlash }) {
       const [tab, setTab] = useState("modes");
+      const sizeOptions = [
+        ["large", "大きい"],
+        ["normal", "通常"],
+        ["small", "小さめ"]
+      ];
       return (
         <div className="app-pad mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={() => setUnlockFlash(null)} />}
@@ -1438,7 +1506,10 @@
             <div className="min-w-0 flex-1">
               <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver{APP_VERSION}</span></h1>
             </div>
-            <img className="server-logo shrink-0" src="assets/ensuku.png" alt="エンスクロゴ" />
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />
+              <button className="btn-quiet rounded-full px-3 py-1.5 text-xs font-black" {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>設定</button>
+            </div>
           </header>
 
           <div className="mb-4 grid grid-cols-3 gap-2 rounded-full bg-black/20 p-1">
@@ -1480,6 +1551,34 @@
               onClear={clearReview}
               tap={tap}
             />
+          )}
+
+          {tab === "settings" && (
+            <section className="panel rounded-3xl p-4">
+              <h2 className="text-xl font-black">設定</h2>
+              <div className="mt-4">
+                <p className="text-sm font-black text-[color:var(--muted)]">回答ボタンサイズ</p>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {sizeOptions.map(([id, label]) => (
+                    <button
+                      key={id}
+                      className={`rounded-2xl px-2 py-3 text-sm font-black ${answerPadSize === id ? "btn-main" : "btn-quiet"}`}
+                      {...tap(() => setAnswerPadSize(id))}
+                    >
+                      <span className="block">{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="settings-preview mt-5 rounded-2xl bg-black/20 p-3">
+                <p className="text-xs font-black text-[color:var(--muted)]">プレビュー</p>
+                <div className={`answer-pad size-${answerPadSize} mt-3 grid grid-cols-3 content-start gap-0`}>
+                  {[1,2,3,4,5,6,7,8,9].map(num => (
+                    <button key={num} className="answer-btn" type="button">{num}</button>
+                  ))}
+                </div>
+              </div>
+            </section>
           )}
         </div>
       );
@@ -1568,7 +1667,7 @@
       );
     }
 
-    function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, isFavorite, favoriteFlash, quit, retry, tap }) {
+    function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, isFavorite, favoriteFlash, quit, retry, answerPadSize, tap }) {
       const counts = q.tiles.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {});
       const isUra = game.variant === "ura";
       return (
@@ -1598,7 +1697,7 @@
             {game.feedback === "ok" ? "正解" : game.feedback === "ng" ? `待ち ${q.answers.join(", ")}` : isUra ? "正解牌をすべて選ぶ / 外すと終了" : game.mode.tileCount === 6 ? "二面子完成の受け入れ" : "待ち牌を選択"}
           </div>
 
-          <section className="answer-pad grid grid-cols-3 content-start gap-0">
+          <section className={`answer-pad size-${answerPadSize} grid grid-cols-3 content-start gap-0`}>
             {[1,2,3,4,5,6,7,8,9].map(num => {
               const disabled = (counts[num] || 0) >= 4;
               const selected = game.selected.includes(num);
@@ -1610,9 +1709,9 @@
             })}
           </section>
 
-          <div className="mt-3">
-            {!isUra && <button className="btn-main pressable w-full rounded-2xl px-4 py-4 text-lg font-black disabled:opacity-40" disabled={game.selected.length === 0 || !!game.feedback} {...tap(confirmAnswer)}>確定</button>}
-            {isUra && <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-center text-lg font-black text-[color:var(--muted)]">即判定</div>}
+          <div className={`answer-action size-${answerPadSize} mt-1.5`}>
+            {!isUra && <button className="answer-confirm btn-main pressable w-full px-4 py-4 text-lg font-black disabled:opacity-40" disabled={game.selected.length === 0 || !!game.feedback} {...tap(confirmAnswer)}>確定</button>}
+            {isUra && <div className="answer-confirm grid place-items-center border border-white/10 bg-black/20 px-4 py-4 text-center text-lg font-black text-[color:var(--muted)]">即判定</div>}
           </div>
 
           <footer className="mt-3 grid grid-cols-2 gap-2">

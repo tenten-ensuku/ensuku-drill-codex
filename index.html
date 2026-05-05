@@ -257,6 +257,23 @@
       color: #1f1606;
       box-shadow: 0 0 0 3px rgba(242,210,123,0.28), 0 12px 22px rgba(0,0,0,0.28);
     }
+    .answer-btn.wrong {
+      color: #fff7f8;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,0.28), transparent 54%),
+        linear-gradient(180deg, #ff536e, #98102a);
+      border-color: rgba(255,255,255,0.38);
+      box-shadow: 0 0 0 3px rgba(255,49,90,0.34), 0 0 22px rgba(255,49,90,0.56), inset 0 1px 0 rgba(255,255,255,0.3);
+      animation: wrong-answer-hit 720ms cubic-bezier(.18,.9,.2,1) both;
+    }
+    @keyframes wrong-answer-hit {
+      0% { transform: translateX(0); filter: saturate(1); }
+      42% { transform: translateX(0); filter: saturate(1.15); }
+      50% { transform: translateX(-4px); }
+      58% { transform: translateX(4px); }
+      66% { transform: translateX(-2px); }
+      74%, 100% { transform: translateX(0); filter: saturate(1.35); }
+    }
     .answer-btn.disabled {
       opacity: 0.28;
       filter: grayscale(1);
@@ -442,6 +459,50 @@
       62% { transform: translate(0, 0) rotate(-13deg) scale(1.04); opacity: 1; }
       100% { transform: translate(0, 0) rotate(-13deg) scale(1); opacity: 1; }
     }
+    .gameover-logo {
+      position: relative;
+      overflow: hidden;
+      border-radius: 22px;
+      padding: 8px;
+      background:
+        linear-gradient(135deg, rgba(255,49,90,0.58), rgba(255,255,255,0.08), rgba(120,0,18,0.36)),
+        rgba(0,0,0,0.58);
+      box-shadow: 0 22px 34px rgba(0,0,0,0.58), 0 0 34px rgba(255,49,90,0.32);
+      animation: gameover-logo-hit 2s cubic-bezier(.16,.9,.2,1.12) both;
+    }
+    .gameover-logo::after {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      background: linear-gradient(118deg, transparent 43%, rgba(255,49,90,0.9) 48%, rgba(255,255,255,0.58) 50%, transparent 55%);
+      filter: drop-shadow(0 0 16px rgba(255,49,90,0.72));
+      animation: gameover-red-scan 2s cubic-bezier(.18,.9,.2,1) both;
+      pointer-events: none;
+    }
+    .gameover-logo img {
+      display: block;
+      width: 100%;
+      border-radius: 16px;
+      filter: saturate(1.12) contrast(1.08);
+    }
+    .gameover-stat {
+      animation: gameover-stat-in 2s ease both;
+    }
+    @keyframes gameover-logo-hit {
+      0% { opacity: 0; transform: scale(1.24) translateY(-12px); filter: blur(10px); }
+      28% { opacity: 1; transform: scale(0.92) translateY(0); filter: blur(0); }
+      44% { transform: scale(1.03); }
+      62%, 100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes gameover-red-scan {
+      0% { opacity: 0; transform: translateX(-46%) translateY(-16%); }
+      22%, 44% { opacity: 1; }
+      76%, 100% { opacity: 0; transform: translateX(46%) translateY(18%); }
+    }
+    @keyframes gameover-stat-in {
+      0%, 52% { opacity: 0; transform: translateY(18px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
     .rainbow-text {
       background: linear-gradient(to right, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6, #ef4444);
       background-size: 200% auto;
@@ -544,7 +605,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 16;
+    const APP_VERSION = 17;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -932,7 +993,7 @@
       return rank === "SSS" ? "神" : rank;
     }
 
-    function makeResult({ mode, variant, sourceList, questionCount, score, rank, correctCount, mistakeCount, elapsedSeconds, wrongQuestions, previousBest, isNewRecord }) {
+    function makeResult({ mode, variant, sourceList, questionCount, score, rank, correctCount, mistakeCount, elapsedSeconds, wrongQuestions, previousBest, isNewRecord, gameOver = false }) {
       return {
         modeId: mode.id,
         modeLabel: mode.label,
@@ -947,6 +1008,7 @@
         elapsedSeconds,
         previousBest,
         isNewRecord,
+        gameOver,
         wrongQuestions,
         finishedAt: new Date().toISOString(),
         clientVersion: "codex-table-minimal-v1"
@@ -1119,7 +1181,8 @@
             setGame(g => ({ ...g, selected }));
           } else {
             tone("ng");
-            finishGame({ forcedWrong: q, selected, uraFailed: true });
+            setGame(g => ({ ...g, selected, feedback: "ng", gameOverWrong: num }));
+            setTimeout(() => finishGame({ forcedWrong: q, selected, uraFailed: true, gameOver: true }), 1000);
           }
           return;
         }
@@ -1189,6 +1252,7 @@
             elapsedSeconds,
             previousBest,
             isNewRecord,
+            gameOver: !!extra.gameOver,
             wrongQuestions
           });
           persistResult(built);
@@ -1201,7 +1265,7 @@
       function persistResult(res) {
         const mode = getMode(res.modeId);
         const oldBest = readNumber(mode.bestKey);
-        const isRankedRun = res.variant === "normal" || res.variant === "ura";
+        const isRankedRun = (res.variant === "normal" || res.variant === "ura") && !res.gameOver;
         if (isRankedRun && res.score > oldBest) {
           localStorage.setItem(mode.bestKey, String(res.score));
           localStorage.setItem(mode.elapsedKey, String(res.elapsedSeconds));
@@ -1221,7 +1285,7 @@
           writeJson(STORAGE.review, merged);
           setReview(merged);
         }
-        if (res.variant === "normal" || res.variant === "ura") {
+        if ((res.variant === "normal" || res.variant === "ura") && !res.gameOver) {
           const history = readJson(STORAGE.results, []);
           writeJson(STORAGE.results, [res, ...history].slice(0, 50));
         }
@@ -1302,7 +1366,18 @@
               tap={tap}
             />
           )}
-          {screen === "result" && result && (
+          {screen === "result" && result?.gameOver && (
+            <GameOverResult
+              result={result}
+              addFavorite={addFavorite}
+              isFavorite={isFavorite}
+              favoriteFlash={favoriteFlash}
+              startMode={startMode}
+              goHome={() => setScreen("home")}
+              tap={tap}
+            />
+          )}
+          {screen === "result" && result && !result.gameOver && (
             <Result
               result={result}
               favorites={favorites}
@@ -1493,7 +1568,7 @@
               const disabled = (counts[num] || 0) >= 4;
               const selected = game.selected.includes(num);
               return (
-                <button key={num} disabled={disabled || !!game.feedback} className={`answer-btn pressable ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${isUra && !selected ? "ura" : ""}`} {...tap(() => selectAnswer(num))}>
+                <button key={num} disabled={disabled || !!game.feedback} className={`answer-btn pressable ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${isUra && !selected ? "ura" : ""} ${game.gameOverWrong === num ? "wrong" : ""}`} {...tap(() => selectAnswer(num))}>
                   {num}
                 </button>
               );
@@ -1506,8 +1581,57 @@
           </div>
 
           <footer className="mt-3 grid grid-cols-2 gap-2">
-            <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black" {...tap(quit)}>メニュー</button>
-            <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black" {...tap(retry)}>再挑戦</button>
+            <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(quit)}>メニュー</button>
+            <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(retry)}>再挑戦</button>
+          </footer>
+        </div>
+      );
+    }
+
+    function GameOverResult({ result, addFavorite, isFavorite, favoriteFlash, startMode, goHome, tap }) {
+      return (
+        <div className="app-pad mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
+          <section className="panel record-card result-pop rounded-3xl p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-black text-[color:var(--gold-2)]">URA MODE</p>
+                <h1 className="mt-1 text-3xl font-black">GAME OVER</h1>
+              </div>
+              <div className="rounded-full border border-white/10 bg-black/24 px-3 py-2 text-xs font-black text-[color:var(--muted)]">{result.modeLabel}</div>
+            </div>
+
+            <div className="mt-5">
+              <div className="gameover-logo">
+                <img src="assets/gameover-logo-a.png" alt="GAME OVER" />
+              </div>
+            </div>
+
+            <div className="gameover-stat mt-5 grid grid-cols-2 gap-2 text-center">
+              <Stat label="連続正解" value={result.correctCount} />
+              <Stat label="時間" value={formatTime(result.elapsedSeconds)} />
+            </div>
+          </section>
+
+          {result.wrongQuestions.length > 0 && (
+            <section className="panel mt-4 rounded-3xl p-4">
+              <h2 className="text-lg font-black">誤答問題</h2>
+              <div className="mt-3 space-y-3">
+                {result.wrongQuestions.map(item => (
+                  <div key={item.instanceId} className="rounded-2xl bg-black/20 p-3">
+                    <MiniHand q={item} compact />
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <p className="min-w-0 text-xs text-[color:var(--muted)]">正解 {item.answers.join(", ")} / 選択 {(item.selected || []).join(", ") || "-"}</p>
+                      <StarFavoriteButton active={isFavorite(item)} justAdded={favoriteFlash === normalizeSavedQuestion(item).favoriteId} onPress={() => addFavorite(item)} tap={tap} label="お気に入りに追加" small />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <footer className="mt-4 grid grid-cols-2 gap-2 pb-4">
+            <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant, result.sourceList))}>もう一度</button>
+            <button className="btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(goHome)}>メニュー</button>
           </footer>
         </div>
       );

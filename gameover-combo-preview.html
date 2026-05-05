@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>裏モード GAMEOVER 合成案</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #fff8db;
+      --muted: #a9c7bc;
+      --gold: #f2d27b;
+      --red: #ff315a;
+      --violet: #7c3cff;
+      --green: #06271f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      color: var(--ink);
+      font-family: Inter, "Yu Gothic UI", Meiryo, sans-serif;
+      background:
+        radial-gradient(circle at 50% -18%, rgba(124,60,255,0.22), transparent 42%),
+        linear-gradient(180deg, #010403, #031612);
+    }
+    main { width: min(430px, 100%); }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .lead {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.6;
+    }
+    .phone {
+      position: relative;
+      min-height: 720px;
+      overflow: hidden;
+      border: 1px solid rgba(242,210,123,0.28);
+      border-radius: 28px;
+      background:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+        radial-gradient(circle at 50% 18%, rgba(242,210,123,0.1), transparent 34%),
+        linear-gradient(180deg, rgba(4,24,19,0.98), rgba(0,0,0,0.96));
+      background-size: 18px 18px, 18px 18px, auto, auto;
+      box-shadow: 0 22px 42px rgba(0,0,0,0.42);
+    }
+    .play-ui {
+      position: absolute;
+      inset: 0;
+      padding: 26px 18px;
+      animation: play-dim 3.2s ease both;
+    }
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      color: var(--gold);
+      font-size: 18px;
+      font-weight: 1000;
+    }
+    .hand {
+      margin-top: 42px;
+      border-radius: 24px;
+      background: rgba(0,0,0,0.32);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 18px 14px;
+    }
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+    .tile {
+      height: 48px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, #fffdf4, #ddd7c8);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.24);
+      display: grid;
+      place-items: center;
+      color: #c32036;
+      font-weight: 1000;
+      font-size: 20px;
+    }
+    .prompt {
+      margin: 20px 0 14px;
+      border-radius: 999px;
+      background: rgba(6,39,31,0.86);
+      padding: 12px 14px;
+      color: var(--muted);
+      text-align: center;
+      font-weight: 1000;
+    }
+    .pad {
+      width: min(74vw, 264px);
+      margin-left: auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid rgba(242,210,123,0.34);
+      border-radius: 18px;
+      overflow: hidden;
+      background: rgba(242,210,123,0.28);
+    }
+    .key {
+      position: relative;
+      aspect-ratio: 1;
+      border: 0;
+      border-right: 1px solid rgba(35,22,8,0.28);
+      border-bottom: 1px solid rgba(35,22,8,0.28);
+      background: linear-gradient(180deg, #fff7dc, #dac58a);
+      color: #171107;
+      font-size: 28px;
+      font-weight: 1000;
+      overflow: hidden;
+    }
+    .key:nth-child(3n) { border-right: 0; }
+    .key:nth-child(n+7) { border-bottom: 0; }
+    .key.wrong {
+      animation: wrong-shake 640ms cubic-bezier(.2,.9,.2,1) both;
+    }
+    .key.wrong::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 38%, rgba(255,255,255,0.24), transparent 28%),
+        linear-gradient(180deg, #ff536e, #9f102c);
+      transform: translateY(100%);
+      animation: wrong-fill 640ms ease-out 300ms both;
+    }
+    .key.wrong span {
+      position: relative;
+      z-index: 1;
+      animation: wrong-text 640ms ease-out 300ms both;
+    }
+    .blackout {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      opacity: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 78% 62%, rgba(255,49,90,0.2), transparent 22%),
+        linear-gradient(180deg, rgba(4,0,0,0.1), rgba(0,0,0,0.9));
+      animation: blackout 3.2s ease both;
+    }
+    .slash {
+      position: absolute;
+      z-index: 7;
+      inset: -20%;
+      pointer-events: none;
+      opacity: 0;
+      background:
+        linear-gradient(118deg, transparent 43%, rgba(255,49,90,0.96) 48%, rgba(255,255,255,0.58) 50%, transparent 55%),
+        linear-gradient(118deg, transparent 50%, rgba(140,0,24,0.7) 51%, transparent 53%);
+      filter: drop-shadow(0 0 18px rgba(255,49,90,0.72));
+      animation: red-scan 3.2s cubic-bezier(.18,.9,.2,1) both;
+    }
+    .crack {
+      position: absolute;
+      z-index: 8;
+      inset: 10% 6%;
+      pointer-events: none;
+      opacity: 0;
+      background:
+        linear-gradient(135deg, transparent 48%, rgba(255,255,255,0.7) 49%, transparent 50%),
+        linear-gradient(71deg, transparent 54%, rgba(255,49,90,0.92) 55%, transparent 56%),
+        linear-gradient(25deg, transparent 58%, rgba(255,255,255,0.45) 59%, transparent 60%);
+      filter: drop-shadow(0 0 14px rgba(255,49,90,0.65));
+      animation: crack 3.2s ease both;
+    }
+    .gameover {
+      position: absolute;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      padding: 120px 22px 34px;
+      opacity: 0;
+      animation: gameover-in 3.2s ease both;
+    }
+    .logo-frame {
+      position: relative;
+      z-index: 2;
+      width: min(352px, 90vw);
+      border-radius: 22px;
+      padding: 8px;
+      background:
+        linear-gradient(135deg, rgba(255,49,90,0.62), rgba(255,255,255,0.08), rgba(120,0,18,0.38)),
+        rgba(0,0,0,0.58);
+      box-shadow:
+        0 22px 34px rgba(0,0,0,0.58),
+        0 0 34px rgba(255,49,90,0.34);
+      animation: logo-hit 3.2s cubic-bezier(.16,.9,.2,1.12) both;
+    }
+    .logo-img {
+      display: block;
+      width: 100%;
+      border-radius: 16px;
+      filter: saturate(1.1) contrast(1.07);
+    }
+    .stats {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      animation: stats-in 3.2s ease both;
+    }
+    .stat {
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 18px;
+      padding: 14px 10px;
+      text-align: center;
+      background: rgba(0,0,0,0.44);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .stat small {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 1000;
+    }
+    .stat strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 30px;
+      line-height: 1;
+    }
+    .wrong-review {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      margin-top: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      background: rgba(0,0,0,0.34);
+      padding: 12px;
+      animation: stats-in 3.2s ease both;
+    }
+    .wrong-review h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+    .wrong-line {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .actions {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      animation: stats-in 3.2s ease both;
+    }
+    .action {
+      border: 0;
+      border-radius: 16px;
+      padding: 13px 10px;
+      font-weight: 1000;
+      color: #171107;
+      background: linear-gradient(180deg, #f6d980, #b9852f);
+    }
+    .action.quiet {
+      color: var(--ink);
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.28);
+    }
+    .replay {
+      width: 100%;
+      margin-top: 14px;
+      border: 0;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #f6d980, #b9852f);
+      color: #171107;
+      padding: 14px 16px;
+      font-weight: 1000;
+      cursor: pointer;
+    }
+    .phone.replay * { animation-name: none !important; }
+    .phone.replay { animation: none !important; }
+    @keyframes wrong-fill {
+      0% { transform: translateY(100%); }
+      100% { transform: translateY(0); }
+    }
+    @keyframes wrong-text {
+      100% { color: #fff7f8; text-shadow: 0 0 14px rgba(255,255,255,0.5); }
+    }
+    @keyframes wrong-shake {
+      0%, 100% { transform: translateX(0); }
+      58% { transform: translateX(0); }
+      64% { transform: translateX(-5px); }
+      70% { transform: translateX(5px); }
+      76% { transform: translateX(-3px); }
+      82% { transform: translateX(3px); }
+    }
+    @keyframes play-dim {
+      0%, 28% { opacity: 1; transform: scale(1); filter: blur(0); }
+      48%, 100% { opacity: 0.2; transform: scale(0.98); filter: blur(3px); }
+    }
+    @keyframes blackout {
+      0%, 32% { opacity: 0; }
+      45%, 100% { opacity: 1; }
+    }
+    @keyframes red-scan {
+      0%, 30% { opacity: 0; transform: translateX(-42%) translateY(-18%); }
+      38%, 58% { opacity: 1; }
+      76%, 100% { opacity: 0; transform: translateX(44%) translateY(20%); }
+    }
+    @keyframes crack {
+      0%, 46% { opacity: 0; transform: scale(0.9); }
+      56%, 78% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0.34; transform: scale(1.02); }
+    }
+    @keyframes gameover-in {
+      0%, 44% { opacity: 0; }
+      52%, 100% { opacity: 1; }
+    }
+    @keyframes logo-hit {
+      0%, 52% { opacity: 0; transform: scale(1.18) translateY(-8px); filter: blur(8px); }
+      64% { opacity: 1; transform: scale(0.94) translateY(0); filter: blur(0); }
+      78% { transform: scale(1.03); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes stats-in {
+      0%, 72% { opacity: 0; transform: translateY(18px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>GAMEOVER 合成案</h1>
+    <p class="lead">誤答ボタンが赤く染まる → 0.3秒後に赤スキャン → 紫封印ロゴ＋円ゲージ崩壊でGAMEOVER、という流れです。</p>
+    <section class="phone" id="preview">
+      <div class="play-ui">
+        <div class="hud"><span>8連続</span><span>00:34</span></div>
+        <div class="hand">
+          <div class="tiles">
+            <div class="tile">三</div><div class="tile">四</div><div class="tile">伍</div><div class="tile">伍</div><div class="tile">六</div><div class="tile">六</div><div class="tile">七</div>
+          </div>
+        </div>
+        <div class="prompt">待ち牌を選択</div>
+        <div class="pad">
+          <button class="key"><span>1</span></button>
+          <button class="key"><span>2</span></button>
+          <button class="key"><span>3</span></button>
+          <button class="key"><span>4</span></button>
+          <button class="key"><span>5</span></button>
+          <button class="key"><span>6</span></button>
+          <button class="key"><span>7</span></button>
+          <button class="key wrong"><span>8</span></button>
+          <button class="key"><span>9</span></button>
+        </div>
+      </div>
+      <div class="blackout"></div>
+      <div class="slash"></div>
+      <div class="crack"></div>
+      <div class="gameover">
+        <div class="logo-frame" aria-label="GAME OVER">
+          <img class="logo-img" src="assets/gameover-logo-a.png" alt="GAME OVER" />
+        </div>
+        <div class="stats">
+          <div class="stat"><small>連続正解</small><strong>8</strong></div>
+          <div class="stat"><small>時間</small><strong>0:34</strong></div>
+        </div>
+        <div class="wrong-review">
+          <h2>誤答問題</h2>
+          <div class="tiles">
+            <div class="tile">三</div><div class="tile">四</div><div class="tile">伍</div><div class="tile">伍</div><div class="tile">六</div><div class="tile">六</div><div class="tile">七</div>
+          </div>
+          <div class="wrong-line">正解 4, 7 / 選択 8</div>
+        </div>
+        <div class="actions">
+          <button class="action" type="button">もう一度</button>
+          <button class="action quiet" type="button">メニュー</button>
+        </div>
+      </div>
+    </section>
+    <button class="replay" type="button" id="replay">もう一度見る</button>
+  </main>
+  <script>
+    const preview = document.getElementById("preview");
+    document.getElementById("replay").addEventListener("click", () => {
+      preview.classList.add("replay");
+      void preview.offsetWidth;
+      preview.classList.remove("replay");
+    });
+  </script>
+</body>
+</html>

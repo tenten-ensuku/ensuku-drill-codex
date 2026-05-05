@@ -394,7 +394,7 @@
     }
     .score-gauge {
       position: relative;
-      width: min(250px, 78vw);
+      width: min(228px, 72vw);
       aspect-ratio: 1;
       margin: 0 auto;
       overflow: visible;
@@ -479,23 +479,23 @@
       z-index: 8;
       right: 8px;
       bottom: 20px;
-      width: 128px;
-      height: 96px;
-      background-image: url("assets/record-stamps.png");
+      width: 85px;
+      height: 85px;
+      background-image: url("assets/record-stamp-transparent-v2.png");
       background-repeat: no-repeat;
-      background-size: 300% auto;
-      background-position: 50% 39%;
+      background-size: contain;
+      background-position: center;
       pointer-events: none;
       mix-blend-mode: normal;
-      filter: drop-shadow(0 10px 14px rgba(0,0,0,0.48)) saturate(1.18);
+      filter: drop-shadow(0 8px 10px rgba(0,0,0,0.36)) saturate(1.18);
       animation: stamp-hit 500ms cubic-bezier(.16,.9,.2,1.12) both;
       transform-origin: center;
     }
     @keyframes stamp-hit {
-      0% { transform: translate(18px, -22px) rotate(-13deg) scale(2.15); opacity: 0; }
-      44% { transform: translate(0, 0) rotate(-13deg) scale(0.84); opacity: 1; }
-      62% { transform: translate(0, 0) rotate(-13deg) scale(1.04); opacity: 1; }
-      100% { transform: translate(0, 0) rotate(-13deg) scale(1); opacity: 1; }
+      0% { transform: translate(18px, -22px) rotate(-14deg) scale(2.15); opacity: 0; }
+      44% { transform: translate(0, 0) rotate(-14deg) scale(0.84); opacity: 1; }
+      62% { transform: translate(0, 0) rotate(-14deg) scale(1.04); opacity: 1; }
+      100% { transform: translate(0, 0) rotate(-14deg) scale(1); opacity: 1; }
     }
     .gameover-logo {
       position: relative;
@@ -871,7 +871,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 21;
+    const APP_VERSION = 22;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1213,14 +1213,12 @@
     }
 
     function formatTime(sec) {
-      const m = Math.floor(sec / 60).toString().padStart(2, "0");
-      const s = Math.floor(sec % 60).toString().padStart(2, "0");
-      return `${m}:${s}`;
+      return `${Math.floor(sec)}秒`;
     }
 
     function formatAverageTime(elapsedSeconds, questionCount) {
       if (!questionCount) return "-";
-      return `${(elapsedSeconds / questionCount).toFixed(2)}秒`;
+      return `${(elapsedSeconds / questionCount).toFixed(1)}秒`;
     }
 
     function formatBestLine(record, questionCount) {
@@ -1304,6 +1302,28 @@
       }, []);
 
       useEffect(() => {
+        const preview = new URLSearchParams(window.location.search).get("preview");
+        if (preview !== "record") return;
+        const mode = MODES[0];
+        const score = Math.max(rankThreshold(mode.id, "S") + 8, 360);
+        setResult(makeResult({
+          mode,
+          variant: "normal",
+          sourceList: null,
+          questionCount: mode.questionCount,
+          score,
+          rank: rankFor(mode.id, score),
+          correctCount: mode.questionCount,
+          mistakeCount: 0,
+          elapsedSeconds: Math.max(1, Math.round(mode.questionCount * 2.4)),
+          previousBest: Math.max(0, score - 38),
+          isNewRecord: true,
+          wrongQuestions: []
+        }));
+        setScreen("result");
+      }, []);
+
+      useEffect(() => {
         localStorage.setItem(STORAGE.answerPadSize, answerPadSize);
       }, [answerPadSize]);
 
@@ -1372,13 +1392,39 @@
           osc.stop(now + 0.25);
         } else if (type === "stamp") {
           osc.type = "triangle";
-          osc.frequency.setValueAtTime(150, now);
-          osc.frequency.exponentialRampToValueAtTime(82, now + 0.08);
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.exponentialRampToValueAtTime(78, now + 0.1);
           gain.gain.setValueAtTime(0.0001, now);
-          gain.gain.exponentialRampToValueAtTime(0.16, now + 0.012);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+          gain.gain.exponentialRampToValueAtTime(0.2, now + 0.012);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
           osc.start(now);
-          osc.stop(now + 0.2);
+          osc.stop(now + 0.24);
+
+          const hit = ctx.createOscillator();
+          const hitGain = ctx.createGain();
+          hit.type = "square";
+          hit.frequency.setValueAtTime(92, now + 0.06);
+          hit.frequency.exponentialRampToValueAtTime(58, now + 0.18);
+          hitGain.gain.setValueAtTime(0.0001, now + 0.05);
+          hitGain.gain.exponentialRampToValueAtTime(0.18, now + 0.07);
+          hitGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+          hit.connect(hitGain);
+          hitGain.connect(ctx.destination);
+          hit.start(now + 0.05);
+          hit.stop(now + 0.22);
+
+          const pop = ctx.createOscillator();
+          const popGain = ctx.createGain();
+          pop.type = "sine";
+          pop.frequency.setValueAtTime(520, now + 0.015);
+          pop.frequency.exponentialRampToValueAtTime(310, now + 0.08);
+          popGain.gain.setValueAtTime(0.0001, now + 0.01);
+          popGain.gain.exponentialRampToValueAtTime(0.055, now + 0.018);
+          popGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+          pop.connect(popGain);
+          popGain.connect(ctx.destination);
+          pop.start(now + 0.01);
+          pop.stop(now + 0.1);
         } else {
           osc.type = "square";
           osc.frequency.setValueAtTime(520, now);
@@ -2133,20 +2179,19 @@
         }
       }
       return (
-        <div className="app-pad mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
-          <section className="panel record-card result-pop rounded-3xl p-5">
+        <div className="app-pad mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-3">
+          <section className="panel record-card result-pop rounded-3xl p-4">
             {result.isNewRecord && <div className="record-rays" />}
             <div className="relative">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-black text-[color:var(--gold-2)]">{isPractice ? "PRACTICE" : "RESULT"}</p>
-                  <h1 className="mt-1 text-3xl font-black">{isPractice ? "練習完了" : "成績"}</h1>
+                  <h1 className="text-3xl font-black">{isPractice ? "練習完了" : "成績発表"}</h1>
                 </div>
                 <div className="rounded-full border border-white/10 bg-black/24 px-3 py-2 text-xs font-black text-[color:var(--muted)]">{result.modeLabel}</div>
               </div>
 
               {!isPractice ? (
-                <div className="mt-6 rounded-3xl border border-white/10 bg-black/30 p-5 text-center">
+                <div className="mt-3 rounded-3xl border border-white/10 bg-black/30 p-4 text-center">
                   <div className="score-gauge">
                     <svg viewBox="0 0 240 240" aria-hidden="true">
                       <defs>
@@ -2204,26 +2249,28 @@
                     </div>
                     {showRecordStamp && <div className="record-stamp" aria-label="記録更新" />}
                   </div>
-                  <p className="mx-auto mt-4 max-w-xs text-sm font-bold leading-6 text-[color:var(--muted)]">{rankComment(result.rank)}</p>
+                  <p className="mx-auto mt-2 max-w-xs text-xs font-bold leading-5 text-[color:var(--muted)]">{rankComment(result.rank)}</p>
                 </div>
               ) : (
-                <div className="mt-6 rounded-3xl border border-white/10 bg-black/30 p-5 text-center">
+                <div className="mt-3 rounded-3xl border border-white/10 bg-black/30 p-4 text-center">
                   <p className="text-sm font-bold text-[color:var(--muted)]">{result.variant === "favorite" ? "お気に入り練習" : "復習"}</p>
                   <div className="mt-2 text-5xl font-black">{result.correctCount}<span className="text-xl text-[color:var(--gold)]"> / {result.questionCount}</span></div>
-                  <p className="mx-auto mt-4 max-w-xs text-sm font-bold leading-6 text-[color:var(--muted)]">採点なしの練習を完了しました。気になる形は星で保存できます。</p>
+                  <p className="mx-auto mt-2 max-w-xs text-xs font-bold leading-5 text-[color:var(--muted)]">採点なしの練習を完了しました。気になる形は星で保存できます。</p>
                 </div>
               )}
             </div>
-            <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-              <Stat label="正解" value={result.correctCount} />
-              <Stat label="ミス" value={result.mistakeCount} />
-              <Stat label="時間" value={formatTime(result.elapsedSeconds)} />
-            </div>
-            <div className="mt-2 rounded-2xl bg-black/22 p-3 text-center">
-              <p className="text-xs font-bold text-[color:var(--muted)]">1問平均</p>
-              <p className="mt-1 text-xl font-black">{averageTime}</p>
+            <div className="mt-3 grid grid-cols-4 gap-1.5 text-center">
+              <Stat label="正解" value={result.correctCount} icon="●" iconClass="text-[#ff4b4b]" compact />
+              <Stat label="ミス" value={result.mistakeCount} icon="×" iconClass="text-[#63a7ff]" compact />
+              <Stat label="時間" value={`${result.elapsedSeconds}秒`} icon="⏱" compact />
+              <Stat label="1問平均" value={averageTime} compact />
             </div>
           </section>
+
+          <footer className="mt-3 grid grid-cols-2 gap-2 pb-3">
+            <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant, result.sourceList))}>もう一度</button>
+            <button className="btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(goHome)}>メニュー</button>
+          </footer>
 
           {result.wrongQuestions.length > 0 && (
             <section className="panel mt-4 rounded-3xl p-4">
@@ -2242,7 +2289,7 @@
             </section>
           )}
 
-          <section className="panel mt-4 rounded-3xl p-4">
+          <section className="panel mt-3 rounded-3xl p-4">
             <button className="btn-quiet w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => setShowPost(v => !v))}>ランキング投稿の準備</button>
             {showPost && (
               <div className="mt-3 space-y-3">
@@ -2254,19 +2301,18 @@
             )}
           </section>
 
-          <footer className="mt-4 grid grid-cols-2 gap-2 pb-4">
-            <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant, result.sourceList))}>もう一度</button>
-            <button className="btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(goHome)}>メニュー</button>
-          </footer>
         </div>
       );
     }
 
-    function Stat({ label, value }) {
+    function Stat({ label, value, icon = null, iconClass = "text-[color:var(--gold-2)]", compact = false }) {
       return (
-        <div className="rounded-2xl bg-black/22 p-3">
-          <p className="text-xs font-bold text-[color:var(--muted)]">{label}</p>
-          <p className="mt-1 text-lg font-black">{value}</p>
+        <div className={`rounded-2xl bg-black/22 ${compact ? "px-1.5 py-2" : "p-3"}`}>
+          <p className={`flex items-center justify-center gap-1 whitespace-nowrap font-bold text-[color:var(--muted)] ${compact ? "text-[10px]" : "text-xs"}`}>
+            {icon && <span className={`text-sm leading-none ${iconClass}`}>{icon}</span>}
+            <span>{label}</span>
+          </p>
+          <p className={`mt-1 whitespace-nowrap font-black ${compact ? "text-sm" : "text-lg"}`}>{value}</p>
         </div>
       );
     }

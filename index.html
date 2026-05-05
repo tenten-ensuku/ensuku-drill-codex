@@ -310,11 +310,11 @@
       margin-left: auto;
     }
     .answer-pad.size-small {
-      width: min(50vw, 186px);
+      width: min(55vw, 205px);
     }
     .settings-preview .answer-pad.size-small {
-      width: 58%;
-      max-width: 186px;
+      width: 64%;
+      max-width: 205px;
     }
     .answer-action {
       width: min(74vw, 264px);
@@ -326,7 +326,7 @@
       margin-left: 0;
     }
     .answer-action.size-small {
-      width: min(50vw, 186px);
+      width: min(55vw, 205px);
     }
     .answer-confirm {
       min-height: 62px;
@@ -618,7 +618,7 @@
       margin-left: 0;
     }
     .ura-fail-pad.size-small {
-      width: min(50vw, 186px);
+      width: min(55vw, 205px);
     }
     .ura-blackout,
     .ura-slash,
@@ -826,13 +826,13 @@
     @media (max-width: 420px) {
       .answer-pad { width: min(76vw, 252px); }
       .answer-pad.size-large { width: 100%; }
-      .answer-pad.size-small { width: min(50vw, 178px); }
+      .answer-pad.size-small { width: min(55vw, 196px); }
       .answer-action { width: min(76vw, 252px); }
       .answer-action.size-large { width: 100%; }
-      .answer-action.size-small { width: min(50vw, 178px); }
+      .answer-action.size-small { width: min(55vw, 196px); }
       .ura-fail-pad { width: min(76vw, 252px); }
       .ura-fail-pad.size-large { width: 100%; }
-      .ura-fail-pad.size-small { width: min(50vw, 178px); }
+      .ura-fail-pad.size-small { width: min(55vw, 196px); }
       .answer-btn { border-radius: 0; }
     }
     @media (max-width: 340px) {
@@ -841,24 +841,24 @@
       .panel-tight { padding-left: 12px; padding-right: 12px; }
       .answer-pad { width: min(76vw, 232px); }
       .answer-pad.size-large { width: 100%; }
-      .answer-pad.size-small { width: min(50vw, 164px); }
+      .answer-pad.size-small { width: min(55vw, 180px); }
       .answer-action { width: min(76vw, 232px); }
       .answer-action.size-large { width: 100%; }
-      .answer-action.size-small { width: min(50vw, 164px); }
+      .answer-action.size-small { width: min(55vw, 180px); }
       .ura-fail-pad { width: min(76vw, 232px); }
       .ura-fail-pad.size-large { width: 100%; }
-      .ura-fail-pad.size-small { width: min(50vw, 164px); }
+      .ura-fail-pad.size-small { width: min(55vw, 180px); }
     }
     @media (max-height: 720px) {
       .answer-pad { width: min(68vw, 232px); }
       .answer-pad.size-large { width: 100%; }
-      .answer-pad.size-small { width: min(48vw, 168px); }
+      .answer-pad.size-small { width: min(53vw, 185px); }
       .answer-action { width: min(68vw, 232px); }
       .answer-action.size-large { width: 100%; }
-      .answer-action.size-small { width: min(48vw, 168px); }
+      .answer-action.size-small { width: min(53vw, 185px); }
       .ura-fail-pad { width: min(68vw, 232px); }
       .ura-fail-pad.size-large { width: 100%; }
-      .ura-fail-pad.size-small { width: min(48vw, 168px); }
+      .ura-fail-pad.size-small { width: min(53vw, 185px); }
       .answer-confirm { min-height: 58px; }
       .answer-btn { border-radius: 0; font-size: 22px; }
       .feedback { height: 38px; }
@@ -1903,10 +1903,12 @@
               </div>
             )}
 
+            {!isUra && (
             <footer className="mt-3 grid grid-cols-2 gap-2">
               <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(quit)}>メニュー</button>
               <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(retry)}>再挑戦</button>
             </footer>
+            )}
           </div>
           {showGameOver && (
             <PlayGameOverOverlay

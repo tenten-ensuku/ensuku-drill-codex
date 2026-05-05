@@ -463,10 +463,10 @@
       position: relative;
       overflow: hidden;
       border-radius: 22px;
-      min-height: 156px;
+      min-height: 128px;
       display: grid;
       place-items: center;
-      padding: 18px 10px;
+      padding: 12px 8px;
       background:
         radial-gradient(circle at 50% 38%, rgba(255,49,90,0.16), transparent 46%),
         linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
@@ -502,7 +502,7 @@
       position: relative;
       z-index: 1;
       color: #fff1f3;
-      font-size: clamp(50px, 16vw, 74px);
+      font-size: clamp(44px, 14vw, 64px);
       font-weight: 1000;
       line-height: 0.82;
       letter-spacing: 0;
@@ -640,7 +640,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 18;
+    const APP_VERSION = 19;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1626,7 +1626,7 @@
     function GameOverResult({ result, addFavorite, isFavorite, favoriteFlash, startMode, goHome, tap }) {
       return (
         <div className="app-pad mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
-          <section className="panel record-card result-pop rounded-3xl p-5">
+          <section className="panel record-card result-pop rounded-3xl p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-black text-[color:var(--gold-2)]">URA MODE</p>
@@ -1635,13 +1635,13 @@
               <div className="rounded-full border border-white/10 bg-black/24 px-3 py-2 text-xs font-black text-[color:var(--muted)]">{result.modeLabel}</div>
             </div>
 
-            <div className="mt-5">
+            <div className="mt-3">
               <div className="gameover-logo">
                 <div className="gameover-label">GAME<br />OVER</div>
               </div>
             </div>
 
-            <div className="gameover-stat mt-5 grid grid-cols-2 gap-2 text-center">
+            <div className="gameover-stat mt-3 grid grid-cols-2 gap-2 text-center">
               <Stat label="連続正解" value={result.correctCount} />
               <Stat label="時間" value={formatTime(result.elapsedSeconds)} />
             </div>
@@ -1665,8 +1665,8 @@
           )}
 
           <footer className="mt-4 grid grid-cols-2 gap-2 pb-4">
-            <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant, result.sourceList))}>もう一度</button>
             <button className="btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(goHome)}>メニュー</button>
+            <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant, result.sourceList))}>再挑戦</button>
           </footer>
         </div>
       );

@@ -193,21 +193,47 @@
       position: relative;
       z-index: 2;
       width: min(352px, 90vw);
+      min-height: 156px;
       border-radius: 22px;
-      padding: 8px;
+      padding: 18px 10px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
       background:
+        radial-gradient(circle at 50% 38%, rgba(255,49,90,0.16), transparent 46%),
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
         linear-gradient(135deg, rgba(255,49,90,0.62), rgba(255,255,255,0.08), rgba(120,0,18,0.38)),
         rgba(0,0,0,0.58);
+      background-size: auto, 16px 16px, 16px 16px, auto, auto;
       box-shadow:
         0 22px 34px rgba(0,0,0,0.58),
         0 0 34px rgba(255,49,90,0.34);
       animation: logo-hit 3.2s cubic-bezier(.16,.9,.2,1.12) both;
     }
-    .logo-img {
-      display: block;
-      width: 100%;
-      border-radius: 16px;
-      filter: saturate(1.1) contrast(1.07);
+    .logo-frame::after {
+      content: "";
+      position: absolute;
+      inset: 4% 2%;
+      opacity: 0;
+      background:
+        linear-gradient(135deg, transparent 47%, rgba(255,255,255,0.76) 48%, transparent 49%),
+        linear-gradient(74deg, transparent 53%, rgba(255,49,90,0.84) 54%, transparent 55%),
+        linear-gradient(22deg, transparent 55%, rgba(255,255,255,0.48) 56%, transparent 57%);
+      filter: drop-shadow(0 0 12px rgba(255,49,90,0.58));
+      animation: crack 3.2s ease both;
+      pointer-events: none;
+    }
+    .logo-label {
+      position: relative;
+      z-index: 1;
+      color: #fff1f3;
+      font-size: clamp(50px, 16vw, 74px);
+      font-weight: 1000;
+      line-height: 0.82;
+      text-align: center;
+      text-shadow: 0 0 12px rgba(255,49,90,0.7), 0 0 36px rgba(255,49,90,0.42);
+      animation: a-label 3.2s ease both;
     }
     .stats {
       position: relative;
@@ -374,7 +400,7 @@
       <div class="crack"></div>
       <div class="gameover">
         <div class="logo-frame" aria-label="GAME OVER">
-          <img class="logo-img" src="assets/gameover-logo-a.png" alt="GAME OVER" />
+          <div class="logo-label">GAME<br>OVER</div>
         </div>
         <div class="stats">
           <div class="stat"><small>連続正解</small><strong>8</strong></div>

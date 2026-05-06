@@ -959,7 +959,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 30;
+    const APP_VERSION = 31;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1671,7 +1671,7 @@
         const baseMode = getMode(modeId) || MODES[0];
         let bases;
         if (sourceList?.length) {
-          bases = shuffle(sourceList).slice(0, Math.min(sourceList.length, baseMode.questionCount));
+          bases = shuffle(sourceList);
         } else {
           const datasetKey = baseMode.tileCount === 10 ? "10" : String(baseMode.tileCount);
           bases = shuffle(DATASETS[datasetKey]).slice(0, baseMode.questionCount);
@@ -1850,7 +1850,7 @@
         }
         if (res.variant === "normal" && res.wrongQuestions.length) {
           const bucket = readJson(STORAGE.review, []);
-          const merged = dedupeQuestions([...res.wrongQuestions.map(q => normalizeSavedQuestion(q)), ...bucket]).slice(0, 120);
+          const merged = dedupeQuestions([...res.wrongQuestions.map(q => normalizeSavedQuestion(q)), ...bucket]).slice(0, 200);
           writeJson(STORAGE.review, merged);
           setReview(merged);
         }
@@ -2160,7 +2160,7 @@
                 {onClear && <button className="pressable btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(onClear)}>空にする</button>}
               </div>
               <div className="space-y-3">
-                {items.slice(0, 20).map(item => (
+                {items.map(item => (
                   <div key={item.favoriteId} className="rounded-2xl border border-white/10 bg-black/20 p-3">
                     <div className="flex items-center justify-between gap-3">
                       <MiniHand q={item} />
@@ -2635,7 +2635,6 @@
                 <div className="mt-3 rounded-3xl border border-white/10 bg-black/30 p-4 text-center">
                   <p className="text-sm font-bold text-[color:var(--muted)]">{result.variant === "favorite" ? "お気に入り練習" : "復習"}</p>
                   <div className="mt-2 text-5xl font-black">{result.correctCount}<span className="text-xl text-[color:var(--gold)]"> / {result.questionCount}</span></div>
-                  <p className="mx-auto mt-2 max-w-xs text-xs font-bold leading-5 text-[color:var(--muted)]">採点なしの練習を完了しました。気になる形は星で保存できます。</p>
                 </div>
               )}
             </div>
@@ -2891,7 +2890,7 @@
 
     function inferModeFromList(items) {
       const max = Math.max(...items.map(item => item.tileCount || item.tiles.length), 6);
-      if (max >= 10) return items.length > 20 ? "10_all" : "10_20";
+      if (max >= 10) return "10_20";
       if (max >= 7) return "7";
       return "6";
     }

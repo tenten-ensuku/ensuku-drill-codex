@@ -5,7 +5,7 @@ create table if not exists public.ensuku_rankings (
   mode_label text not null,
   variant text not null check (variant in ('normal', 'ura')),
   score integer not null check (score >= 0),
-  rank text not null check (rank in ('A', 'A+', 'S', 'SS', '神')),
+  rank text not null check (rank in ('E', 'D', 'C', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S', 'SS', '神')),
   correct_count integer not null check (correct_count >= 0),
   mistake_count integer not null check (mistake_count >= 0),
   elapsed_seconds integer not null check (elapsed_seconds >= 0),
@@ -24,13 +24,14 @@ for select
 to anon
 using (true);
 
+drop policy if exists "Anyone can submit ensuku results" on public.ensuku_rankings;
 drop policy if exists "Anyone can submit A rank ensuku results" on public.ensuku_rankings;
-create policy "Anyone can submit A rank ensuku results"
+create policy "Anyone can submit ensuku results"
 on public.ensuku_rankings
 for insert
 to anon
 with check (
-  rank in ('A', 'A+', 'S', 'SS', '神')
+  rank in ('E', 'D', 'C', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S', 'SS', '神')
   and mode_id in ('6', '7', '10_20', '10_all')
   and variant in ('normal', 'ura')
   and score >= 0

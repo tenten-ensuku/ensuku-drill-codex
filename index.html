@@ -959,7 +959,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 29;
+    const APP_VERSION = 30;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2475,7 +2475,7 @@
       const rankColor = rankClass(result.rank);
       const averageTime = formatAverageTime(result.elapsedSeconds, result.questionCount);
       const isPractice = result.variant === "favorite" || result.variant === "review";
-      const canPostRanking = !isPractice && rankAtLeast(result.rank, "A");
+      const canPostRanking = !isPractice;
       const gaugeRadius = 104;
       const gaugeCircumference = 2 * Math.PI * gaugeRadius;
       const gaugeProgress = isPractice ? 0 : scoreGaugeProgress(result.modeId, displayScore);
@@ -2674,7 +2674,7 @@
             <button className="btn-quiet w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => setShowPost(v => !v))}>ランキング投稿</button>
             {showPost && (
               <div className="mt-3 space-y-3">
-                <p className="text-sm leading-6 text-[color:var(--muted)]">Aランク以上の成績だけ投稿できます。表モードと裏モードは同じランキングに入ります。</p>
+                <p className="text-sm leading-6 text-[color:var(--muted)]">表モードと裏モードは同じランキングに入ります。投稿したい成績だけ送信できます。</p>
                 <input className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 font-bold outline-none focus:border-[color:var(--gold)]" value={name} onChange={e => setName(e.target.value)} placeholder="名前 任意" />
                 {isSupabaseReady() ? (
                   <button className="btn-main w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(postRanking)}>送信する</button>

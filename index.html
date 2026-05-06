@@ -510,6 +510,10 @@
     .god-rank.result {
       width: 92px;
     }
+    .god-rank.leaderboard {
+      width: 28px;
+      filter: drop-shadow(0 0 8px rgba(242,210,123,0.42));
+    }
     @keyframes rank-reveal {
       0% { opacity: 0; transform: scale(0.72) translateY(6px); }
       64% { opacity: 1; transform: scale(1.08) translateY(0); }
@@ -955,7 +959,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 28;
+    const APP_VERSION = 29;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2254,7 +2258,7 @@
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-black">{row.score}<span className="text-xs text-[color:var(--gold)]">pt</span></p>
-                    <p className="text-xs font-black text-[color:var(--muted)]">{row.rank}</p>
+                    <p className={`text-xs font-black ${rankClass(row.rank)}`}><RankBadge rank={row.rank} size="leaderboard" /></p>
                   </div>
                 </div>
               ))}

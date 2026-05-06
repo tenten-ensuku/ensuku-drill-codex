@@ -959,7 +959,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 31;
+    const APP_VERSION = 32;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2647,8 +2647,8 @@
           </section>
 
           <footer className="mt-3 grid grid-cols-2 gap-2 pb-3">
-            <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant, result.sourceList))}>もう一度</button>
             <button className="btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(goHome)}>メニュー</button>
+            <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant, result.sourceList))}>もう一度</button>
           </footer>
 
           {result.wrongQuestions.length > 0 && (

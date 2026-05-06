@@ -967,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 35;
+    const APP_VERSION = 36;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1468,12 +1468,14 @@
     }
 
     const TILE_DECODE_CACHE = new Map();
+    const TILE_IMAGE_CACHE = new Map();
 
     function ensureTileDecoded(suit, num) {
       const src = tilePath(suit, num);
       if (TILE_DECODE_CACHE.has(src)) return TILE_DECODE_CACHE.get(src);
       const promise = new Promise(resolve => {
         const img = new Image();
+        TILE_IMAGE_CACHE.set(src, img);
         img.onload = async () => {
           try {
             if (img.decode) await img.decode();
@@ -2769,20 +2771,33 @@
       const normalizedQ = { ...q, tiles: sortedTiles(q.tiles) };
       const [slots, setSlots] = useState([normalizedQ, normalizedQ]);
       const [activeSlot, setActiveSlot] = useState(0);
+      const activeSlotRef = useRef(0);
       const qKey = `${q.instanceId || q.baseId}-${q.suit}-${normalizedQ.tiles.join("")}`;
       useEffect(() => {
         let active = true;
+        let raf1 = 0;
+        let raf2 = 0;
         Promise.all(normalizedQ.tiles.map(num => ensureTileDecoded(q.suit, num))).then(() => {
           if (!active) return;
-          const nextSlot = activeSlot === 0 ? 1 : 0;
+          const nextSlot = activeSlotRef.current === 0 ? 1 : 0;
           setSlots(prev => {
             const next = [...prev];
             next[nextSlot] = normalizedQ;
             return next;
           });
-          setActiveSlot(nextSlot);
+          raf1 = requestAnimationFrame(() => {
+            raf2 = requestAnimationFrame(() => {
+              if (!active) return;
+              activeSlotRef.current = nextSlot;
+              setActiveSlot(nextSlot);
+            });
+          });
         });
-        return () => { active = false; };
+        return () => {
+          active = false;
+          cancelAnimationFrame(raf1);
+          cancelAnimationFrame(raf2);
+        };
       }, [qKey]);
       return (
         <div className="relative w-full overflow-hidden">
@@ -2830,7 +2845,7 @@
       return (
         <div style={{ width, aspectRatio: "66 / 90" }} className="shrink-0">
           {!error ? (
-            <img className="tile-img" src={tilePath(suit, num)} alt={`${suit}${num}`} onError={() => setError(true)} />
+            <img className="tile-img" src={tilePath(suit, num)} alt={`${suit}${num}`} decoding="sync" loading="eager" onError={() => setError(true)} />
           ) : (
             <div className="tile-fallback" style={{ fontSize, color }}>{num}</div>
           )}

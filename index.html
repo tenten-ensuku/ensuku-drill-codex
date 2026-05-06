@@ -1175,6 +1175,10 @@
       return [...new Set(nums)].sort((a, b) => a - b);
     }
 
+    function sortedTiles(nums) {
+      return [...nums].sort((a, b) => a - b);
+    }
+
     function getValidShifts(tiles, answers) {
       const minTile = Math.min(...tiles);
       const maxTile = Math.max(...tiles);
@@ -1592,7 +1596,7 @@
               instanceId: `${q.favoriteId || q.baseId || "saved"}-${Date.now()}-${index}`,
               baseId: q.baseId || `${q.tileCount || q.tiles.length}-saved-${index}`,
               tileCount: q.tileCount || q.tiles.length,
-              tiles: [...q.tiles],
+              tiles: sortedTiles(q.tiles),
               answers: uniqueSorted(q.answers),
               suit: q.suit || "m"
             }))
@@ -2509,12 +2513,13 @@
     }
 
     function Hand({ q }) {
-      const [shownQ, setShownQ] = useState(q);
-      const qKey = `${q.instanceId || q.baseId}-${q.suit}-${q.tiles.join("")}`;
+      const normalizedQ = { ...q, tiles: sortedTiles(q.tiles) };
+      const [shownQ, setShownQ] = useState(normalizedQ);
+      const qKey = `${q.instanceId || q.baseId}-${q.suit}-${normalizedQ.tiles.join("")}`;
       useEffect(() => {
         let active = true;
-        Promise.all(q.tiles.map(num => ensureTileDecoded(q.suit, num))).then(() => {
-          if (active) setShownQ(q);
+        Promise.all(normalizedQ.tiles.map(num => ensureTileDecoded(q.suit, num))).then(() => {
+          if (active) setShownQ(normalizedQ);
         });
         return () => { active = false; };
       }, [qKey]);
@@ -2534,12 +2539,13 @@
     }
 
     function MiniHand({ q, compact = false }) {
+      const tiles = sortedTiles(q.tiles);
       const width = compact
-        ? q.tiles.length >= 10 ? "clamp(18px, 6.4vw, 23px)" : q.tiles.length >= 7 ? "clamp(20px, 7vw, 25px)" : 24
+        ? tiles.length >= 10 ? "clamp(18px, 6.4vw, 23px)" : tiles.length >= 7 ? "clamp(20px, 7vw, 25px)" : 24
         : 24;
       return (
         <div className="flex w-full items-center gap-px overflow-hidden">
-          {q.tiles.map((num, idx) => <Tile key={`${idx}-${num}`} suit={q.suit} num={num} width={width} />)}
+          {tiles.map((num, idx) => <Tile key={`${idx}-${num}`} suit={q.suit} num={num} width={width} />)}
         </div>
       );
     }
@@ -2645,12 +2651,14 @@
     }
 
     function normalizeSavedQuestion(q) {
+      const tiles = sortedTiles(q.tiles);
+      const answers = uniqueSorted(q.answers);
       return {
-        favoriteId: `${q.baseId}-${q.suit}-${q.tiles.join("")}-${q.answers.join("")}`,
+        favoriteId: `${q.baseId}-${q.suit}-${tiles.join("")}-${answers.join("")}`,
         baseId: q.baseId,
         tileCount: q.tileCount,
-        tiles: [...q.tiles],
-        answers: [...q.answers],
+        tiles,
+        answers,
         suit: q.suit || "m"
       };
     }

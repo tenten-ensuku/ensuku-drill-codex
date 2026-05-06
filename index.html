@@ -954,7 +954,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 23;
+    const APP_VERSION = 24;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1956,7 +1956,7 @@
             <QuestionList
               empty="間違えた牌姿はまだありません。ミスした問題が自動で入ります。"
               items={review}
-              actionLabel="復習する"
+              actionLabel="まとめて練習"
               onStart={() => startMode(inferModeFromList(review), "review", review)}
               onRemove={null}
               onFavorite={addFavorite}

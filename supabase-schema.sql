@@ -42,3 +42,7 @@ on public.ensuku_rankings (mode_id, submitted_at desc, score desc, elapsed_secon
 
 create index if not exists ensuku_rankings_mode_score_idx
 on public.ensuku_rankings (mode_id, score desc, elapsed_seconds asc);
+
+-- Ranking display rule:
+-- The app fetches candidates ordered by score desc / elapsed_seconds asc,
+-- then shows only the best visible result per player_name for each mode and period.

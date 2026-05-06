@@ -955,7 +955,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 25;
+    const APP_VERSION = 26;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1363,12 +1363,18 @@
         .eq("mode_id", modeId)
         .order("score", { ascending: false })
         .order("elapsed_seconds", { ascending: true })
-        .limit(20);
+        .limit(200);
       const startIso = periodStartIso(period);
       if (startIso) query = query.gte("submitted_at", startIso);
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      const seenNames = new Set();
+      return (data || []).filter(row => {
+        const key = normalizePlayerName(row.player_name);
+        if (seenNames.has(key)) return false;
+        seenNames.add(key);
+        return true;
+      }).slice(0, 20);
     }
 
     function scoreGame(questionCount, correctCount, mistakes, elapsedSeconds) {

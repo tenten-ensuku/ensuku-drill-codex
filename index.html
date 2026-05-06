@@ -967,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 33;
+    const APP_VERSION = 34;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2738,26 +2738,45 @@
 
     function Hand({ q }) {
       const normalizedQ = { ...q, tiles: sortedTiles(q.tiles) };
-      const [shownQ, setShownQ] = useState(normalizedQ);
+      const [slots, setSlots] = useState([normalizedQ, normalizedQ]);
+      const [activeSlot, setActiveSlot] = useState(0);
       const qKey = `${q.instanceId || q.baseId}-${q.suit}-${normalizedQ.tiles.join("")}`;
       useEffect(() => {
         let active = true;
         Promise.all(normalizedQ.tiles.map(num => ensureTileDecoded(q.suit, num))).then(() => {
-          if (active) setShownQ(normalizedQ);
+          if (!active) return;
+          const nextSlot = activeSlot === 0 ? 1 : 0;
+          setSlots(prev => {
+            const next = [...prev];
+            next[nextSlot] = normalizedQ;
+            return next;
+          });
+          setActiveSlot(nextSlot);
         });
         return () => { active = false; };
       }, [qKey]);
-      const count = shownQ.tiles.length;
-      const width = count >= 10
-        ? "min(40px, calc((100% - 9px) / 10))"
-        : count === 7
-          ? "min(48px, calc((100% - 6px) / 7))"
-          : "min(54px, calc((100% - 5px) / 6))";
       return (
-        <div key={`${shownQ.instanceId || shownQ.baseId}-${shownQ.suit}-${shownQ.tiles.join("")}`} className="flex w-full items-center justify-center gap-px overflow-hidden">
-          {shownQ.tiles.map((num, idx) => (
-            <Tile key={`${idx}-${num}`} suit={shownQ.suit} num={num} width={width} />
-          ))}
+        <div className="relative w-full overflow-hidden">
+          {slots.map((slotQ, slot) => {
+            const count = slotQ.tiles.length;
+            const width = count >= 10
+              ? "min(40px, calc((100% - 9px) / 10))"
+              : count === 7
+                ? "min(48px, calc((100% - 6px) / 7))"
+                : "min(54px, calc((100% - 5px) / 6))";
+            const visible = slot === activeSlot;
+            return (
+              <div
+                key={slot}
+                className={`flex w-full items-center justify-center gap-px overflow-hidden ${visible ? "relative" : "absolute left-0 top-0"}`}
+                style={{ opacity: visible ? 1 : 0, visibility: visible ? "visible" : "hidden", pointerEvents: visible ? "auto" : "none" }}
+              >
+                {slotQ.tiles.map((num, idx) => (
+                  <Tile key={`${idx}-${num}`} suit={slotQ.suit} num={num} width={width} />
+                ))}
+              </div>
+            );
+          })}
         </div>
       );
     }
@@ -2776,6 +2795,7 @@
 
     function Tile({ suit, num, width }) {
       const [error, setError] = useState(false);
+      useEffect(() => setError(false), [suit, num]);
       const color = suit === "m" ? "#b91c1c" : suit === "p" ? "#1d4ed8" : "#047857";
       const fontSize = typeof width === "number" ? Math.max(14, width * 0.58) : "clamp(15px, 4vw, 22px)";
       return (
@@ -2921,6 +2941,9 @@
           ensureTileDecoded(suit, n);
         }
       });
+      for (let n = 1; n <= 7; n++) {
+        ensureTileDecoded("z", n);
+      }
     }
 
     ReactDOM.createRoot(document.getElementById("root")).render(<App />);

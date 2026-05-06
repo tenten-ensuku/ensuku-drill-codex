@@ -377,6 +377,14 @@
     }
     .judge-flash.ok { color: #ff4b4b; }
     .judge-flash.ng { color: #63a7ff; }
+    .ura-side-menu {
+      position: absolute;
+      left: 4px;
+      bottom: 0;
+      width: clamp(74px, 22vw, 98px);
+      min-height: 44px;
+      z-index: 2;
+    }
     @keyframes judge-flash {
       0% { opacity: 0; transform: scale(0.72) translateY(6px); }
       16% { opacity: 1; transform: scale(1.08) translateY(0); }
@@ -959,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 32;
+    const APP_VERSION = 33;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2299,6 +2307,9 @@
                 <div key={judgeFlash.id} className={`judge-flash ${judgeFlash.type}`}>
                   {judgeFlash.type === "ok" ? "○" : "×"}
                 </div>
+              )}
+              {isUra && (
+                <button className="ura-side-menu btn-quiet rounded-2xl px-2 py-2 text-xs font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(quit)}>メニュー</button>
               )}
               <section className={`answer-pad size-${answerPadSize} grid grid-cols-3 content-start gap-0`}>
                 {[1,2,3,4,5,6,7,8,9].map(num => {

@@ -342,6 +342,39 @@
     }
     .feedback.ok { background: rgba(54,163,113,0.18); color: #b9f5d5; animation: feedback-pop 480ms ease both; }
     .feedback.ng { background: rgba(199,55,47,0.20); color: #ffd7d3; animation: shake 360ms ease both; }
+    .answer-zone {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-start;
+    }
+    .judge-flash {
+      position: absolute;
+      left: 4px;
+      top: 0;
+      width: clamp(58px, 18vw, 82px);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      font-size: clamp(46px, 13vw, 70px);
+      font-weight: 900;
+      line-height: 1;
+      pointer-events: none;
+      opacity: 0;
+      animation: judge-flash 1s ease both;
+      text-shadow: 0 5px 14px rgba(0,0,0,0.55);
+      filter: drop-shadow(0 0 14px currentColor);
+    }
+    .judge-flash.ok { color: #ff4b4b; }
+    .judge-flash.ng { color: #63a7ff; }
+    @keyframes judge-flash {
+      0% { opacity: 0; transform: scale(0.72) translateY(6px); }
+      16% { opacity: 1; transform: scale(1.08) translateY(0); }
+      72% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.96) translateY(-4px); }
+    }
     @keyframes feedback-pop {
       0% { transform: scale(0.78); opacity: 0; }
       62% { transform: scale(1.05); opacity: 1; }
@@ -1336,6 +1369,7 @@
       const [unlockFlash, setUnlockFlash] = useState(null);
       const [unlockHighlight, setUnlockHighlight] = useState(null);
       const [favoriteFlash, setFavoriteFlash] = useState(null);
+      const [judgeFlash, setJudgeFlash] = useState(null);
       const [answerPadSize, setAnswerPadSize] = useState(() => localStorage.getItem(STORAGE.answerPadSize) || "normal");
       const [tick, setTick] = useState(0);
       const audioRef = useRef(null);
@@ -1486,6 +1520,7 @@
 
       function startMode(modeId, variant = "normal", sourceList = null) {
         ensureAudio();
+        setJudgeFlash(null);
         const baseMode = getMode(modeId) || MODES[0];
         let bases;
         if (sourceList?.length) {
@@ -1542,12 +1577,14 @@
           const completed = sameSet(selected, q.answers);
           if (hit && completed) {
             tone("ok");
+            showJudge("ok");
             setGame(g => ({ ...g, selected, correctCount: g.correctCount + 1 }));
             setTimeout(() => advanceUra(true), 120);
           } else if (hit) {
             setGame(g => ({ ...g, selected }));
           } else {
             tone("ng");
+            showJudge("ng");
             setGame(g => ({
               ...g,
               selected,
@@ -1562,11 +1599,20 @@
         setGame(g => ({ ...g, selected }));
       }
 
+      function showJudge(type) {
+        const id = Date.now();
+        setJudgeFlash({ type, id });
+        setTimeout(() => {
+          setJudgeFlash(current => current?.id === id ? null : current);
+        }, 1000);
+      }
+
       function confirmAnswer() {
         if (!game || game.feedback) return;
         const q = currentQuestion();
         const ok = sameSet(game.selected, q.answers);
         tone(ok ? "ok" : "ng");
+        showJudge(ok ? "ok" : "ng");
         const wrong = ok ? null : { ...q, selected: [...game.selected] };
         setGame(g => ({
           ...g,
@@ -1755,6 +1801,7 @@
               quit={() => setScreen("home")}
               retry={() => startMode(game.mode.id, game.variant, game.sourceList)}
               answerPadSize={answerPadSize}
+              judgeFlash={judgeFlash}
               tap={tap}
             />
           )}
@@ -1965,7 +2012,7 @@
       );
     }
 
-    function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, isFavorite, favoriteFlash, quit, retry, answerPadSize, tap }) {
+    function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, isFavorite, favoriteFlash, quit, retry, answerPadSize, judgeFlash, tap }) {
       const counts = q.tiles.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {});
       const isUra = game.variant === "ura";
       const showGameOver = isUra && game.gameOverWrong;
@@ -1986,30 +2033,27 @@
             </header>
 
             <section className="panel panel-tight mb-2 rounded-3xl p-4">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-sm font-bold text-[color:var(--muted)]">牌姿</span>
-                <StarFavoriteButton active={isFavorite(q)} justAdded={favoriteFlash === normalizeSavedQuestion(q).favoriteId} onPress={() => addFavorite(q)} tap={tap} label="お気に入りに追加" />
-              </div>
               <Hand q={q} />
             </section>
 
-            {!isUra && game.feedback && (
-              <div className={`feedback mb-4 ${game.feedback === "ok" ? "ok" : game.feedback === "ng" ? "ng" : "bg-black/20 text-[color:var(--muted)]"}`}>
-                {game.feedback === "ok" ? "正解" : `待ち ${q.answers.join(", ")}`}
-              </div>
-            )}
-
-            <section className={`answer-pad size-${answerPadSize} grid grid-cols-3 content-start gap-0`}>
-              {[1,2,3,4,5,6,7,8,9].map(num => {
-                const disabled = (counts[num] || 0) >= 4;
-                const selected = game.selected.includes(num);
-                return (
-                  <button key={num} disabled={disabled || !!game.feedback} className={`answer-btn pressable ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${isUra && !selected ? "ura" : ""} ${game.gameOverWrong === num ? "wrong" : ""}`} {...tap(() => selectAnswer(num))}>
-                    {num}
-                  </button>
-                );
-              })}
-            </section>
+            <div className="answer-zone">
+              {judgeFlash && (
+                <div key={judgeFlash.id} className={`judge-flash ${judgeFlash.type}`}>
+                  {judgeFlash.type === "ok" ? "○" : "×"}
+                </div>
+              )}
+              <section className={`answer-pad size-${answerPadSize} grid grid-cols-3 content-start gap-0`}>
+                {[1,2,3,4,5,6,7,8,9].map(num => {
+                  const disabled = (counts[num] || 0) >= 4;
+                  const selected = game.selected.includes(num);
+                  return (
+                    <button key={num} disabled={disabled || !!game.feedback} className={`answer-btn pressable ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${isUra && !selected ? "ura" : ""} ${game.gameOverWrong === num ? "wrong" : ""}`} {...tap(() => selectAnswer(num))}>
+                      {num}
+                    </button>
+                  );
+                })}
+              </section>
+            </div>
 
             {!isUra && (
               <div className={`answer-action size-${answerPadSize} mt-1.5`}>

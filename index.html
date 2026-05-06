@@ -1368,6 +1368,26 @@
       return `${IMG_BASE}${SUIT_PREFIX[suit]}${num}-66-90-l.png`;
     }
 
+    const TILE_DECODE_CACHE = new Map();
+
+    function ensureTileDecoded(suit, num) {
+      const src = tilePath(suit, num);
+      if (TILE_DECODE_CACHE.has(src)) return TILE_DECODE_CACHE.get(src);
+      const promise = new Promise(resolve => {
+        const img = new Image();
+        img.onload = async () => {
+          try {
+            if (img.decode) await img.decode();
+          } catch {}
+          resolve(src);
+        };
+        img.onerror = () => resolve(src);
+        img.src = src;
+      });
+      TILE_DECODE_CACHE.set(src, promise);
+      return promise;
+    }
+
     function App() {
       const [screen, setScreen] = useState("home");
       const [game, setGame] = useState(null);
@@ -2489,16 +2509,25 @@
     }
 
     function Hand({ q }) {
-      const count = q.tiles.length;
+      const [shownQ, setShownQ] = useState(q);
+      const qKey = `${q.instanceId || q.baseId}-${q.suit}-${q.tiles.join("")}`;
+      useEffect(() => {
+        let active = true;
+        Promise.all(q.tiles.map(num => ensureTileDecoded(q.suit, num))).then(() => {
+          if (active) setShownQ(q);
+        });
+        return () => { active = false; };
+      }, [qKey]);
+      const count = shownQ.tiles.length;
       const width = count >= 10
         ? "min(40px, calc((100% - 9px) / 10))"
         : count === 7
           ? "min(48px, calc((100% - 6px) / 7))"
           : "min(54px, calc((100% - 5px) / 6))";
       return (
-        <div className="flex w-full items-center justify-center gap-px overflow-hidden">
-          {q.tiles.map((num, idx) => (
-            <Tile key={`${idx}-${num}`} suit={q.suit} num={num} width={width} />
+        <div key={`${shownQ.instanceId || shownQ.baseId}-${shownQ.suit}-${shownQ.tiles.join("")}`} className="flex w-full items-center justify-center gap-px overflow-hidden">
+          {shownQ.tiles.map((num, idx) => (
+            <Tile key={`${idx}-${num}`} suit={shownQ.suit} num={num} width={width} />
           ))}
         </div>
       );
@@ -2657,8 +2686,7 @@
     function preloadTiles() {
       ["m", "p", "s"].forEach(suit => {
         for (let n = 1; n <= 9; n++) {
-          const img = new Image();
-          img.src = tilePath(suit, n);
+          ensureTileDecoded(suit, n);
         }
       });
     }

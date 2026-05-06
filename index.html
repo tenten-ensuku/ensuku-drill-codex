@@ -1370,7 +1370,10 @@
       const [unlockHighlight, setUnlockHighlight] = useState(null);
       const [favoriteFlash, setFavoriteFlash] = useState(null);
       const [judgeFlash, setJudgeFlash] = useState(null);
-      const [answerPadSize, setAnswerPadSize] = useState(() => localStorage.getItem(STORAGE.answerPadSize) || "normal");
+      const [answerPadSize, setAnswerPadSize] = useState(() => {
+        const saved = localStorage.getItem(STORAGE.answerPadSize);
+        return saved === "small" ? "small" : "normal";
+      });
       const [tick, setTick] = useState(0);
       const audioRef = useRef(null);
       const touchRef = useRef(false);
@@ -1837,7 +1840,6 @@
     function Home({ records, favorites, review, isUnlocked, startMode, removeFavorite, clearReview, answerPadSize, setAnswerPadSize, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
       const sizeOptions = [
-        ["large", "大きい"],
         ["normal", "通常"],
         ["small", "小さめ"]
       ];
@@ -1900,7 +1902,7 @@
               <h2 className="text-xl font-black">設定</h2>
               <div className="mt-4">
                 <p className="text-sm font-black text-[color:var(--muted)]">回答ボタンサイズ</p>
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   {sizeOptions.map(([id, label]) => (
                     <button
                       key={id}
@@ -2016,6 +2018,7 @@
       const counts = q.tiles.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {});
       const isUra = game.variant === "ura";
       const showGameOver = isUra && game.gameOverWrong;
+      const promptTitle = game.mode.tileCount === 6 ? "2面子完成となる受け入れは？" : "何待ち？";
       return (
         <div className={`play-pad mx-auto flex h-screen max-h-screen w-full max-w-md flex-col overflow-hidden px-4 py-3 ${showGameOver ? "game-over-active" : ""}`}>
           <div className="play-content flex min-h-0 flex-1 flex-col">
@@ -2033,6 +2036,7 @@
             </header>
 
             <section className="panel panel-tight mb-2 rounded-3xl p-4">
+              <p className="mb-3 text-center text-sm font-black text-[color:var(--gold-2)]">{promptTitle}</p>
               <Hand q={q} />
             </section>
 

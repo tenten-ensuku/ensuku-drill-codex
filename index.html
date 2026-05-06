@@ -57,6 +57,13 @@
       mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.15));
     }
     button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    body.play-lock {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
     .app-shell { min-height: 100vh; min-height: 100dvh; }
     .panel {
       background: linear-gradient(180deg, rgba(7,16,14,0.94), rgba(12,23,21,0.94));
@@ -1106,19 +1113,19 @@
 
     const RANKS = {
       "6": [
-        ["SSS", 374], ["SS", 365], ["S", 355], ["A+", 345], ["A", 335], ["A-", 325],
+        ["神", 373], ["SS", 365], ["S", 355], ["A+", 345], ["A", 335], ["A-", 325],
         ["B+", 315], ["B", 305], ["B-", 295], ["C", 285], ["D", 275], ["E", -Infinity]
       ],
       "7": [
-        ["SSS", 545], ["SS", 535], ["S", 520], ["A+", 510], ["A", 500], ["A-", 490],
+        ["神", 541], ["SS", 535], ["S", 520], ["A+", 510], ["A", 500], ["A-", 490],
         ["B+", 480], ["B", 470], ["B-", 460], ["C", 450], ["D", 440], ["E", -Infinity]
       ],
       "10_20": [
-        ["SSS", 560], ["SS", 530], ["S", 500], ["A+", 460], ["A", 420], ["A-", 385],
+        ["神", 560], ["SS", 530], ["S", 500], ["A+", 460], ["A", 420], ["A-", 385],
         ["B+", 350], ["B", 315], ["B-", 280], ["C", 230], ["D", 170], ["E", -Infinity]
       ],
       "10_all": [
-        ["SSS", 2240], ["SS", 2120], ["S", 2000], ["A+", 1800], ["A", 1600], ["A-", 1400],
+        ["神", 2240], ["SS", 2120], ["S", 2000], ["A+", 1800], ["A", 1600], ["A-", 1400],
         ["B+", 1200], ["B", 1000], ["B-", 800], ["C", 600], ["D", 400], ["E", -Infinity]
       ]
     };
@@ -1262,7 +1269,7 @@
         { startRank: "A", endRank: "A+", start: 8 / 12, end: 9 / 12 },
         { startRank: "A+", endRank: "S", start: 9 / 12, end: 10 / 12 },
         { startRank: "S", endRank: "SS", start: 10 / 12, end: 11 / 12 },
-        { startRank: "SS", endRank: "SSS", start: 11 / 12, end: 1 }
+        { startRank: "SS", endRank: "神", start: 11 / 12, end: 1 }
       ];
       const safeScore = Math.max(0, Number(score) || 0);
       for (const band of bands) {
@@ -1279,7 +1286,7 @@
     }
 
     function rankAtLeast(actual, required) {
-      const order = ["E", "D", "C", "B-", "B", "B+", "A-", "A", "A+", "S", "SS", "SSS"];
+      const order = ["E", "D", "C", "B-", "B", "B+", "A-", "A", "A+", "S", "SS", "神"];
       return order.indexOf(actual) >= order.indexOf(required);
     }
 
@@ -1305,33 +1312,34 @@
       return `Best ${record.best}pt${average}`;
     }
 
-    function rankComment(rank) {
+    function rankComment(rank, tileCount) {
+      const shapeLabel = tileCount === 6 ? "六枚形" : tileCount === 7 ? "七枚形" : "十枚形";
       const comments = {
-        SSS: "卓上の情報が止まって見えています。神域の最高到達点。",
-        SS: "鋭さと安定感が両立しています。ほとんど読み切っています。",
-        S: "見事です。実戦でも頼れる待ち読みの速度です。",
-        "A+": "かなり良い記録です。Sランクが見える位置まで来ています。",
-        A: "安定した合格ラインです。この調子で精度を上げましょう。",
-        "A-": "基礎は十分です。あと少しの短縮で上位ランクに届きます。",
-        "B+": "良い手応えです。迷った形を復習すると伸びます。",
-        B: "標準ラインです。正解牌の抜けを少しずつ減らしましょう。",
-        "B-": "もう一押しです。焦らず形ごとの待ちを整理しましょう。",
-        C: "練習の効果が出やすい段階です。復習から始めるのがおすすめです。",
-        D: "まずは牌姿に慣れるところから。速度より正確さを優先しましょう。",
-        E: "ここからです。間違えた形をひとつずつ潰していきましょう。"
+        神: "みんなには内緒だよ",
+        SS: "キミは神になるつもりかい！？",
+        S: "Congratulations!…Congratulations!…",
+        "A+": "狂気の沙汰ほど面白い……！",
+        A: "強えっつっても兄さんのは昼間の麻雀だ",
+        "A-": "行くぜ、坊や！！",
+        "B+": "倍プッシュだ…！",
+        B: "こざかしいことと無関係のところに強者は存在する",
+        "B-": "熱い三流なら上等よ",
+        C: "まだまだだね",
+        D: `${shapeLabel}が仲間になりたそうにコチラを見ている`,
+        E: `へんじが無い。ただの${shapeLabel}のようだ。`
       };
       return comments[rank] || comments.E;
     }
 
     function RankBadge({ rank, size = "menu", className = "" }) {
-      if (rank === "SSS") {
+      if (rank === "神") {
         return <img className={`god-rank ${size} ${className}`} src="assets/god-rank.png" alt="神" />;
       }
       return <>{displayRank(rank)}</>;
     }
 
     function displayRank(rank) {
-      return rank === "SSS" ? "神" : rank;
+      return rank;
     }
 
     function makeResult({ mode, variant, sourceList, questionCount, score, rank, correctCount, mistakeCount, elapsedSeconds, wrongQuestions, previousBest, isNewRecord, gameOver = false }) {
@@ -1402,6 +1410,26 @@
             wrongQuestions: []
           }));
           setScreen("result");
+        } else if (preview === "god") {
+          const mode = MODES[0];
+          const score = rankThreshold(mode.id, "神");
+          localStorage.setItem(mode.bestKey, String(score));
+          localStorage.setItem(mode.elapsedKey, String(Math.max(1, Math.round(mode.questionCount * 1.8))));
+          setResult(makeResult({
+            mode,
+            variant: "normal",
+            sourceList: null,
+            questionCount: mode.questionCount,
+            score,
+            rank: "神",
+            correctCount: mode.questionCount,
+            mistakeCount: 0,
+            elapsedSeconds: Math.max(1, Math.round(mode.questionCount * 1.8)),
+            previousBest: Math.max(0, score - 10),
+            isNewRecord: true,
+            wrongQuestions: []
+          }));
+          setScreen("result");
         } else if (preview === "unlock-normal") {
           setUnlockFlash({ label: "十枚形 20問・80問", variant: "normal", modeIds: ["10_20", "10_all"] });
         } else if (preview === "unlock-ura") {
@@ -1412,6 +1440,11 @@
       useEffect(() => {
         localStorage.setItem(STORAGE.answerPadSize, answerPadSize);
       }, [answerPadSize]);
+
+      useEffect(() => {
+        document.body.classList.toggle("play-lock", screen === "game");
+        return () => document.body.classList.remove("play-lock");
+      }, [screen]);
 
       useEffect(() => {
         if (screen !== "game" || !game || game.ended) return;
@@ -2214,6 +2247,7 @@
       const [copied, setCopied] = useState(false);
       const [displayScore, setDisplayScore] = useState(result.variant === "favorite" || result.variant === "review" ? result.score : 0);
       const [showRank, setShowRank] = useState(result.variant === "favorite" || result.variant === "review");
+      const [showComment, setShowComment] = useState(result.variant === "favorite" || result.variant === "review");
       const [showRecordStamp, setShowRecordStamp] = useState(false);
       const rankColor = rankClass(result.rank);
       const averageTime = formatAverageTime(result.elapsedSeconds, result.questionCount);
@@ -2226,10 +2260,12 @@
       useEffect(() => {
         if (isPractice) {
           setDisplayScore(result.score);
+          setShowComment(true);
           return;
         }
         setShowRecordStamp(false);
         setShowRank(false);
+        setShowComment(false);
         setDisplayScore(0);
         let frame = 0;
         const started = performance.now();
@@ -2260,6 +2296,9 @@
                 tone?.("stamp");
                 setShowRecordStamp(true);
               }, 540);
+              setTimeout(() => setShowComment(true), 1040);
+            } else {
+              setTimeout(() => setShowComment(true), 520);
             }
           }
         }
@@ -2365,7 +2404,9 @@
                     </div>
                     {showRecordStamp && <div className="record-stamp" aria-label="記録更新" />}
                   </div>
-                  <p className="mx-auto mt-2 max-w-xs text-xs font-bold leading-5 text-[color:var(--muted)]">{rankComment(result.rank)}</p>
+                  {showComment && (
+                    <p className="mx-auto mt-2 max-w-xs text-xs font-bold leading-5 text-[color:var(--muted)]">{rankComment(result.rank, result.tileCount)}</p>
+                  )}
                 </div>
               ) : (
                 <div className="mt-3 rounded-3xl border border-white/10 bg-black/30 p-4 text-center">
@@ -2605,7 +2646,7 @@
     }
 
     function rankClass(rank) {
-      if (rank === "SSS" || rank === "SS") return "rainbow-text";
+      if (rank === "神" || rank === "SS") return "rainbow-text";
       if (rank === "S") return "gold-text";
       if (rank?.startsWith("A")) return "text-red-300";
       if (rank?.startsWith("B")) return "text-emerald-300";

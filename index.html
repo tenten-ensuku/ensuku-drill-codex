@@ -758,10 +758,18 @@
     .unlock-card {
       position: relative;
       overflow: hidden;
+      box-shadow: 0 28px 90px rgba(0,0,0,0.58), 0 0 0 1px rgba(216,168,60,0.16) inset;
+    }
+    .unlock-card.ura {
       background:
         radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.25), transparent 12rem),
         linear-gradient(180deg, rgba(17,10,27,0.98), rgba(4,5,10,0.98));
-      box-shadow: 0 28px 90px rgba(0,0,0,0.58), 0 0 0 1px rgba(216,168,60,0.16) inset;
+    }
+    .unlock-card.normal {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(216,168,60,0.24), transparent 12rem),
+        linear-gradient(180deg, rgba(41,29,19,0.98), rgba(8,6,4,0.98));
+      box-shadow: 0 28px 90px rgba(0,0,0,0.58), 0 0 0 1px rgba(185,139,85,0.22) inset;
     }
     .unlock-card::before {
       content: "";
@@ -779,6 +787,41 @@
     .unlock-chain-left { animation: unlock-chain-left 2.35s cubic-bezier(.2,.72,.16,1) both; transform-origin: 94px 78px; }
     .unlock-chain-right { animation: unlock-chain-right 2.35s cubic-bezier(.2,.72,.16,1) both; transform-origin: 174px 78px; }
     .unlock-spark { opacity: 0; animation: unlock-spark 2.35s ease both; transform-origin: center; }
+    .unlock-target-highlight {
+      position: relative;
+      isolation: isolate;
+      animation: unlock-target-pulse 3s ease-out both;
+    }
+    .unlock-target-highlight::after {
+      content: "";
+      position: absolute;
+      inset: -5px;
+      z-index: -1;
+      border-radius: 20px;
+      pointer-events: none;
+      opacity: 0;
+      animation: unlock-target-ring 3s ease-out both;
+    }
+    .unlock-target-highlight.normal::after {
+      background: radial-gradient(circle at 50% 50%, rgba(242,210,123,0.55), rgba(185,139,85,0.16) 55%, transparent 72%);
+      box-shadow: 0 0 0 2px rgba(242,210,123,0.45), 0 0 22px rgba(242,210,123,0.5);
+    }
+    .unlock-target-highlight.ura::after {
+      background: radial-gradient(circle at 50% 50%, rgba(169,128,255,0.58), rgba(91,50,144,0.18) 55%, transparent 72%);
+      box-shadow: 0 0 0 2px rgba(169,128,255,0.5), 0 0 24px rgba(169,128,255,0.48);
+    }
+    @keyframes unlock-target-pulse {
+      0% { transform: scale(1); filter: brightness(1); }
+      12% { transform: scale(1.04); filter: brightness(1.22); }
+      28% { transform: scale(1); filter: brightness(1.1); }
+      48% { transform: scale(1.025); filter: brightness(1.18); }
+      72%, 100% { transform: scale(1); filter: brightness(1); }
+    }
+    @keyframes unlock-target-ring {
+      0% { opacity: 0; transform: scale(0.88); }
+      10%, 62% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.14); }
+    }
     @keyframes unlock-fade { 0%, 90% { opacity: 1; } 100% { opacity: 0; } }
     @keyframes unlock-rays {
       0% { opacity: 0; transform: rotate(0deg) scale(0.65); }
@@ -1291,6 +1334,7 @@
       const [favorites, setFavorites] = useState(() => readJson(STORAGE.favorites, []));
       const [review, setReview] = useState(() => readJson(STORAGE.review, []));
       const [unlockFlash, setUnlockFlash] = useState(null);
+      const [unlockHighlight, setUnlockHighlight] = useState(null);
       const [favoriteFlash, setFavoriteFlash] = useState(null);
       const [answerPadSize, setAnswerPadSize] = useState(() => localStorage.getItem(STORAGE.answerPadSize) || "normal");
       const [tick, setTick] = useState(0);
@@ -1303,24 +1347,29 @@
 
       useEffect(() => {
         const preview = new URLSearchParams(window.location.search).get("preview");
-        if (preview !== "record") return;
-        const mode = MODES[0];
-        const score = Math.max(rankThreshold(mode.id, "S") + 8, 360);
-        setResult(makeResult({
-          mode,
-          variant: "normal",
-          sourceList: null,
-          questionCount: mode.questionCount,
-          score,
-          rank: rankFor(mode.id, score),
-          correctCount: mode.questionCount,
-          mistakeCount: 0,
-          elapsedSeconds: Math.max(1, Math.round(mode.questionCount * 2.4)),
-          previousBest: Math.max(0, score - 38),
-          isNewRecord: true,
-          wrongQuestions: []
-        }));
-        setScreen("result");
+        if (preview === "record") {
+          const mode = MODES[0];
+          const score = Math.max(rankThreshold(mode.id, "S") + 8, 360);
+          setResult(makeResult({
+            mode,
+            variant: "normal",
+            sourceList: null,
+            questionCount: mode.questionCount,
+            score,
+            rank: rankFor(mode.id, score),
+            correctCount: mode.questionCount,
+            mistakeCount: 0,
+            elapsedSeconds: Math.max(1, Math.round(mode.questionCount * 2.4)),
+            previousBest: Math.max(0, score - 38),
+            isNewRecord: true,
+            wrongQuestions: []
+          }));
+          setScreen("result");
+        } else if (preview === "unlock-normal") {
+          setUnlockFlash({ label: "十枚形 20問・80問", variant: "normal", modeIds: ["10_20", "10_all"] });
+        } else if (preview === "unlock-ura") {
+          setUnlockFlash({ label: "六枚形", variant: "ura", modeIds: ["6"] });
+        }
       }, []);
 
       useEffect(() => {
@@ -1595,12 +1644,15 @@
           localStorage.setItem(mode.elapsedKey, String(res.elapsedSeconds));
           if (res.variant === "normal") {
             const previousRank = rankFor(res.modeId, oldBest);
-            if (!rankAtLeast(previousRank, "S") && rankAtLeast(res.rank, "S")) {
-              setUnlockFlash({ label: mode.label, variant: "ura" });
-            } else {
-              const next = nextUnlockedMode(res.modeId, res.rank);
-              if (next) setUnlockFlash({ label: next.label, variant: "normal" });
-            }
+              if (!rankAtLeast(previousRank, "S") && rankAtLeast(res.rank, "S")) {
+                setUnlockFlash({ label: mode.label, variant: "ura", modeIds: [mode.id] });
+              } else {
+                const next = newlyUnlockedModes(res.modeId, previousRank, res.rank);
+                if (next.length) {
+                  const label = next.map(mode => mode.label.replace("十枚形 ", "")).join("・");
+                  setUnlockFlash({ label: next.length > 1 ? `十枚形 ${label}` : next[0].label, variant: "normal", modeIds: next.map(mode => mode.id) });
+                }
+              }
           }
         }
         if (res.variant === "normal" && res.wrongQuestions.length) {
@@ -1615,8 +1667,12 @@
         }
       }
 
-      function nextUnlockedMode(modeId, rank) {
-        return MODES.find(m => m.unlock?.modeId === modeId && rankAtLeast(rank, m.unlock.rank));
+      function newlyUnlockedModes(modeId, previousRank, currentRank) {
+        return MODES.filter(m =>
+          m.unlock?.modeId === modeId &&
+          !rankAtLeast(previousRank, m.unlock.rank) &&
+          rankAtLeast(currentRank, m.unlock.rank)
+        );
       }
 
       function addFavorite(q = currentQuestion()) {
@@ -1657,6 +1713,14 @@
         return rankAtLeast(prevRank, mode.unlock.rank);
       }
 
+      function closeUnlockFlash() {
+        const payload = unlockFlash;
+        setUnlockFlash(null);
+        if (!payload) return;
+        setUnlockHighlight(payload);
+        setTimeout(() => setUnlockHighlight(null), 3000);
+      }
+
       const q = currentQuestion();
 
       return (
@@ -1674,7 +1738,8 @@
               setAnswerPadSize={setAnswerPadSize}
               tap={tap}
               unlockFlash={unlockFlash}
-              setUnlockFlash={setUnlockFlash}
+              unlockHighlight={unlockHighlight}
+              onUnlockDone={closeUnlockFlash}
             />
           )}
           {screen === "game" && game && q && (
@@ -1722,7 +1787,7 @@
       );
     }
 
-    function Home({ records, favorites, review, isUnlocked, startMode, removeFavorite, clearReview, answerPadSize, setAnswerPadSize, tap, unlockFlash, setUnlockFlash }) {
+    function Home({ records, favorites, review, isUnlocked, startMode, removeFavorite, clearReview, answerPadSize, setAnswerPadSize, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
       const sizeOptions = [
         ["large", "大きい"],
@@ -1731,7 +1796,7 @@
       ];
       return (
         <div className="app-pad mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
-          {unlockFlash && <UnlockFlash label={unlockFlash} onDone={() => setUnlockFlash(null)} />}
+          {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
               <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver{APP_VERSION}</span></h1>
@@ -1755,7 +1820,7 @@
           {tab === "modes" && (
             <section className="space-y-3">
               {MODES.map(mode => (
-                <ModeCard key={mode.id} mode={mode} record={records[mode.id]} normalUnlocked={isUnlocked(mode, "normal")} uraUnlocked={isUnlocked(mode, "ura")} startMode={startMode} tap={tap} />
+                <ModeCard key={mode.id} mode={mode} record={records[mode.id]} normalUnlocked={isUnlocked(mode, "normal")} uraUnlocked={isUnlocked(mode, "ura")} startMode={startMode} tap={tap} unlockHighlight={unlockHighlight} />
               ))}
             </section>
           )}
@@ -1814,11 +1879,14 @@
       );
     }
 
-    function ModeCard({ mode, record, normalUnlocked, uraUnlocked, startMode, tap }) {
+    function ModeCard({ mode, record, normalUnlocked, uraUnlocked, startMode, tap, unlockHighlight }) {
       const [showHint, setShowHint] = useState(null);
       const unlockLabel = mode.unlock ? `${getMode(mode.unlock.modeId)?.label || ""} ${mode.unlock.rank}で解放` : "";
       const normalUnlockLabel = mode.unlock ? `${getMode(mode.unlock.modeId)?.label || ""}で${mode.unlock.rank}ランク以上を取ると開放` : "";
       const uraUnlockLabel = `${mode.label} 表モードでSランク以上を取ると開放`;
+      const highlightIds = unlockHighlight?.modeIds || [];
+      const highlightNormal = unlockHighlight?.variant === "normal" && highlightIds.includes(mode.id);
+      const highlightUra = unlockHighlight?.variant === "ura" && highlightIds.includes(mode.id);
       function showLockedHint(kind) {
         setShowHint(kind);
         setTimeout(() => setShowHint(null), 1500);
@@ -1837,14 +1905,14 @@
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             {normalUnlocked ? (
-              <button className="pressable btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(mode.id, "normal"))}>
+              <button className={`pressable btn-main rounded-2xl px-4 py-3 text-sm font-black ${highlightNormal ? "unlock-target-highlight normal" : ""}`} {...tap(() => startMode(mode.id, "normal"))}>
                 プレイ
               </button>
             ) : (
               <div className={`locked-mode-wrap ${showHint === "normal" ? "hint-open" : ""}`}>
                 <div className="unlock-hint">{normalUnlockLabel || unlockLabel}</div>
                 <button
-                  className="pressable btn-sealed-normal w-full rounded-2xl px-4 py-3 text-sm font-black"
+                  className={`pressable btn-sealed-normal w-full rounded-2xl px-4 py-3 text-sm font-black ${highlightNormal ? "unlock-target-highlight normal" : ""}`}
                   aria-disabled="true"
                   title={normalUnlockLabel || unlockLabel}
                   {...tap(() => showLockedHint("normal"))}
@@ -1856,7 +1924,7 @@
             <div className={`locked-mode-wrap ${showHint === "ura" ? "hint-open" : ""}`}>
               {!uraUnlocked && <div className="unlock-hint">{uraUnlockLabel}</div>}
               <button
-                className={`pressable w-full rounded-2xl px-4 py-3 text-sm font-black ${uraUnlocked ? "btn-ura" : "btn-locked"}`}
+                className={`pressable w-full rounded-2xl px-4 py-3 text-sm font-black ${uraUnlocked ? "btn-ura" : "btn-locked"} ${highlightUra ? "unlock-target-highlight ura" : ""}`}
                 aria-disabled={!uraUnlocked}
                 title={uraUnlocked ? "裏モード" : uraUnlockLabel}
                 {...tap(() => uraUnlocked ? startMode(mode.id, "ura") : showLockedHint("ura"))}
@@ -1917,7 +1985,7 @@
               </div>
             </header>
 
-            <section className={`panel panel-tight ${isUra ? "mb-2" : "mb-4"} rounded-3xl p-4`}>
+            <section className="panel panel-tight mb-2 rounded-3xl p-4">
               <div className="mb-4 flex items-center justify-between">
                 <span className="text-sm font-bold text-[color:var(--muted)]">牌姿</span>
                 <StarFavoriteButton active={isFavorite(q)} justAdded={favoriteFlash === normalizeSavedQuestion(q).favoriteId} onPress={() => addFavorite(q)} tap={tap} label="お気に入りに追加" />
@@ -1925,9 +1993,9 @@
               <Hand q={q} />
             </section>
 
-            {!isUra && (
+            {!isUra && game.feedback && (
               <div className={`feedback mb-4 ${game.feedback === "ok" ? "ok" : game.feedback === "ng" ? "ng" : "bg-black/20 text-[color:var(--muted)]"}`}>
-                {game.feedback === "ok" ? "正解" : game.feedback === "ng" ? `待ち ${q.answers.join(", ")}` : game.mode.tileCount === 6 ? "二面子完成の受け入れ" : "待ち牌を選択"}
+                {game.feedback === "ok" ? "正解" : `待ち ${q.answers.join(", ")}`}
               </div>
             )}
 
@@ -2377,20 +2445,27 @@
       const payload = typeof label === "string" ? { label, variant: "normal" } : label;
       const modeLabel = payload?.label || "裏モード";
       const isUra = payload?.variant === "ura";
+      const plateStops = isUra
+        ? ["#3a1f58", "#211134", "#0c0715"]
+        : ["#6b492f", "#372319", "#15100d"];
+      const plateStroke = isUra ? "#8e6ade" : "#b98b55";
+      const plateText = isUra ? "#f6f2df" : "#f7e0a7";
+      const stageText = isUra ? "裏モード" : modeLabel;
+      const stageFontSize = stageText.length > 8 ? 18 : 24;
       useEffect(() => {
         const id = setTimeout(onDone, 2650);
         return () => clearTimeout(id);
       }, []);
       return (
         <div className="unlock-overlay fixed inset-0 z-50 grid place-items-center bg-black/75 px-4">
-          <div className="panel unlock-card w-full max-w-sm rounded-3xl p-6 text-center">
+          <div className={`panel unlock-card ${isUra ? "ura" : "normal"} w-full max-w-sm rounded-3xl p-6 text-center`}>
             <div className="relative mx-auto mb-5 h-36 w-full max-w-xs">
               <svg viewBox="0 0 268 150" className="unlock-stage h-full w-full" role="img" aria-label="裏モード解放">
                 <defs>
                   <linearGradient id="unlockPlate" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#3a1f58" />
-                    <stop offset="48%" stopColor="#211134" />
-                    <stop offset="100%" stopColor="#0c0715" />
+                    <stop offset="0%" stopColor={plateStops[0]} />
+                    <stop offset="48%" stopColor={plateStops[1]} />
+                    <stop offset="100%" stopColor={plateStops[2]} />
                   </linearGradient>
                   <linearGradient id="unlockGold" x1="0" x2="1" y1="0" y2="1">
                     <stop offset="0%" stopColor="#fff0ae" />
@@ -2407,9 +2482,9 @@
                   </filter>
                 </defs>
 
-                <rect className="unlock-button-plate" x="18" y="34" width="232" height="84" rx="18" fill="url(#unlockPlate)" stroke="#8e6ade" strokeWidth="2" filter="url(#unlockInnerShadow)" />
+                <rect className="unlock-button-plate" x="18" y="34" width="232" height="84" rx="18" fill="url(#unlockPlate)" stroke={plateStroke} strokeWidth="2" filter="url(#unlockInnerShadow)" />
                 <path d="M24 42h220" stroke="#ffffff" strokeOpacity="0.14" strokeWidth="2" />
-                <text x="134" y="86" textAnchor="middle" fill="#f6f2df" fontSize="24" fontWeight="900">裏モード</text>
+                <text x="134" y="86" textAnchor="middle" fill={plateText} fontSize={stageFontSize} fontWeight="900">{stageText}</text>
 
                 <g className="unlock-chain-left" fill="none" stroke="url(#unlockSteel)" strokeWidth="9" strokeLinecap="round">
                   <path d="M12 54 C54 42, 78 62, 114 76" />

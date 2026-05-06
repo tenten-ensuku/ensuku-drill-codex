@@ -967,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 34;
+    const APP_VERSION = 35;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1718,6 +1718,31 @@
         return game?.questions[game.index] || null;
       }
 
+      function saveReviewQuestions(questions) {
+        if (!questions?.length) return;
+        const bucket = readJson(STORAGE.review, []);
+        const merged = dedupeQuestions([...questions.map(q => normalizeSavedQuestion(q)), ...bucket]).slice(0, 200);
+        writeJson(STORAGE.review, merged);
+        setReview(merged);
+      }
+
+      function saveCurrentWrongs() {
+        if (game?.wrongQuestions?.length) {
+          saveReviewQuestions(game.wrongQuestions);
+        }
+      }
+
+      function quitGame() {
+        saveCurrentWrongs();
+        setScreen("home");
+      }
+
+      function retryGame() {
+        const current = game;
+        saveCurrentWrongs();
+        if (current) startMode(current.mode.id, current.variant, current.sourceList);
+      }
+
       function selectAnswer(num) {
         if (!game || game.feedback) return;
         const q = currentQuestion();
@@ -1740,12 +1765,16 @@
           } else {
             tone("ng");
             showJudge("ng");
+            const wrong = { ...q, selected };
+            saveReviewQuestions([wrong]);
             setGame(g => ({
               ...g,
               selected,
+              mistakeCount: g.mistakeCount + 1,
+              wrongQuestions: [...g.wrongQuestions, wrong],
               feedback: "ng",
               gameOverWrong: num,
-              gameOverQuestion: { ...q, selected },
+              gameOverQuestion: wrong,
               ended: true
             }));
           }
@@ -1856,11 +1885,8 @@
               }
           }
         }
-        if (res.variant === "normal" && res.wrongQuestions.length) {
-          const bucket = readJson(STORAGE.review, []);
-          const merged = dedupeQuestions([...res.wrongQuestions.map(q => normalizeSavedQuestion(q)), ...bucket]).slice(0, 200);
-          writeJson(STORAGE.review, merged);
-          setReview(merged);
+        if ((res.variant === "normal" || res.variant === "ura") && res.wrongQuestions.length) {
+          saveReviewQuestions(res.wrongQuestions);
         }
         if ((res.variant === "normal" || res.variant === "ura") && !res.gameOver) {
           const history = readJson(STORAGE.results, []);
@@ -1962,8 +1988,8 @@
               addFavorite={addFavorite}
               isFavorite={isFavorite}
               favoriteFlash={favoriteFlash}
-              quit={() => setScreen("home")}
-              retry={() => startMode(game.mode.id, game.variant, game.sourceList)}
+              quit={quitGame}
+              retry={retryGame}
               answerPadSize={answerPadSize}
               judgeFlash={judgeFlash}
               tap={tap}
@@ -2019,12 +2045,15 @@
 
           <div className="mb-4 grid grid-cols-4 gap-1.5 rounded-full bg-black/20 p-1">
             {[
-              ["modes", "挑戦"],
-              ["favorite", `お気に入り ${favorites.length}`],
-              ["review", `復習 ${review.length}`],
-              ["ranking", "ランキング"]
-            ].map(([id, label]) => (
-              <button key={id} className={`rounded-full px-2 py-2 text-[11px] font-extrabold sm:text-sm ${tab === id ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(id))}>{label}</button>
+              { id: "modes", label: "挑戦" },
+              { id: "favorite", label: "お気に入り", count: favorites.length },
+              { id: "review", label: "復習", count: review.length },
+              { id: "ranking", label: "ランキング" }
+            ].map(item => (
+              <button key={item.id} className={`rounded-full px-1.5 py-2 text-[11px] font-extrabold leading-tight sm:text-sm ${tab === item.id ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(item.id))}>
+                <span className="block">{item.label}</span>
+                {item.count !== undefined && <span className="mt-0.5 block text-[10px] opacity-80 sm:text-xs">{item.count}問</span>}
+              </button>
             ))}
           </div>
 

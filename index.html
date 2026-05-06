@@ -954,7 +954,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 22;
+    const APP_VERSION = 23;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1804,6 +1804,11 @@
         setFavorites(next);
       }
 
+      function clearFavorites() {
+        writeJson(STORAGE.favorites, []);
+        setFavorites([]);
+      }
+
       function clearReview() {
         writeJson(STORAGE.review, []);
         setReview([]);
@@ -1838,7 +1843,11 @@
               review={review}
               isUnlocked={isUnlocked}
               startMode={startMode}
+              addFavorite={addFavorite}
+              isFavorite={isFavorite}
+              favoriteFlash={favoriteFlash}
               removeFavorite={removeFavorite}
+              clearFavorites={clearFavorites}
               clearReview={clearReview}
               answerPadSize={answerPadSize}
               setAnswerPadSize={setAnswerPadSize}
@@ -1894,7 +1903,7 @@
       );
     }
 
-    function Home({ records, favorites, review, isUnlocked, startMode, removeFavorite, clearReview, answerPadSize, setAnswerPadSize, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
+    function Home({ records, favorites, review, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
       const sizeOptions = [
         ["normal", "通常"],
@@ -1938,6 +1947,7 @@
               actionLabel="まとめて練習"
               onStart={() => startMode(inferModeFromList(favorites), "favorite", favorites)}
               onRemove={removeFavorite}
+              onClear={clearFavorites}
               tap={tap}
             />
           )}
@@ -1949,6 +1959,9 @@
               actionLabel="復習する"
               onStart={() => startMode(inferModeFromList(review), "review", review)}
               onRemove={null}
+              onFavorite={addFavorite}
+              isFavorite={isFavorite}
+              favoriteFlash={favoriteFlash}
               onClear={clearReview}
               tap={tap}
             />
@@ -2043,7 +2056,7 @@
       );
     }
 
-    function QuestionList({ empty, items, actionLabel, onStart, onRemove, onClear, tap }) {
+    function QuestionList({ empty, items, actionLabel, onStart, onRemove, onFavorite, isFavorite, favoriteFlash, onClear, tap }) {
       return (
         <section className="panel rounded-3xl p-4">
           {items.length === 0 ? (
@@ -2059,6 +2072,16 @@
                   <div key={item.favoriteId} className="rounded-2xl border border-white/10 bg-black/20 p-3">
                     <div className="flex items-center justify-between gap-3">
                       <MiniHand q={item} />
+                      {onFavorite && (
+                        <StarFavoriteButton
+                          active={isFavorite?.(item)}
+                          justAdded={favoriteFlash === normalizeSavedQuestion(item).favoriteId}
+                          onPress={() => onFavorite(item)}
+                          tap={tap}
+                          label="お気に入りに追加"
+                          small
+                        />
+                      )}
                       {onRemove && <button className="btn-quiet rounded-full px-3 py-2 text-xs font-bold" {...tap(() => onRemove(item.favoriteId))}>削除</button>}
                     </div>
                     <p className="mt-2 text-xs text-[color:var(--muted)]">待ち {item.answers.join(", ")}</p>
@@ -2542,9 +2565,9 @@
       const tiles = sortedTiles(q.tiles);
       const width = compact
         ? tiles.length >= 10 ? "clamp(18px, 6.4vw, 23px)" : tiles.length >= 7 ? "clamp(20px, 7vw, 25px)" : 24
-        : 24;
+        : tiles.length >= 10 ? "clamp(14px, 4.8vw, 24px)" : tiles.length >= 7 ? "clamp(19px, 6.2vw, 25px)" : 24;
       return (
-        <div className="flex w-full items-center gap-px overflow-hidden">
+        <div className="flex min-w-0 flex-1 items-center gap-px overflow-hidden">
           {tiles.map((num, idx) => <Tile key={`${idx}-${num}`} suit={q.suit} num={num} width={width} />)}
         </div>
       );

@@ -1,6 +1,7 @@
 create table if not exists public.ensuku_rankings (
   id uuid primary key default gen_random_uuid(),
   player_name text not null check (char_length(player_name) between 1 and 12),
+  device_id text not null check (char_length(device_id) between 4 and 64),
   mode_id text not null check (mode_id in ('6', '7', '10_20', '10_all')),
   mode_label text not null,
   variant text not null check (variant in ('normal', 'ura')),
@@ -36,6 +37,7 @@ with check (
   and variant in ('normal', 'ura')
   and score >= 0
   and char_length(player_name) between 1 and 12
+  and char_length(device_id) between 4 and 64
 );
 
 create index if not exists ensuku_rankings_mode_day_score_idx
@@ -43,6 +45,9 @@ on public.ensuku_rankings (mode_id, submitted_at desc, score desc, elapsed_secon
 
 create index if not exists ensuku_rankings_mode_score_idx
 on public.ensuku_rankings (mode_id, score desc, elapsed_seconds asc);
+
+create index if not exists ensuku_rankings_device_idx
+on public.ensuku_rankings (device_id, submitted_at desc);
 
 -- Ranking display rule:
 -- The app fetches candidates ordered by score desc / elapsed_seconds asc,

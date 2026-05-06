@@ -967,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 36;
+    const APP_VERSION = 37;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1108,7 +1108,8 @@
       review: "mahjong_review_bucket",
       results: "mahjong_results_history",
       playerName: "mahjong_player_name",
-      answerPadSize: "mahjong_answer_pad_size"
+      answerPadSize: "mahjong_answer_pad_size",
+      deviceId: "mahjong_device_id"
     };
 
     const SUPABASE_CONFIG = {
@@ -1330,9 +1331,24 @@
       return (trimmed || "名無し").slice(0, 12);
     }
 
+    function getDeviceId() {
+      const existing = localStorage.getItem(STORAGE.deviceId);
+      if (existing) return existing;
+      const bytes = new Uint8Array(12);
+      if (window.crypto?.getRandomValues) {
+        window.crypto.getRandomValues(bytes);
+      } else {
+        for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+      }
+      const id = `d_${Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("")}`;
+      localStorage.setItem(STORAGE.deviceId, id);
+      return id;
+    }
+
     function rankingPayload(result, name) {
       return {
         player_name: normalizePlayerName(name),
+        device_id: getDeviceId(),
         mode_id: result.modeId,
         mode_label: result.modeLabel,
         variant: result.variant,

@@ -955,7 +955,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 26;
+    const APP_VERSION = 27;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2463,6 +2463,7 @@
       const [name, setName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
       const [copied, setCopied] = useState(false);
       const [submitStatus, setSubmitStatus] = useState("");
+      const [showPayloadFallback, setShowPayloadFallback] = useState(false);
       const [displayScore, setDisplayScore] = useState(result.variant === "favorite" || result.variant === "review" ? result.score : 0);
       const [showRank, setShowRank] = useState(result.variant === "favorite" || result.variant === "review");
       const [showComment, setShowComment] = useState(result.variant === "favorite" || result.variant === "review");
@@ -2525,13 +2526,19 @@
         return () => cancelAnimationFrame(frame);
       }, [result.finishedAt]);
       const publicPayload = rankingPayload(result, name);
+      const publicPayloadText = JSON.stringify(publicPayload, null, 2);
       async function copyPayload() {
         localStorage.setItem(STORAGE.playerName, name);
+        setShowPayloadFallback(false);
+        setSubmitStatus("");
         try {
-          await navigator.clipboard.writeText(JSON.stringify(publicPayload, null, 2));
+          if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
+          await navigator.clipboard.writeText(publicPayloadText);
           setCopied(true);
         } catch {
           setCopied(false);
+          setShowPayloadFallback(true);
+          setSubmitStatus("コピーできませんでした。下の投稿データを長押ししてコピーしてください。");
         }
       }
       async function postRanking() {
@@ -2672,6 +2679,14 @@
                 )}
                 {submitStatus && <p className="text-center text-sm font-bold text-[color:var(--gold-2)]">{submitStatus}</p>}
                 {copied && <p className="text-center text-sm font-bold text-[color:var(--gold-2)]">コピーしました</p>}
+                {showPayloadFallback && (
+                  <textarea
+                    className="h-40 w-full rounded-2xl border border-white/10 bg-black/25 px-3 py-3 text-[11px] font-bold leading-5 text-[color:var(--cream)] outline-none"
+                    readOnly
+                    value={publicPayloadText}
+                    onFocus={e => e.target.select()}
+                  />
+                )}
               </div>
             )}
           </section>

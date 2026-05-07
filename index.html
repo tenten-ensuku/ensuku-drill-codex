@@ -967,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 39;
+    const APP_VERSION = 40;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1953,6 +1953,12 @@
         setReview([]);
       }
 
+      function removeReview(id) {
+        const next = review.filter(q => q.favoriteId !== id);
+        writeJson(STORAGE.review, next);
+        setReview(next);
+      }
+
       function isUnlocked(mode, variant = "normal") {
         if (variant === "ura") {
           const normalRecord = records[mode.id] || { best: 0, rank: "E" };
@@ -2101,7 +2107,7 @@
               items={review}
               actionLabel="まとめて練習"
               onStart={() => startMode(inferModeFromList(review), "review", review)}
-              onRemove={null}
+              onRemove={removeReview}
               onFavorite={addFavorite}
               isFavorite={isFavorite}
               favoriteFlash={favoriteFlash}
@@ -2215,25 +2221,32 @@
                 {onClear && <button className="pressable btn-quiet rounded-2xl px-4 py-3 text-sm font-black" {...tap(onClear)}>空にする</button>}
               </div>
               <div className="space-y-3">
-                {items.map(item => (
-                  <div key={item.favoriteId} className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <MiniHand q={item} />
-                      {onFavorite && (
-                        <StarFavoriteButton
-                          active={isFavorite?.(item)}
-                          justAdded={favoriteFlash === normalizeSavedQuestion(item).favoriteId}
-                          onPress={() => onFavorite(item)}
-                          tap={tap}
-                          label="お気に入りに追加"
-                          small
-                        />
-                      )}
-                      {onRemove && <button className="btn-quiet rounded-full px-3 py-2 text-xs font-bold" {...tap(() => onRemove(item.favoriteId))}>削除</button>}
+                {items.map(item => {
+                  const itemId = item.favoriteId || normalizeSavedQuestion(item).favoriteId;
+                  return (
+                    <div key={itemId} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <MiniHand q={item} />
+                        {(onFavorite || onRemove) && (
+                          <div className="flex shrink-0 flex-col items-end gap-1.5">
+                            {onFavorite && (
+                              <StarFavoriteButton
+                                active={isFavorite?.(item)}
+                                justAdded={favoriteFlash === itemId}
+                                onPress={() => onFavorite(item)}
+                                tap={tap}
+                                label="お気に入りに追加"
+                                small
+                              />
+                            )}
+                            {onRemove && <button className="btn-quiet rounded-full px-3 py-2 text-xs font-bold" {...tap(() => onRemove(itemId))}>削除</button>}
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-2 text-xs text-[color:var(--muted)]">待ち {item.answers.join(", ")}</p>
                     </div>
-                    <p className="mt-2 text-xs text-[color:var(--muted)]">待ち {item.answers.join(", ")}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}

@@ -967,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 44;
+    const APP_VERSION = 45;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2192,21 +2192,6 @@
               </div>
 
               <div className="mt-5">
-                <p className="text-sm font-black text-[color:var(--muted)]">ボタンサイズ</p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {sizeOptions.map(([id, label]) => (
-                    <button
-                      key={id}
-                      className={`rounded-2xl px-2 py-3 text-sm font-black ${answerPadSize === id ? "btn-main" : "btn-quiet"}`}
-                      {...tap(() => setAnswerPadSize(id))}
-                    >
-                      <span className="block">{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-black text-[color:var(--muted)]">音量</p>
                   <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-[color:var(--gold-2)]">{soundVolume} / 5</span>
@@ -2220,6 +2205,21 @@
                   value={soundVolume}
                   onChange={e => setSoundVolume(Number(e.target.value))}
                 />
+              </div>
+
+              <div className="mt-5">
+                <p className="text-sm font-black text-[color:var(--muted)]">ボタンサイズ</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {sizeOptions.map(([id, label]) => (
+                    <button
+                      key={id}
+                      className={`rounded-2xl px-2 py-3 text-sm font-black ${answerPadSize === id ? "btn-main" : "btn-quiet"}`}
+                      {...tap(() => setAnswerPadSize(id))}
+                    >
+                      <span className="block">{label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="settings-preview mt-5 rounded-2xl bg-black/20 p-3">

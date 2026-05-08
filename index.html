@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 49;
+    const APP_VERSION = 50;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2208,7 +2208,7 @@
                   value={playerName}
                   onChange={e => setPlayerName(e.target.value)}
                   maxLength={12}
-                  placeholder="名前 任意"
+                  placeholder=""
                 />
                 <p className="mt-2 text-xs font-bold leading-5 text-[color:var(--muted)]">この名前でランキングに反映させることが可能です。</p>
               </div>

@@ -967,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 42;
+    const APP_VERSION = 43;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1382,6 +1382,16 @@
       if (error) throw error;
     }
 
+    function dedupeRankingRows(rows, limit = 20) {
+      const seenNames = new Set();
+      return (rows || []).filter(row => {
+        const key = normalizePlayerName(row.player_name);
+        if (seenNames.has(key)) return false;
+        seenNames.add(key);
+        return true;
+      }).slice(0, limit);
+    }
+
     async function fetchRankings(modeId, period) {
       const client = getSupabaseClient();
       if (!client) return [];
@@ -1396,13 +1406,27 @@
       if (startIso) query = query.gte("submitted_at", startIso);
       const { data, error } = await query;
       if (error) throw error;
-      const seenNames = new Set();
-      return (data || []).filter(row => {
-        const key = normalizePlayerName(row.player_name);
-        if (seenNames.has(key)) return false;
-        seenNames.add(key);
-        return true;
-      }).slice(0, 20);
+      return dedupeRankingRows(data, 20);
+    }
+
+    async function fetchRankPosition(modeId, period, playerName) {
+      const client = getSupabaseClient();
+      if (!client) return null;
+      let query = client
+        .from(SUPABASE_CONFIG.table)
+        .select("player_name,mode_id,mode_label,score,rank,elapsed_seconds,average_seconds,submitted_at")
+        .eq("mode_id", modeId)
+        .order("score", { ascending: false })
+        .order("elapsed_seconds", { ascending: true })
+        .limit(500);
+      const startIso = periodStartIso(period);
+      if (startIso) query = query.gte("submitted_at", startIso);
+      const { data, error } = await query;
+      if (error) throw error;
+      const rows = dedupeRankingRows(data, 500);
+      const nameKey = normalizePlayerName(playerName);
+      const index = rows.findIndex(row => normalizePlayerName(row.player_name) === nameKey);
+      return index >= 0 ? index + 1 : null;
     }
 
     function scoreGame(questionCount, correctCount, mistakes, elapsedSeconds) {
@@ -2545,6 +2569,10 @@
       const [name, setName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
       const [copied, setCopied] = useState(false);
       const [submitStatus, setSubmitStatus] = useState("");
+      const [submittingRanking, setSubmittingRanking] = useState(false);
+      const [rankingSubmitted, setRankingSubmitted] = useState(false);
+      const [postedRank, setPostedRank] = useState(null);
+      const rankingSubmitLockRef = useRef(false);
       const [showPayloadFallback, setShowPayloadFallback] = useState(false);
       const [displayScore, setDisplayScore] = useState(result.variant === "favorite" || result.variant === "review" ? result.score : 0);
       const [showRank, setShowRank] = useState(result.variant === "favorite" || result.variant === "review");
@@ -2624,14 +2652,23 @@
         }
       }
       async function postRanking() {
+        if (rankingSubmitLockRef.current || submittingRanking || rankingSubmitted) return;
+        rankingSubmitLockRef.current = true;
         localStorage.setItem(STORAGE.playerName, name);
         setSubmitStatus("送信中...");
+        setSubmittingRanking(true);
         setCopied(false);
         try {
           await submitRanking(result, name);
-          setSubmitStatus("ランキングに投稿しました");
+          const rank = await fetchRankPosition(result.modeId, "daily", name);
+          setPostedRank(rank);
+          setRankingSubmitted(true);
+          setSubmitStatus(rank ? `現在${rank}位です` : "ランキングに投稿しました");
         } catch (err) {
           setSubmitStatus(err.message || "投稿できませんでした");
+          rankingSubmitLockRef.current = false;
+        } finally {
+          setSubmittingRanking(false);
         }
       }
       return (
@@ -2754,7 +2791,13 @@
                 <p className="text-sm leading-6 text-[color:var(--muted)]">表モードと裏モードは同じランキングに入ります。投稿したい成績だけ送信できます。</p>
                 <input className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 font-bold outline-none focus:border-[color:var(--gold)]" value={name} onChange={e => setName(e.target.value)} placeholder="名前 任意" />
                 {isSupabaseReady() ? (
-                  <button className="btn-main w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(postRanking)}>送信する</button>
+                  <button
+                    className={`w-full rounded-2xl px-4 py-3 text-sm font-black ${rankingSubmitted ? "btn-quiet opacity-75" : "btn-main"}`}
+                    disabled={submittingRanking || rankingSubmitted}
+                    {...tap(postRanking)}
+                  >
+                    {rankingSubmitted ? (postedRank ? `現在${postedRank}位です` : "投稿しました") : submittingRanking ? "送信中..." : "送信する"}
+                  </button>
                 ) : (
                   <button className="btn-main w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(copyPayload)}>投稿データをコピー</button>
                 )}

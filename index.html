@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 48;
+    const APP_VERSION = 49;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1568,7 +1568,7 @@
       const [playerName, setPlayerName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
       const [soundVolume, setSoundVolume] = useState(() => {
         const saved = Number(localStorage.getItem(STORAGE.soundVolume));
-        return Number.isFinite(saved) && saved >= 0 && saved <= 5 ? saved : 5;
+        return Number.isFinite(saved) && saved >= 0 && saved <= 3 ? saved : 3;
       });
       const [tick, setTick] = useState(0);
       const audioRef = useRef(null);
@@ -1684,7 +1684,7 @@
         ensureAudio();
         const ctx = audioRef.current;
         if (!ctx) return;
-        const volumeScale = Math.max(0, Math.min(5, Number(soundVolume))) / 5;
+        const volumeScale = Math.max(0, Math.min(3, Number(soundVolume))) / 3;
         if (volumeScale <= 0) return;
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
@@ -2232,13 +2232,13 @@
                   className="volume-slider mt-3 w-full accent-[color:var(--gold)]"
                   type="range"
                   min="0"
-                  max="5"
+                  max="3"
                   step="1"
                   value={soundVolume}
                   onChange={e => setSoundVolume(Number(e.target.value))}
                 />
                 <div className="mt-2 flex justify-between text-[11px] font-black text-[color:var(--muted)]">
-                  {[0,1,2,3,4,5].map(level => <span key={level} className="w-4 text-center">{level}</span>)}
+                  {[0,1,2,3].map(level => <span key={level} className="w-4 text-center">{level}</span>)}
                 </div>
               </div>
 

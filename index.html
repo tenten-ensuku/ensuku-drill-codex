@@ -967,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 46;
+    const APP_VERSION = 47;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2644,6 +2644,7 @@
       const averageTime = formatAverageTime(result.elapsedSeconds, result.questionCount);
       const isPractice = result.variant === "favorite" || result.variant === "review";
       const canPostRanking = !isPractice;
+      const submitName = normalizePlayerName(playerName);
       const gaugeRadius = 104;
       const gaugeCircumference = 2 * Math.PI * gaugeRadius;
       const gaugeProgress = isPractice ? 0 : scoreGaugeProgress(result.modeId, displayScore);
@@ -2723,7 +2724,7 @@
           const rank = await fetchRankPosition(result.modeId, "daily", playerName);
           setPostedRank(rank);
           setRankingSubmitted(true);
-          setSubmitStatus(rank ? `現在${rank}位です` : "ランキングに投稿しました");
+          setSubmitStatus(rank ? `現在${rank}位です` : "順位を取得できませんでした");
         } catch (err) {
           setSubmitStatus(err.message || "投稿できませんでした");
           rankingSubmitLockRef.current = false;
@@ -2848,14 +2849,14 @@
             <button className="btn-quiet w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => setShowPost(v => !v))}>ランキング投稿</button>
             {showPost && (
               <div className="mt-3 space-y-3">
-                <p className="text-sm leading-6 text-[color:var(--muted)]">表モードと裏モードは同じランキングに入ります。設定のニックネームで投稿されます。</p>
+                <p className="text-sm leading-6 text-[color:var(--muted)]">設定で決めたニックネームで投稿されます</p>
                 {isSupabaseReady() ? (
                   <button
                     className={`w-full rounded-2xl px-4 py-3 text-sm font-black ${rankingSubmitted ? "btn-quiet opacity-75" : "btn-main"}`}
                     disabled={submittingRanking || rankingSubmitted}
                     {...tap(postRanking)}
                   >
-                    {rankingSubmitted ? (postedRank ? `現在${postedRank}位です` : "投稿しました") : submittingRanking ? "送信中..." : "送信する"}
+                    {rankingSubmitted ? "送信済み" : submittingRanking ? "送信中..." : `${submitName}で送信`}
                   </button>
                 ) : (
                   <button className="btn-main w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(copyPayload)}>投稿データをコピー</button>

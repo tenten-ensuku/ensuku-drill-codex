@@ -967,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 40;
+    const APP_VERSION = 41;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1522,6 +1522,7 @@
       const [tick, setTick] = useState(0);
       const audioRef = useRef(null);
       const touchRef = useRef(false);
+      const inputLockRef = useRef(false);
 
       useEffect(() => {
         preloadTiles();
@@ -1693,6 +1694,7 @@
 
       function startMode(modeId, variant = "normal", sourceList = null) {
         ensureAudio();
+        inputLockRef.current = false;
         setJudgeFlash(null);
         const baseMode = getMode(modeId) || MODES[0];
         let bases;
@@ -1751,6 +1753,7 @@
       }
 
       function quitGame() {
+        inputLockRef.current = false;
         saveCurrentWrongs();
         setScreen("home");
       }
@@ -1762,7 +1765,7 @@
       }
 
       function selectAnswer(num) {
-        if (!game || game.feedback) return;
+        if (!game || game.feedback || game.ended || inputLockRef.current) return;
         const q = currentQuestion();
         const counts = q.tiles.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {});
         if ((counts[num] || 0) >= 4) return;
@@ -1774,13 +1777,15 @@
           const hit = q.answers.includes(num);
           const completed = sameSet(selected, q.answers);
           if (hit && completed) {
+            inputLockRef.current = true;
             tone("ok");
             showJudge("ok");
-            setGame(g => ({ ...g, selected, correctCount: g.correctCount + 1 }));
+            setGame(g => ({ ...g, selected, correctCount: g.correctCount + 1, feedback: "ok" }));
             setTimeout(() => advanceUra(true), 120);
           } else if (hit) {
             setGame(g => ({ ...g, selected }));
           } else {
+            inputLockRef.current = true;
             tone("ng");
             showJudge("ng");
             const wrong = { ...q, selected };
@@ -1844,6 +1849,7 @@
             setTimeout(() => finishGame(), 0);
             return { ...g, ended: true };
           }
+          inputLockRef.current = false;
           return { ...g, index: g.index + 1, selected: [], feedback: null };
         });
       }
@@ -1992,6 +1998,7 @@
               isFavorite={isFavorite}
               favoriteFlash={favoriteFlash}
               removeFavorite={removeFavorite}
+              removeReview={removeReview}
               clearFavorites={clearFavorites}
               clearReview={clearReview}
               answerPadSize={answerPadSize}
@@ -2048,7 +2055,7 @@
       );
     }
 
-    function Home({ records, favorites, review, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
+    function Home({ records, favorites, review, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
       const sizeOptions = [
         ["normal", "通常"],

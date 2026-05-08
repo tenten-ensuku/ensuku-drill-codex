@@ -967,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 43;
+    const APP_VERSION = 44;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1109,6 +1109,7 @@
       results: "mahjong_results_history",
       playerName: "mahjong_player_name",
       answerPadSize: "mahjong_answer_pad_size",
+      soundVolume: "mahjong_sound_volume",
       deviceId: "mahjong_device_id"
     };
 
@@ -1543,6 +1544,11 @@
         const saved = localStorage.getItem(STORAGE.answerPadSize);
         return saved === "small" ? "small" : "normal";
       });
+      const [playerName, setPlayerName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
+      const [soundVolume, setSoundVolume] = useState(() => {
+        const saved = Number(localStorage.getItem(STORAGE.soundVolume));
+        return Number.isFinite(saved) && saved >= 0 && saved <= 5 ? saved : 5;
+      });
       const [tick, setTick] = useState(0);
       const audioRef = useRef(null);
       const touchRef = useRef(false);
@@ -1604,6 +1610,14 @@
       }, [answerPadSize]);
 
       useEffect(() => {
+        localStorage.setItem(STORAGE.playerName, playerName);
+      }, [playerName]);
+
+      useEffect(() => {
+        localStorage.setItem(STORAGE.soundVolume, String(soundVolume));
+      }, [soundVolume]);
+
+      useEffect(() => {
         document.body.classList.toggle("play-lock", screen === "game");
         return () => document.body.classList.remove("play-lock");
       }, [screen]);
@@ -1649,11 +1663,16 @@
         ensureAudio();
         const ctx = audioRef.current;
         if (!ctx) return;
+        const volumeScale = Math.max(0, Math.min(5, Number(soundVolume))) / 5;
+        if (volumeScale <= 0) return;
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
+        const output = ctx.createGain();
+        output.gain.setValueAtTime(volumeScale, now);
+        output.connect(ctx.destination);
         osc.connect(gain);
-        gain.connect(ctx.destination);
+        gain.connect(output);
         if (type === "ok") {
           osc.type = "triangle";
           osc.frequency.setValueAtTime(660, now);
@@ -1690,7 +1709,7 @@
           hitGain.gain.exponentialRampToValueAtTime(0.18, now + 0.07);
           hitGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
           hit.connect(hitGain);
-          hitGain.connect(ctx.destination);
+          hitGain.connect(output);
           hit.start(now + 0.05);
           hit.stop(now + 0.22);
 
@@ -1703,7 +1722,7 @@
           popGain.gain.exponentialRampToValueAtTime(0.055, now + 0.018);
           popGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
           pop.connect(popGain);
-          popGain.connect(ctx.destination);
+          popGain.connect(output);
           pop.start(now + 0.01);
           pop.stop(now + 0.1);
         } else {
@@ -2027,6 +2046,10 @@
               clearReview={clearReview}
               answerPadSize={answerPadSize}
               setAnswerPadSize={setAnswerPadSize}
+              playerName={playerName}
+              setPlayerName={setPlayerName}
+              soundVolume={soundVolume}
+              setSoundVolume={setSoundVolume}
               tap={tap}
               unlockFlash={unlockFlash}
               unlockHighlight={unlockHighlight}
@@ -2056,6 +2079,7 @@
               addFavorite={addFavorite}
               isFavorite={isFavorite}
               favoriteFlash={favoriteFlash}
+              playerName={playerName}
               startMode={startMode}
               goHome={() => setScreen("home")}
               answerPadSize={answerPadSize}
@@ -2079,7 +2103,7 @@
       );
     }
 
-    function Home({ records, favorites, review, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
+    function Home({ records, favorites, review, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, playerName, setPlayerName, soundVolume, setSoundVolume, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
       const sizeOptions = [
         ["normal", "通常"],
@@ -2154,8 +2178,21 @@
           {tab === "settings" && (
             <section className="panel rounded-3xl p-4">
               <h2 className="text-xl font-black">設定</h2>
+
               <div className="mt-4">
-                <p className="text-sm font-black text-[color:var(--muted)]">回答ボタンサイズ</p>
+                <p className="text-sm font-black text-[color:var(--muted)]">ニックネーム</p>
+                <input
+                  className="mt-3 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 font-bold outline-none focus:border-[color:var(--gold)]"
+                  value={playerName}
+                  onChange={e => setPlayerName(e.target.value)}
+                  maxLength={12}
+                  placeholder="名前 任意"
+                />
+                <p className="mt-2 text-xs font-bold leading-5 text-[color:var(--muted)]">この名前でランキングに反映させることが可能です。</p>
+              </div>
+
+              <div className="mt-5">
+                <p className="text-sm font-black text-[color:var(--muted)]">ボタンサイズ</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   {sizeOptions.map(([id, label]) => (
                     <button
@@ -2168,6 +2205,23 @@
                   ))}
                 </div>
               </div>
+
+              <div className="mt-5">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-black text-[color:var(--muted)]">音量</p>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-[color:var(--gold-2)]">{soundVolume} / 5</span>
+                </div>
+                <input
+                  className="mt-3 w-full accent-[color:var(--gold)]"
+                  type="range"
+                  min="0"
+                  max="5"
+                  step="1"
+                  value={soundVolume}
+                  onChange={e => setSoundVolume(Number(e.target.value))}
+                />
+              </div>
+
               <div className="settings-preview mt-5 rounded-2xl bg-black/20 p-3">
                 <p className="text-xs font-black text-[color:var(--muted)]">プレビュー</p>
                 <div className={`answer-pad size-${answerPadSize} mt-3 grid grid-cols-3 content-start gap-0`}>
@@ -2564,9 +2618,8 @@
       );
     }
 
-    function Result({ result, addFavorite, isFavorite, favoriteFlash, startMode, goHome, tap, tone }) {
+    function Result({ result, addFavorite, isFavorite, favoriteFlash, playerName, startMode, goHome, tap, tone }) {
       const [showPost, setShowPost] = useState(false);
-      const [name, setName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
       const [copied, setCopied] = useState(false);
       const [submitStatus, setSubmitStatus] = useState("");
       const [submittingRanking, setSubmittingRanking] = useState(false);
@@ -2635,10 +2688,9 @@
         frame = requestAnimationFrame(step);
         return () => cancelAnimationFrame(frame);
       }, [result.finishedAt]);
-      const publicPayload = rankingPayload(result, name);
+      const publicPayload = rankingPayload(result, playerName);
       const publicPayloadText = JSON.stringify(publicPayload, null, 2);
       async function copyPayload() {
-        localStorage.setItem(STORAGE.playerName, name);
         setShowPayloadFallback(false);
         setSubmitStatus("");
         try {
@@ -2654,13 +2706,12 @@
       async function postRanking() {
         if (rankingSubmitLockRef.current || submittingRanking || rankingSubmitted) return;
         rankingSubmitLockRef.current = true;
-        localStorage.setItem(STORAGE.playerName, name);
         setSubmitStatus("送信中...");
         setSubmittingRanking(true);
         setCopied(false);
         try {
-          await submitRanking(result, name);
-          const rank = await fetchRankPosition(result.modeId, "daily", name);
+          await submitRanking(result, playerName);
+          const rank = await fetchRankPosition(result.modeId, "daily", playerName);
           setPostedRank(rank);
           setRankingSubmitted(true);
           setSubmitStatus(rank ? `現在${rank}位です` : "ランキングに投稿しました");
@@ -2788,8 +2839,7 @@
             <button className="btn-quiet w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => setShowPost(v => !v))}>ランキング投稿</button>
             {showPost && (
               <div className="mt-3 space-y-3">
-                <p className="text-sm leading-6 text-[color:var(--muted)]">表モードと裏モードは同じランキングに入ります。投稿したい成績だけ送信できます。</p>
-                <input className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 font-bold outline-none focus:border-[color:var(--gold)]" value={name} onChange={e => setName(e.target.value)} placeholder="名前 任意" />
+                <p className="text-sm leading-6 text-[color:var(--muted)]">表モードと裏モードは同じランキングに入ります。設定のニックネームで投稿されます。</p>
                 {isSupabaseReady() ? (
                   <button
                     className={`w-full rounded-2xl px-4 py-3 text-sm font-black ${rankingSubmitted ? "btn-quiet opacity-75" : "btn-main"}`}

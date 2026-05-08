@@ -967,7 +967,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 45;
+    const APP_VERSION = 46;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2050,6 +2050,7 @@
               setPlayerName={setPlayerName}
               soundVolume={soundVolume}
               setSoundVolume={setSoundVolume}
+              tone={tone}
               tap={tap}
               unlockFlash={unlockFlash}
               unlockHighlight={unlockHighlight}
@@ -2079,7 +2080,6 @@
               addFavorite={addFavorite}
               isFavorite={isFavorite}
               favoriteFlash={favoriteFlash}
-              playerName={playerName}
               startMode={startMode}
               goHome={() => setScreen("home")}
               answerPadSize={answerPadSize}
@@ -2093,6 +2093,7 @@
               addFavorite={addFavorite}
               isFavorite={isFavorite}
               favoriteFlash={favoriteFlash}
+              playerName={playerName}
               startMode={startMode}
               goHome={() => setScreen("home")}
               tap={tap}
@@ -2103,7 +2104,7 @@
       );
     }
 
-    function Home({ records, favorites, review, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, playerName, setPlayerName, soundVolume, setSoundVolume, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
+    function Home({ records, favorites, review, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, playerName, setPlayerName, soundVolume, setSoundVolume, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
       const sizeOptions = [
         ["normal", "通常"],
@@ -2193,8 +2194,13 @@
 
               <div className="mt-5">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-black text-[color:var(--muted)]">音量</p>
-                  <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-[color:var(--gold-2)]">{soundVolume} / 5</span>
+                  <p className="flex items-center gap-2 text-sm font-black text-[color:var(--muted)]">
+                    音量
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M4 9v6h4l5 4V5L8 9H4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                      <path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </p>
                 </div>
                 <input
                   className="mt-3 w-full accent-[color:var(--gold)]"
@@ -2205,6 +2211,9 @@
                   value={soundVolume}
                   onChange={e => setSoundVolume(Number(e.target.value))}
                 />
+                <div className="mt-1 grid grid-cols-6 text-center text-[11px] font-black text-[color:var(--muted)]">
+                  {[0,1,2,3,4,5].map(level => <span key={level}>{level}</span>)}
+                </div>
               </div>
 
               <div className="mt-5">
@@ -2226,7 +2235,7 @@
                 <p className="text-xs font-black text-[color:var(--muted)]">プレビュー</p>
                 <div className={`answer-pad size-${answerPadSize} mt-3 grid grid-cols-3 content-start gap-0`}>
                   {[1,2,3,4,5,6,7,8,9].map(num => (
-                    <button key={num} className="answer-btn" type="button">{num}</button>
+                    <button key={num} className="answer-btn" type="button" {...tap(() => tone("tap"))}>{num}</button>
                   ))}
                 </div>
               </div>

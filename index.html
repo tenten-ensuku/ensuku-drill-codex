@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 52;
+    const APP_VERSION = 53;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2497,20 +2497,36 @@
 
     function ProblemCatalog({ problemStats, tap }) {
       const [kind, setKind] = useState("6");
+      const [sortMode, setSortMode] = useState("default");
       const tabs = [
         ["6", "六枚形"],
         ["7", "七枚形"],
         ["10", "十枚形"]
       ];
-      const items = DATASETS[kind].map(base => ({
-        ...base,
-        suit: "s"
-      }));
+      const suitByKind = { "6": "m", "7": "s", "10": "p" };
+      const suitLabelByKind = { "6": "萬子表示", "7": "索子表示", "10": "筒子表示" };
+      const items = DATASETS[kind].map(base => {
+        const stat = problemStats[base.baseId] || { correct: 0, total: 0 };
+        const rate = stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : null;
+        return {
+          ...base,
+          suit: suitByKind[kind],
+          stat,
+          rate
+        };
+      }).sort((a, b) => {
+        if (sortMode !== "weak") return Number(a.id.split("-")[1]) - Number(b.id.split("-")[1]);
+        const aRate = a.rate ?? 101;
+        const bRate = b.rate ?? 101;
+        if (aRate !== bRate) return aRate - bRate;
+        if (a.stat.total !== b.stat.total) return b.stat.total - a.stat.total;
+        return Number(a.id.split("-")[1]) - Number(b.id.split("-")[1]);
+      });
       return (
         <section className="panel rounded-3xl p-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-xl font-black">問題一覧</h2>
-            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-[color:var(--muted)]">索子表示</span>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-[color:var(--muted)]">{suitLabelByKind[kind]}</span>
           </div>
 
           <div className="mt-4 grid grid-cols-3 gap-2 rounded-full bg-black/20 p-1">
@@ -2519,16 +2535,24 @@
             ))}
           </div>
 
+          <div className="mt-3 grid grid-cols-2 gap-2 rounded-full bg-black/20 p-1">
+            {[
+              ["default", "通常順"],
+              ["weak", "苦手順"]
+            ].map(([id, label]) => (
+              <button key={id} className={`rounded-full px-3 py-2 text-xs font-black ${sortMode === id ? "btn-main" : "btn-quiet"}`} {...tap(() => setSortMode(id))}>{label}</button>
+            ))}
+          </div>
+
           <div className="mt-4 space-y-2">
             {items.map(item => {
-              const stat = problemStats[item.baseId] || { correct: 0, total: 0 };
               return (
                 <div key={item.baseId} className="rounded-2xl border border-white/10 bg-black/20 p-3">
                   <div className="flex items-center justify-between gap-3">
                     <MiniHand q={item} />
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-black text-[color:var(--cream)]">{stat.correct}/{stat.total}</p>
-                      <p className="text-[10px] font-bold text-[color:var(--muted)]">正解/出題</p>
+                      <p className="text-lg font-black text-[color:var(--cream)]">{item.rate === null ? "--" : `${item.rate}%`}</p>
+                      <p className="text-[10px] font-bold text-[color:var(--muted)]">{item.stat.correct}/{item.stat.total}</p>
                     </div>
                   </div>
                   <p className="mt-2 text-xs font-bold text-[color:var(--muted)]">待ち {item.answers.join(", ")}</p>

@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 50;
+    const APP_VERSION = 51;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1131,6 +1131,7 @@
       playerName: "mahjong_player_name",
       answerPadSize: "mahjong_answer_pad_size",
       soundVolume: "mahjong_sound_volume",
+      soundVolumeDefaulted: "mahjong_sound_volume_defaulted_v2",
       deviceId: "mahjong_device_id"
     };
 
@@ -1567,7 +1568,14 @@
       });
       const [playerName, setPlayerName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
       const [soundVolume, setSoundVolume] = useState(() => {
-        const saved = Number(localStorage.getItem(STORAGE.soundVolume));
+        const raw = localStorage.getItem(STORAGE.soundVolume);
+        const wasDefaulted = localStorage.getItem(STORAGE.soundVolumeDefaulted);
+        if (!wasDefaulted && (raw === null || raw === "0")) {
+          localStorage.setItem(STORAGE.soundVolumeDefaulted, "1");
+          localStorage.setItem(STORAGE.soundVolume, "3");
+          return 3;
+        }
+        const saved = Number(raw);
         return Number.isFinite(saved) && saved >= 0 && saved <= 3 ? saved : 3;
       });
       const [tick, setTick] = useState(0);

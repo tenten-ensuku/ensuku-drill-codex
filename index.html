@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 51;
+    const APP_VERSION = 52;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1128,6 +1128,7 @@
       favorites: "mahjong_favorites",
       review: "mahjong_review_bucket",
       results: "mahjong_results_history",
+      problemStats: "mahjong_problem_stats",
       playerName: "mahjong_player_name",
       answerPadSize: "mahjong_answer_pad_size",
       soundVolume: "mahjong_sound_volume",
@@ -1558,6 +1559,7 @@
       const [result, setResult] = useState(null);
       const [favorites, setFavorites] = useState(() => readJson(STORAGE.favorites, []));
       const [review, setReview] = useState(() => readJson(STORAGE.review, []));
+      const [problemStats, setProblemStats] = useState(() => readJson(STORAGE.problemStats, {}));
       const [unlockFlash, setUnlockFlash] = useState(null);
       const [unlockHighlight, setUnlockHighlight] = useState(null);
       const [favoriteFlash, setFavoriteFlash] = useState(null);
@@ -1824,6 +1826,24 @@
         }
       }
 
+      function recordProblemAnswer(q, ok) {
+        if (!q || !(game?.variant === "normal" || game?.variant === "ura")) return;
+        const key = q.baseId || q.id;
+        if (!key) return;
+        setProblemStats(current => {
+          const prev = current[key] || { correct: 0, total: 0 };
+          const next = {
+            ...current,
+            [key]: {
+              correct: prev.correct + (ok ? 1 : 0),
+              total: prev.total + 1
+            }
+          };
+          writeJson(STORAGE.problemStats, next);
+          return next;
+        });
+      }
+
       function quitGame() {
         inputLockRef.current = false;
         saveCurrentWrongs();
@@ -1849,6 +1869,7 @@
           const hit = q.answers.includes(num);
           const completed = sameSet(selected, q.answers);
           if (hit && completed) {
+            recordProblemAnswer(q, true);
             inputLockRef.current = true;
             tone("ok");
             showJudge("ok");
@@ -1857,6 +1878,7 @@
           } else if (hit) {
             setGame(g => ({ ...g, selected }));
           } else {
+            recordProblemAnswer(q, false);
             inputLockRef.current = true;
             tone("ng");
             showJudge("ng");
@@ -1890,6 +1912,7 @@
         if (!game || game.feedback) return;
         const q = currentQuestion();
         const ok = sameSet(game.selected, q.answers);
+        recordProblemAnswer(q, ok);
         tone(ok ? "ok" : "ng");
         showJudge(ok ? "ok" : "ng");
         const wrong = ok ? null : { ...q, selected: [...game.selected] };
@@ -2064,6 +2087,7 @@
               records={records}
               favorites={favorites}
               review={review}
+              problemStats={problemStats}
               isUnlocked={isUnlocked}
               startMode={startMode}
               addFavorite={addFavorite}
@@ -2133,7 +2157,7 @@
       );
     }
 
-    function Home({ records, favorites, review, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, playerName, setPlayerName, soundVolume, setSoundVolume, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
+    function Home({ records, favorites, review, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, playerName, setPlayerName, soundVolume, setSoundVolume, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
       const sizeOptions = [
         ["normal", "通常"],
@@ -2148,7 +2172,10 @@
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />
-              <button className="btn-quiet rounded-full px-3 py-1.5 text-xs font-black" {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>設定</button>
+              <div className="flex gap-1.5">
+                <button className="btn-quiet rounded-full px-3 py-1.5 text-xs font-black" {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>設定</button>
+                <button className="btn-quiet rounded-full px-3 py-1.5 text-xs font-black" {...tap(() => setTab(tab === "problems" ? "modes" : "problems"))}>問題一覧</button>
+              </div>
             </div>
           </header>
 
@@ -2203,6 +2230,10 @@
 
           {tab === "ranking" && (
             <Leaderboard tap={tap} />
+          )}
+
+          {tab === "problems" && (
+            <ProblemCatalog problemStats={problemStats} tap={tap} />
           )}
 
           {tab === "settings" && (
@@ -2460,6 +2491,51 @@
               ))}
             </div>
           )}
+        </section>
+      );
+    }
+
+    function ProblemCatalog({ problemStats, tap }) {
+      const [kind, setKind] = useState("6");
+      const tabs = [
+        ["6", "六枚形"],
+        ["7", "七枚形"],
+        ["10", "十枚形"]
+      ];
+      const items = DATASETS[kind].map(base => ({
+        ...base,
+        suit: "s"
+      }));
+      return (
+        <section className="panel rounded-3xl p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xl font-black">問題一覧</h2>
+            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-[color:var(--muted)]">索子表示</span>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2 rounded-full bg-black/20 p-1">
+            {tabs.map(([id, label]) => (
+              <button key={id} className={`rounded-full px-3 py-2 text-xs font-black ${kind === id ? "btn-main" : "btn-quiet"}`} {...tap(() => setKind(id))}>{label}</button>
+            ))}
+          </div>
+
+          <div className="mt-4 space-y-2">
+            {items.map(item => {
+              const stat = problemStats[item.baseId] || { correct: 0, total: 0 };
+              return (
+                <div key={item.baseId} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <MiniHand q={item} />
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-black text-[color:var(--cream)]">{stat.correct}/{stat.total}</p>
+                      <p className="text-[10px] font-bold text-[color:var(--muted)]">正解/出題</p>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs font-bold text-[color:var(--muted)]">待ち {item.answers.join(", ")}</p>
+                </div>
+              );
+            })}
+          </div>
         </section>
       );
     }

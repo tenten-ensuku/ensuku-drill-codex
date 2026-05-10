@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 54;
+    const APP_VERSION = 55;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2415,31 +2415,43 @@
     }
 
     function ReviewHub({ favorites, review, startMode, removeFavorite, removeReview, clearFavorites, clearReview, addFavorite, isFavorite, favoriteFlash, tap }) {
+      const [reviewTab, setReviewTab] = useState("review");
       return (
-        <div className="space-y-4">
-          <QuestionList
-            title="お気に入り"
-            empty="保存した牌姿はまだありません。ゲーム中や結果画面から追加できます。"
-            items={favorites}
-            actionLabel="まとめて練習"
-            onStart={() => startMode(inferModeFromList(favorites), "favorite", favorites)}
-            onRemove={removeFavorite}
-            onClear={clearFavorites}
-            tap={tap}
-          />
-          <QuestionList
-            title="誤答問題"
-            empty="間違えた牌姿はまだありません。ミスした問題が自動で入ります。"
-            items={review}
-            actionLabel="まとめて練習"
-            onStart={() => startMode(inferModeFromList(review), "review", review)}
-            onRemove={removeReview}
-            onFavorite={addFavorite}
-            isFavorite={isFavorite}
-            favoriteFlash={favoriteFlash}
-            onClear={clearReview}
-            tap={tap}
-          />
+        <div>
+          <div className="mb-4 grid grid-cols-2 gap-2 rounded-full bg-black/20 p-1">
+            {[
+              ["review", `復習（誤答履歴） ${review.length}問`],
+              ["favorite", `お気に入り ${favorites.length}問`]
+            ].map(([id, label]) => (
+              <button key={id} className={`rounded-full px-3 py-2 text-xs font-black ${reviewTab === id ? "btn-main" : "btn-quiet"}`} {...tap(() => setReviewTab(id))}>{label}</button>
+            ))}
+          </div>
+          {reviewTab === "review" ? (
+            <QuestionList
+              title="復習（誤答履歴）"
+              empty="間違えた牌姿はまだありません。ミスした問題が自動で入ります。"
+              items={review}
+              actionLabel="まとめて練習"
+              onStart={() => startMode(inferModeFromList(review), "review", review)}
+              onRemove={removeReview}
+              onFavorite={addFavorite}
+              isFavorite={isFavorite}
+              favoriteFlash={favoriteFlash}
+              onClear={clearReview}
+              tap={tap}
+            />
+          ) : (
+            <QuestionList
+              title="お気に入り"
+              empty="保存した牌姿はまだありません。ゲーム中や結果画面から追加できます。"
+              items={favorites}
+              actionLabel="まとめて練習"
+              onStart={() => startMode(inferModeFromList(favorites), "favorite", favorites)}
+              onRemove={removeFavorite}
+              onClear={clearFavorites}
+              tap={tap}
+            />
+          )}
         </div>
       );
     }

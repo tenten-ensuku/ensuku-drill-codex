@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 58;
+    const APP_VERSION = 59;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2666,6 +2666,7 @@
 
     function SelfAnalysis({ resultsHistory, dailySummary, problemStats, tap }) {
       const [modeId, setModeId] = useState("6");
+      const [showDailyRecords, setShowDailyRecords] = useState(false);
       const selectedMode = getMode(modeId);
       const completed = resultsHistory.filter(r => (r.variant === "normal" || r.variant === "ura") && !r.gameOver && r.modeId === modeId);
       const summaries = Object.values(dailySummary || {});
@@ -2785,12 +2786,16 @@
           <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">日別ベスト推移</h3>
           <div className="mt-3 flex h-24 items-end gap-1 rounded-2xl bg-black/20 p-3">
             {chartRows.length ? chartRows.map((row, idx) => (
-              <div key={`${row.date}-${row.modeId || "all"}-${idx}`} className="flex-1 rounded-t bg-[color:var(--gold)] opacity-80" style={{ height: `${Math.max(8, (row.bestScore / maxScore) * 100)}%` }} title={`${row.date} ${row.bestScore}pt`} />
+              <div key={`${row.date}-${row.modeId || "all"}-${idx}`} className="flex flex-1 items-end justify-center self-stretch">
+                <div className="w-full max-w-[18px] rounded-t bg-[color:var(--gold)] opacity-80" style={{ height: `${Math.max(8, (row.bestScore / maxScore) * 100)}%` }} title={`${row.date} ${row.bestScore}pt`} />
+              </div>
             )) : <p className="m-auto text-sm font-bold text-[color:var(--muted)]">履歴がまだありません。</p>}
           </div>
 
-          <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">日別記録</h3>
-          <div className="mt-3 space-y-2">
+          <button className="btn-quiet mt-5 w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => setShowDailyRecords(v => !v))}>
+            日別記録 {showDailyRecords ? "を閉じる" : "を見る"}
+          </button>
+          {showDailyRecords && <div className="mt-3 space-y-2">
             {dailyRows.length ? dailyRows.slice().reverse().slice(0, 30).map(row => (
               <div key={`${row.date}-${row.modeId || "all"}`} className="grid grid-cols-[1fr_auto] gap-2 rounded-2xl bg-black/20 p-3">
                 <div>
@@ -2803,7 +2808,7 @@
                 </div>
               </div>
             )) : <p className="py-4 text-center text-sm font-bold text-[color:var(--muted)]">日別記録はまだありません。</p>}
-          </div>
+          </div>}
 
           <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">苦手な形</h3>
           <div className="mt-3 space-y-2">

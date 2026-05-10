@@ -398,14 +398,6 @@
     }
     .judge-flash.ok { color: #ff4b4b; }
     .judge-flash.ng { color: #63a7ff; }
-    .ura-side-menu {
-      position: absolute;
-      left: 4px;
-      bottom: 0;
-      width: clamp(74px, 22vw, 98px);
-      min-height: 44px;
-      z-index: 2;
-    }
     @keyframes judge-flash {
       0% { opacity: 0; transform: scale(0.72) translateY(6px); }
       16% { opacity: 1; transform: scale(1.08) translateY(0); }
@@ -988,7 +980,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 64;
+    const APP_VERSION = 65;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2934,9 +2926,6 @@
                   {judgeFlash.type === "ok" ? "○" : "×"}
                 </div>
               )}
-              {isUra && (
-                <button className="ura-side-menu btn-quiet rounded-2xl px-2 py-2 text-xs font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(quit)}>メニュー</button>
-              )}
               <section className={`answer-pad size-${answerPadSize} grid grid-cols-3 content-start gap-0`}>
                 {[1,2,3,4,5,6,7,8,9].map(num => {
                   const disabled = (counts[num] || 0) >= 4;
@@ -2950,18 +2939,14 @@
               </section>
             </div>
 
-            {!isUra && (
-              <div className={`answer-action size-${answerPadSize} mt-1.5`}>
-                <button className="answer-confirm btn-main pressable w-full px-4 py-4 text-lg font-black disabled:opacity-40" disabled={game.selected.length === 0 || !!game.feedback} {...tap(confirmAnswer)}>確定</button>
-              </div>
-            )}
+            <div className={`answer-action size-${answerPadSize} mt-1.5 ${isUra ? "pointer-events-none invisible" : ""}`}>
+              <button className="answer-confirm btn-main pressable w-full px-4 py-4 text-lg font-black disabled:opacity-40" disabled={isUra || game.selected.length === 0 || !!game.feedback} {...tap(confirmAnswer)}>確定</button>
+            </div>
 
-            {!isUra && (
             <footer className="mt-3 grid grid-cols-2 gap-2">
               <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(quit)}>メニュー</button>
               <button className="btn-quiet rounded-2xl px-2 py-3 text-sm font-black disabled:opacity-40" disabled={!!game.feedback} {...tap(retry)}>再挑戦</button>
             </footer>
-            )}
           </div>
           {showGameOver && (
             <PlayGameOverOverlay

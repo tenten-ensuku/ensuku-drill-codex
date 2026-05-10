@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 63;
+    const APP_VERSION = 64;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1665,6 +1665,25 @@
       }, [screen]);
 
       useEffect(() => {
+        const wakeAudio = () => ensureAudio();
+        const wakeWhenVisible = () => {
+          if (!document.hidden) wakeAudio();
+        };
+        document.addEventListener("visibilitychange", wakeWhenVisible);
+        window.addEventListener("pageshow", wakeAudio);
+        window.addEventListener("focus", wakeAudio);
+        window.addEventListener("pointerdown", wakeAudio, { passive: true });
+        window.addEventListener("touchstart", wakeAudio, { passive: true });
+        return () => {
+          document.removeEventListener("visibilitychange", wakeWhenVisible);
+          window.removeEventListener("pageshow", wakeAudio);
+          window.removeEventListener("focus", wakeAudio);
+          window.removeEventListener("pointerdown", wakeAudio);
+          window.removeEventListener("touchstart", wakeAudio);
+        };
+      }, []);
+
+      useEffect(() => {
         if (screen !== "game" || !game || game.ended) return;
         const id = setInterval(() => setTick(v => v + 1), 250);
         return () => clearInterval(id);
@@ -1686,9 +1705,10 @@
 
       function tap(handler) {
         return {
-          onTouchStart: () => { touchRef.current = true; handler(); },
+          onTouchStart: () => { touchRef.current = true; ensureAudio(); handler(); },
           onClick: () => {
             if (touchRef.current) { touchRef.current = false; return; }
+            ensureAudio();
             handler();
           }
         };
@@ -1696,14 +1716,25 @@
 
       function ensureAudio() {
         try {
-          if (!audioRef.current) audioRef.current = new (window.AudioContext || window.webkitAudioContext)();
-          if (audioRef.current.state === "suspended") audioRef.current.resume();
-        } catch {}
+          const AudioCtor = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtor) return null;
+          if (!audioRef.current || audioRef.current.state === "closed") {
+            audioRef.current = new AudioCtor();
+          }
+          const ctx = audioRef.current;
+          if (ctx.state !== "running" && ctx.resume) {
+            const resumed = ctx.resume();
+            if (resumed?.catch) resumed.catch(() => {});
+          }
+          return ctx;
+        } catch {
+          audioRef.current = null;
+          return null;
+        }
       }
 
       function tone(type) {
-        ensureAudio();
-        const ctx = audioRef.current;
+        const ctx = ensureAudio();
         if (!ctx) return;
         const volumeScale = Math.max(0, Math.min(3, Number(soundVolume))) / 3;
         if (volumeScale <= 0) return;

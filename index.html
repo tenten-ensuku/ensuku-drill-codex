@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 61;
+    const APP_VERSION = 62;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2666,7 +2666,9 @@
 
     function SelfAnalysis({ resultsHistory, dailySummary, problemStats, tap }) {
       const [modeId, setModeId] = useState("6");
+      const [chartTipIndex, setChartTipIndex] = useState(null);
       const selectedMode = getMode(modeId);
+      useEffect(() => setChartTipIndex(null), [modeId]);
       const completed = resultsHistory.filter(r => (r.variant === "normal" || r.variant === "ura") && !r.gameOver && r.modeId === modeId);
       const summaries = Object.values(dailySummary || {});
       const modeSummaries = summaries.filter(row => row.modeId === modeId);
@@ -2752,6 +2754,7 @@
       const dailyRows = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
       const chartRows = dailyRows.slice(-60);
       const maxScore = Math.max(1, ...chartRows.map(row => row.bestScore));
+      const chartTip = chartTipIndex === null ? null : chartRows[chartTipIndex];
       const problemKind = selectedMode?.tileCount === 10 ? "10" : String(selectedMode?.tileCount || 6);
       const weakItems = Object.entries(problemStats || {})
         .map(([baseId, stat]) => ({ baseId, ...stat, rate: stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : null }))
@@ -2785,11 +2788,32 @@
           <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">日別ベスト推移</h3>
           <div className="mt-3 flex h-24 items-end gap-1 rounded-2xl bg-black/20 p-3">
             {chartRows.length ? chartRows.map((row, idx) => (
-              <div key={`${row.date}-${row.modeId || "all"}-${idx}`} className="flex flex-1 items-end justify-center self-stretch">
-                <div className="w-full max-w-[18px] rounded-t bg-[color:var(--gold)] opacity-80" style={{ height: `${Math.max(8, (row.bestScore / maxScore) * 100)}%` }} title={`${row.date} ${row.bestScore}pt`} />
-              </div>
+              <button
+                key={`${row.date}-${row.modeId || "all"}-${idx}`}
+                type="button"
+                className="flex flex-1 items-end justify-center self-stretch rounded outline-none"
+                aria-label={`${row.date} ${row.bestScore}pt`}
+                {...tap(() => setChartTipIndex(idx))}
+              >
+                <span
+                  className={`w-full max-w-[18px] rounded-t bg-[color:var(--gold)] transition ${chartTipIndex === idx ? "opacity-100 ring-2 ring-[color:var(--cream)]" : "opacity-80"}`}
+                  style={{ height: `${Math.max(8, (row.bestScore / maxScore) * 100)}%` }}
+                  title={`${row.date} ${row.bestScore}pt`}
+                />
+              </button>
             )) : <p className="m-auto text-sm font-bold text-[color:var(--muted)]">履歴がまだありません。</p>}
           </div>
+          {chartTip && (
+            <div className="mt-2 rounded-2xl bg-black/25 px-3 py-2 text-xs font-bold text-[color:var(--cream)]">
+              <span>{chartTip.date}</span>
+              <span className="mx-2 text-[color:var(--muted)]">/</span>
+              <span>{chartTip.bestScore}pt</span>
+              <span className="mx-2 text-[color:var(--muted)]">/</span>
+              <span><RankBadge rank={chartTip.bestRank} size="leaderboard" /></span>
+              <span className="mx-2 text-[color:var(--muted)]">/</span>
+              <span>{chartTip.bestAverageSeconds ?? "--"}秒/問</span>
+            </div>
+          )}
 
           <details className="mt-5 rounded-2xl bg-black/20 p-2">
             <summary className="btn-quiet cursor-pointer list-none rounded-2xl px-4 py-3 text-center text-sm font-black">

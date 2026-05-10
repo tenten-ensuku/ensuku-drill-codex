@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 56;
+    const APP_VERSION = 57;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2665,10 +2665,12 @@
     }
 
     function SelfAnalysis({ resultsHistory, dailySummary, problemStats, tap }) {
-      const [modeId, setModeId] = useState("all");
-      const completed = resultsHistory.filter(r => (r.variant === "normal" || r.variant === "ura") && !r.gameOver);
+      const [modeId, setModeId] = useState("6");
+      const selectedMode = getMode(modeId);
+      const completed = resultsHistory.filter(r => (r.variant === "normal" || r.variant === "ura") && !r.gameOver && r.modeId === modeId);
       const summaries = Object.values(dailySummary || {});
-      const summaryTotals = summaries.reduce((acc, row) => ({
+      const modeSummaries = summaries.filter(row => row.modeId === modeId);
+      const summaryTotals = modeSummaries.reduce((acc, row) => ({
         plays: acc.plays + (row.playCount || 0),
         score: acc.score + (row.totalScore || 0),
         correct: acc.correct + (row.totalCorrect || 0),
@@ -2692,12 +2694,10 @@
       const answerTotal = totals.correct + totals.mistakes;
       const avgRate = answerTotal ? Math.round((totals.correct / answerTotal) * 100) : null;
       const avgSec = answerTotal ? (totals.elapsed / answerTotal).toFixed(1) : "--";
-      const modes = [["all", "全体"], ...MODES.map(mode => [mode.id, mode.label])];
       const historyDaily = {};
       completed.forEach(row => {
-        if (modeId !== "all" && row.modeId !== modeId) return;
         const day = dateKey(row.finishedAt);
-        const key = modeId === "all" ? day : `${day}:${row.modeId}`;
+        const key = `${day}:${row.modeId}`;
         const averageSeconds = Number((row.elapsedSeconds / Math.max(1, row.questionCount)).toFixed(1));
         const prev = historyDaily[key];
         if (!prev) {
@@ -2724,9 +2724,8 @@
         }
       });
       const summaryDaily = {};
-      summaries.forEach(row => {
-        if (modeId !== "all" && row.modeId !== modeId) return;
-        const key = modeId === "all" ? row.date : `${row.date}:${row.modeId}`;
+      modeSummaries.forEach(row => {
+        const key = `${row.date}:${row.modeId}`;
         const prev = summaryDaily[key];
         const candidate = {
           date: row.date,
@@ -2753,8 +2752,10 @@
       const dailyRows = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
       const chartRows = dailyRows.slice(-60);
       const maxScore = Math.max(1, ...chartRows.map(row => row.bestScore));
+      const problemKind = selectedMode?.tileCount === 10 ? "10" : String(selectedMode?.tileCount || 6);
       const weakItems = Object.entries(problemStats || {})
         .map(([baseId, stat]) => ({ baseId, ...stat, rate: stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : null }))
+        .filter(item => item.baseId.startsWith(`${problemKind}-`))
         .filter(item => item.total > 0)
         .sort((a, b) => (a.rate - b.rate) || (b.total - a.total))
         .slice(0, 5)
@@ -2767,6 +2768,11 @@
       return (
         <section className="panel rounded-3xl p-4">
           <h2 className="text-xl font-black">成長ログ</h2>
+          <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-black/20 p-1">
+            {MODES.map(mode => (
+              <button key={mode.id} className={`rounded-2xl px-2 py-2 text-xs font-black ${modeId === mode.id ? "btn-main" : "btn-quiet"}`} {...tap(() => setModeId(mode.id))}>{mode.label}</button>
+            ))}
+          </div>
           <div className="mt-4 grid grid-cols-3 gap-2 text-center">
             <Stat label="総プレイ" value={totals.plays} compact />
             <Stat label="今日" value={todayCount} compact />
@@ -2776,41 +2782,7 @@
             <Stat label="記録更新" value={totals.records} compact />
           </div>
 
-          <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">モード別成績</h3>
-          <div className="mt-3 space-y-2">
-            {MODES.map(mode => {
-              const rows = completed.filter(row => row.modeId === mode.id);
-              const plays = rows.length;
-              const scoreSum = rows.reduce((sum, row) => sum + row.score, 0);
-              const correct = rows.reduce((sum, row) => sum + row.correctCount, 0);
-              const mistakes = rows.reduce((sum, row) => sum + row.mistakeCount, 0);
-              const elapsed = rows.reduce((sum, row) => sum + row.elapsedSeconds, 0);
-              const bestRow = rows.reduce((top, row) => !top || row.score > top.score ? row : top, null);
-              const totalAnswers = correct + mistakes;
-              return (
-                <div key={mode.id} className="rounded-2xl bg-black/20 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-black">{mode.label}</p>
-                    <p className="text-xs font-bold text-[color:var(--muted)]">{plays}回</p>
-                  </div>
-                  <div className="mt-2 grid grid-cols-4 gap-1.5 text-center">
-                    <Stat label="Best" value={bestRow ? `${bestRow.score}pt` : "-"} compact />
-                    <Stat label="Rank" value={bestRow ? <RankBadge rank={bestRow.rank} size="leaderboard" /> : "-"} compact />
-                    <Stat label="平均" value={plays ? `${Math.round(scoreSum / plays)}pt` : "-"} compact />
-                    <Stat label="正答率" value={totalAnswers ? `${Math.round((correct / totalAnswers) * 100)}%` : "-"} compact />
-                  </div>
-                  <p className="mt-2 text-right text-[11px] font-bold text-[color:var(--muted)]">平均 {totalAnswers ? (elapsed / totalAnswers).toFixed(1) : "--"}秒/問</p>
-                </div>
-              );
-            })}
-          </div>
-
           <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">日別ベスト推移</h3>
-          <div className="mt-3 grid grid-cols-5 gap-1 rounded-full bg-black/20 p-1">
-            {modes.map(([id, label]) => (
-              <button key={id} className={`rounded-full px-2 py-2 text-[11px] font-black ${modeId === id ? "btn-main" : "btn-quiet"}`} {...tap(() => setModeId(id))}>{label}</button>
-            ))}
-          </div>
           <div className="mt-3 flex h-24 items-end gap-1 rounded-2xl bg-black/20 p-3">
             {chartRows.length ? chartRows.map((row, idx) => (
               <div key={`${row.date}-${row.modeId || "all"}-${idx}`} className="flex-1 rounded-t bg-[color:var(--gold)] opacity-80" style={{ height: `${Math.max(8, (row.bestScore / maxScore) * 100)}%` }} title={`${row.date} ${row.bestScore}pt`} />

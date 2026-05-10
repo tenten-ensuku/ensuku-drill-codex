@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 53;
+    const APP_VERSION = 54;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1128,6 +1128,7 @@
       favorites: "mahjong_favorites",
       review: "mahjong_review_bucket",
       results: "mahjong_results_history",
+      dailySummary: "mahjong_daily_summary",
       problemStats: "mahjong_problem_stats",
       playerName: "mahjong_player_name",
       answerPadSize: "mahjong_answer_pad_size",
@@ -1462,6 +1463,14 @@
       return `${Math.floor(sec)}秒`;
     }
 
+    function dateKey(iso = new Date().toISOString()) {
+      const d = new Date(iso);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
     function formatAverageTime(elapsedSeconds, questionCount) {
       if (!questionCount) return "-";
       return `${(elapsedSeconds / questionCount).toFixed(1)}秒`;
@@ -1559,6 +1568,8 @@
       const [result, setResult] = useState(null);
       const [favorites, setFavorites] = useState(() => readJson(STORAGE.favorites, []));
       const [review, setReview] = useState(() => readJson(STORAGE.review, []));
+      const [resultsHistory, setResultsHistory] = useState(() => readJson(STORAGE.results, []));
+      const [dailySummary, setDailySummary] = useState(() => readJson(STORAGE.dailySummary, {}));
       const [problemStats, setProblemStats] = useState(() => readJson(STORAGE.problemStats, {}));
       const [unlockFlash, setUnlockFlash] = useState(null);
       const [unlockHighlight, setUnlockHighlight] = useState(null);
@@ -2009,8 +2020,49 @@
         }
         if ((res.variant === "normal" || res.variant === "ura") && !res.gameOver) {
           const history = readJson(STORAGE.results, []);
-          writeJson(STORAGE.results, [res, ...history].slice(0, 50));
+          const nextHistory = [res, ...history].slice(0, 500);
+          writeJson(STORAGE.results, nextHistory);
+          setResultsHistory(nextHistory);
+          setDailySummary(current => {
+            const day = dateKey(res.finishedAt);
+            const key = `${day}:${res.modeId}`;
+            const prev = current[key] || {
+              date: day,
+              modeId: res.modeId,
+              playCount: 0,
+              bestScore: 0,
+              totalScore: 0,
+              totalCorrect: 0,
+              totalMistakes: 0,
+              totalElapsed: 0,
+              recordCount: 0
+            };
+            const next = {
+              ...current,
+              [key]: {
+                ...prev,
+                playCount: prev.playCount + 1,
+                bestScore: Math.max(prev.bestScore || 0, res.score),
+                totalScore: prev.totalScore + res.score,
+                totalCorrect: prev.totalCorrect + res.correctCount,
+                totalMistakes: prev.totalMistakes + res.mistakeCount,
+                totalElapsed: prev.totalElapsed + res.elapsedSeconds,
+                recordCount: prev.recordCount + (res.isNewRecord ? 1 : 0)
+              }
+            };
+            writeJson(STORAGE.dailySummary, next);
+            return next;
+          });
         }
+      }
+
+      function markResultSubmitted(res) {
+        if (!res?.finishedAt) return;
+        setResultsHistory(current => {
+          const next = current.map(item => item.finishedAt === res.finishedAt ? { ...item, submitted: true } : item);
+          writeJson(STORAGE.results, next);
+          return next;
+        });
       }
 
       function newlyUnlockedModes(modeId, previousRank, currentRank) {
@@ -2087,6 +2139,8 @@
               records={records}
               favorites={favorites}
               review={review}
+              resultsHistory={resultsHistory}
+              dailySummary={dailySummary}
               problemStats={problemStats}
               isUnlocked={isUnlocked}
               startMode={startMode}
@@ -2147,6 +2201,7 @@
               isFavorite={isFavorite}
               favoriteFlash={favoriteFlash}
               playerName={playerName}
+              onRankingSubmitted={markResultSubmitted}
               startMode={startMode}
               goHome={() => setScreen("home")}
               tap={tap}
@@ -2157,7 +2212,7 @@
       );
     }
 
-    function Home({ records, favorites, review, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, playerName, setPlayerName, soundVolume, setSoundVolume, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
+    function Home({ records, favorites, review, resultsHistory, dailySummary, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, playerName, setPlayerName, soundVolume, setSoundVolume, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
       const sizeOptions = [
         ["normal", "通常"],
@@ -2172,18 +2227,16 @@
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />
-              <div className="flex gap-1.5">
-                <button className="btn-quiet rounded-full px-3 py-1.5 text-xs font-black" {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>設定</button>
-                <button className="btn-quiet rounded-full px-3 py-1.5 text-xs font-black" {...tap(() => setTab(tab === "problems" ? "modes" : "problems"))}>問題一覧</button>
-              </div>
+              <button className="btn-quiet rounded-full px-3 py-1.5 text-xs font-black" {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>設定</button>
             </div>
           </header>
 
-          <div className="mb-4 grid grid-cols-4 gap-1.5 rounded-full bg-black/20 p-1">
+          <div className="mb-4 grid grid-cols-5 gap-1 rounded-full bg-black/20 p-1">
             {[
               { id: "modes", label: "挑戦" },
-              { id: "favorite", label: "お気に入り", count: favorites.length },
-              { id: "review", label: "復習", count: review.length },
+              { id: "review", label: "復習", count: favorites.length + review.length },
+              { id: "problems", label: "問題一覧" },
+              { id: "analysis", label: "自己分析" },
               { id: "ranking", label: "ランキング" }
             ].map(item => (
               <button key={item.id} className={`rounded-full px-1.5 py-2 text-[11px] font-extrabold leading-tight sm:text-sm ${tab === item.id ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(item.id))}>
@@ -2201,29 +2254,18 @@
             </section>
           )}
 
-          {tab === "favorite" && (
-            <QuestionList
-              empty="保存した牌姿はまだありません。ゲーム中や結果画面から追加できます。"
-              items={favorites}
-              actionLabel="まとめて練習"
-              onStart={() => startMode(inferModeFromList(favorites), "favorite", favorites)}
-              onRemove={removeFavorite}
-              onClear={clearFavorites}
-              tap={tap}
-            />
-          )}
-
           {tab === "review" && (
-            <QuestionList
-              empty="間違えた牌姿はまだありません。ミスした問題が自動で入ります。"
-              items={review}
-              actionLabel="まとめて練習"
-              onStart={() => startMode(inferModeFromList(review), "review", review)}
-              onRemove={removeReview}
-              onFavorite={addFavorite}
+            <ReviewHub
+              favorites={favorites}
+              review={review}
+              startMode={startMode}
+              removeFavorite={removeFavorite}
+              removeReview={removeReview}
+              clearFavorites={clearFavorites}
+              clearReview={clearReview}
+              addFavorite={addFavorite}
               isFavorite={isFavorite}
               favoriteFlash={favoriteFlash}
-              onClear={clearReview}
               tap={tap}
             />
           )}
@@ -2234,6 +2276,10 @@
 
           {tab === "problems" && (
             <ProblemCatalog problemStats={problemStats} tap={tap} />
+          )}
+
+          {tab === "analysis" && (
+            <SelfAnalysis resultsHistory={resultsHistory} dailySummary={dailySummary} problemStats={problemStats} tap={tap} />
           )}
 
           {tab === "settings" && (
@@ -2368,9 +2414,40 @@
       );
     }
 
-    function QuestionList({ empty, items, actionLabel, onStart, onRemove, onFavorite, isFavorite, favoriteFlash, onClear, tap }) {
+    function ReviewHub({ favorites, review, startMode, removeFavorite, removeReview, clearFavorites, clearReview, addFavorite, isFavorite, favoriteFlash, tap }) {
+      return (
+        <div className="space-y-4">
+          <QuestionList
+            title="お気に入り"
+            empty="保存した牌姿はまだありません。ゲーム中や結果画面から追加できます。"
+            items={favorites}
+            actionLabel="まとめて練習"
+            onStart={() => startMode(inferModeFromList(favorites), "favorite", favorites)}
+            onRemove={removeFavorite}
+            onClear={clearFavorites}
+            tap={tap}
+          />
+          <QuestionList
+            title="誤答問題"
+            empty="間違えた牌姿はまだありません。ミスした問題が自動で入ります。"
+            items={review}
+            actionLabel="まとめて練習"
+            onStart={() => startMode(inferModeFromList(review), "review", review)}
+            onRemove={removeReview}
+            onFavorite={addFavorite}
+            isFavorite={isFavorite}
+            favoriteFlash={favoriteFlash}
+            onClear={clearReview}
+            tap={tap}
+          />
+        </div>
+      );
+    }
+
+    function QuestionList({ title, empty, items, actionLabel, onStart, onRemove, onFavorite, isFavorite, favoriteFlash, onClear, tap }) {
       return (
         <section className="panel rounded-3xl p-4">
+          {title && <h2 className="mb-3 text-xl font-black">{title}</h2>}
           {items.length === 0 ? (
             <p className="py-8 text-center text-sm leading-6 text-[color:var(--muted)]">{empty}</p>
           ) : (
@@ -2559,6 +2636,120 @@
                 </div>
               );
             })}
+          </div>
+        </section>
+      );
+    }
+
+    function SelfAnalysis({ resultsHistory, dailySummary, problemStats, tap }) {
+      const [modeId, setModeId] = useState("all");
+      const completed = resultsHistory.filter(r => (r.variant === "normal" || r.variant === "ura") && !r.gameOver);
+      const summaries = Object.values(dailySummary || {});
+      const summaryTotals = summaries.reduce((acc, row) => ({
+        plays: acc.plays + (row.playCount || 0),
+        score: acc.score + (row.totalScore || 0),
+        correct: acc.correct + (row.totalCorrect || 0),
+        mistakes: acc.mistakes + (row.totalMistakes || 0),
+        elapsed: acc.elapsed + (row.totalElapsed || 0),
+        records: acc.records + (row.recordCount || 0)
+      }), { plays: 0, score: 0, correct: 0, mistakes: 0, elapsed: 0, records: 0 });
+      const fallbackTotals = completed.reduce((acc, row) => ({
+        plays: acc.plays + 1,
+        score: acc.score + row.score,
+        correct: acc.correct + row.correctCount,
+        mistakes: acc.mistakes + row.mistakeCount,
+        elapsed: acc.elapsed + row.elapsedSeconds,
+        records: acc.records + (row.isNewRecord ? 1 : 0)
+      }), { plays: 0, score: 0, correct: 0, mistakes: 0, elapsed: 0, records: 0 });
+      const totals = summaryTotals.plays > completed.length ? summaryTotals : fallbackTotals;
+      const today = dateKey();
+      const todayFromSummary = summaries.filter(row => row.date === today).reduce((sum, row) => sum + (row.playCount || 0), 0);
+      const todayCount = todayFromSummary || completed.filter(row => dateKey(row.finishedAt) === today).length;
+      const best = completed.reduce((top, row) => !top || row.score > top.score ? row : top, null);
+      const answerTotal = totals.correct + totals.mistakes;
+      const avgRate = answerTotal ? Math.round((totals.correct / answerTotal) * 100) : null;
+      const avgSec = answerTotal ? (totals.elapsed / answerTotal).toFixed(1) : "--";
+      const modes = [["all", "全体"], ...MODES.map(mode => [mode.id, mode.label])];
+      const chartRows = (modeId === "all" ? completed : completed.filter(row => row.modeId === modeId)).slice(0, 50).reverse();
+      const maxScore = Math.max(1, ...chartRows.map(row => row.score));
+      const weakItems = Object.entries(problemStats || {})
+        .map(([baseId, stat]) => ({ baseId, ...stat, rate: stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : null }))
+        .filter(item => item.total > 0)
+        .sort((a, b) => (a.rate - b.rate) || (b.total - a.total))
+        .slice(0, 5)
+        .map(item => {
+          const [tileCount] = item.baseId.split("-");
+          const base = DATASETS[tileCount === "10" ? "10" : tileCount]?.find(q => q.baseId === item.baseId);
+          return base ? { ...item, ...base, suit: tileCount === "6" ? "m" : tileCount === "7" ? "s" : "p" } : item;
+        })
+        .filter(item => item.tiles);
+      return (
+        <section className="panel rounded-3xl p-4">
+          <h2 className="text-xl font-black">成長ログ</h2>
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+            <Stat label="総プレイ" value={totals.plays} compact />
+            <Stat label="今日" value={todayCount} compact />
+            <Stat label="最高" value={best ? <RankBadge rank={best.rank} size="leaderboard" /> : "--"} compact />
+            <Stat label="平均正答率" value={avgRate === null ? "--" : `${avgRate}%`} compact />
+            <Stat label="平均秒/問" value={`${avgSec}秒`} compact />
+            <Stat label="記録更新" value={totals.records} compact />
+          </div>
+
+          <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">モード別成績</h3>
+          <div className="mt-3 space-y-2">
+            {MODES.map(mode => {
+              const rows = completed.filter(row => row.modeId === mode.id);
+              const plays = rows.length;
+              const scoreSum = rows.reduce((sum, row) => sum + row.score, 0);
+              const correct = rows.reduce((sum, row) => sum + row.correctCount, 0);
+              const mistakes = rows.reduce((sum, row) => sum + row.mistakeCount, 0);
+              const elapsed = rows.reduce((sum, row) => sum + row.elapsedSeconds, 0);
+              const bestRow = rows.reduce((top, row) => !top || row.score > top.score ? row : top, null);
+              const totalAnswers = correct + mistakes;
+              return (
+                <div key={mode.id} className="rounded-2xl bg-black/20 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-black">{mode.label}</p>
+                    <p className="text-xs font-bold text-[color:var(--muted)]">{plays}回</p>
+                  </div>
+                  <div className="mt-2 grid grid-cols-4 gap-1.5 text-center">
+                    <Stat label="Best" value={bestRow ? `${bestRow.score}pt` : "-"} compact />
+                    <Stat label="Rank" value={bestRow ? <RankBadge rank={bestRow.rank} size="leaderboard" /> : "-"} compact />
+                    <Stat label="平均" value={plays ? `${Math.round(scoreSum / plays)}pt` : "-"} compact />
+                    <Stat label="正答率" value={totalAnswers ? `${Math.round((correct / totalAnswers) * 100)}%` : "-"} compact />
+                  </div>
+                  <p className="mt-2 text-right text-[11px] font-bold text-[color:var(--muted)]">平均 {totalAnswers ? (elapsed / totalAnswers).toFixed(1) : "--"}秒/問</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">スコア推移</h3>
+          <div className="mt-3 grid grid-cols-5 gap-1 rounded-full bg-black/20 p-1">
+            {modes.map(([id, label]) => (
+              <button key={id} className={`rounded-full px-2 py-2 text-[11px] font-black ${modeId === id ? "btn-main" : "btn-quiet"}`} {...tap(() => setModeId(id))}>{label}</button>
+            ))}
+          </div>
+          <div className="mt-3 flex h-24 items-end gap-1 rounded-2xl bg-black/20 p-3">
+            {chartRows.length ? chartRows.map((row, idx) => (
+              <div key={`${row.finishedAt}-${idx}`} className="flex-1 rounded-t bg-[color:var(--gold)] opacity-80" style={{ height: `${Math.max(8, (row.score / maxScore) * 100)}%` }} title={`${row.score}pt`} />
+            )) : <p className="m-auto text-sm font-bold text-[color:var(--muted)]">履歴がまだありません。</p>}
+          </div>
+
+          <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">苦手な形</h3>
+          <div className="mt-3 space-y-2">
+            {weakItems.length ? weakItems.map(item => (
+              <div key={item.baseId} className="rounded-2xl bg-black/20 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <MiniHand q={item} />
+                  <div className="shrink-0 text-right">
+                    <p className="text-lg font-black">{item.rate}%</p>
+                    <p className="text-[10px] font-bold text-[color:var(--muted)]">{item.correct}/{item.total}</p>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs font-bold text-[color:var(--muted)]">待ち {item.answers.join(", ")}</p>
+              </div>
+            )) : <p className="py-4 text-center text-sm font-bold text-[color:var(--muted)]">苦手分析はまだありません。</p>}
           </div>
         </section>
       );
@@ -2761,7 +2952,7 @@
       );
     }
 
-    function Result({ result, addFavorite, isFavorite, favoriteFlash, playerName, startMode, goHome, tap, tone }) {
+    function Result({ result, addFavorite, isFavorite, favoriteFlash, playerName, onRankingSubmitted, startMode, goHome, tap, tone }) {
       const [showPost, setShowPost] = useState(false);
       const [copied, setCopied] = useState(false);
       const [submitStatus, setSubmitStatus] = useState("");
@@ -2858,6 +3049,7 @@
           const rank = await fetchRankPosition(result.modeId, "daily", playerName);
           setPostedRank(rank);
           setRankingSubmitted(true);
+          onRankingSubmitted?.(result);
           setSubmitStatus(rank ? `現在${rank}位です` : "順位を取得できませんでした");
         } catch (err) {
           setSubmitStatus(err.message || "投稿できませんでした");

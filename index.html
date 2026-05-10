@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 55;
+    const APP_VERSION = 56;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2031,18 +2031,29 @@
               modeId: res.modeId,
               playCount: 0,
               bestScore: 0,
+              bestRank: "E",
+              bestElapsed: 0,
+              bestQuestionCount: res.questionCount,
+              bestAverageSeconds: null,
               totalScore: 0,
               totalCorrect: 0,
               totalMistakes: 0,
               totalElapsed: 0,
               recordCount: 0
             };
+            const resAverage = Number((res.elapsedSeconds / Math.max(1, res.questionCount)).toFixed(1));
+            const prevAverage = prev.bestAverageSeconds ?? Infinity;
+            const isDailyBest = res.score > (prev.bestScore || 0) || (res.score === prev.bestScore && resAverage < prevAverage);
             const next = {
               ...current,
               [key]: {
                 ...prev,
                 playCount: prev.playCount + 1,
-                bestScore: Math.max(prev.bestScore || 0, res.score),
+                bestScore: isDailyBest ? res.score : prev.bestScore,
+                bestRank: isDailyBest ? res.rank : prev.bestRank,
+                bestElapsed: isDailyBest ? res.elapsedSeconds : prev.bestElapsed,
+                bestQuestionCount: isDailyBest ? res.questionCount : prev.bestQuestionCount,
+                bestAverageSeconds: isDailyBest ? resAverage : prev.bestAverageSeconds,
                 totalScore: prev.totalScore + res.score,
                 totalCorrect: prev.totalCorrect + res.correctCount,
                 totalMistakes: prev.totalMistakes + res.mistakeCount,
@@ -2682,8 +2693,66 @@
       const avgRate = answerTotal ? Math.round((totals.correct / answerTotal) * 100) : null;
       const avgSec = answerTotal ? (totals.elapsed / answerTotal).toFixed(1) : "--";
       const modes = [["all", "全体"], ...MODES.map(mode => [mode.id, mode.label])];
-      const chartRows = (modeId === "all" ? completed : completed.filter(row => row.modeId === modeId)).slice(0, 50).reverse();
-      const maxScore = Math.max(1, ...chartRows.map(row => row.score));
+      const historyDaily = {};
+      completed.forEach(row => {
+        if (modeId !== "all" && row.modeId !== modeId) return;
+        const day = dateKey(row.finishedAt);
+        const key = modeId === "all" ? day : `${day}:${row.modeId}`;
+        const averageSeconds = Number((row.elapsedSeconds / Math.max(1, row.questionCount)).toFixed(1));
+        const prev = historyDaily[key];
+        if (!prev) {
+          historyDaily[key] = {
+            date: day,
+            modeId: row.modeId,
+            playCount: 1,
+            bestScore: row.score,
+            bestRank: row.rank,
+            bestElapsed: row.elapsedSeconds,
+            bestQuestionCount: row.questionCount,
+            bestAverageSeconds: averageSeconds
+          };
+        } else {
+          prev.playCount += 1;
+          if (row.score > prev.bestScore || (row.score === prev.bestScore && averageSeconds < prev.bestAverageSeconds)) {
+            prev.bestScore = row.score;
+            prev.bestRank = row.rank;
+            prev.bestElapsed = row.elapsedSeconds;
+            prev.bestQuestionCount = row.questionCount;
+            prev.bestAverageSeconds = averageSeconds;
+            prev.modeId = row.modeId;
+          }
+        }
+      });
+      const summaryDaily = {};
+      summaries.forEach(row => {
+        if (modeId !== "all" && row.modeId !== modeId) return;
+        const key = modeId === "all" ? row.date : `${row.date}:${row.modeId}`;
+        const prev = summaryDaily[key];
+        const candidate = {
+          date: row.date,
+          modeId: row.modeId,
+          playCount: row.playCount || 0,
+          bestScore: row.bestScore || 0,
+          bestRank: row.bestRank || rankFor(row.modeId, row.bestScore || 0),
+          bestElapsed: row.bestElapsed || 0,
+          bestQuestionCount: row.bestQuestionCount || getMode(row.modeId)?.questionCount || 1,
+          bestAverageSeconds: row.bestAverageSeconds ?? (row.bestElapsed ? Number((row.bestElapsed / Math.max(1, row.bestQuestionCount || getMode(row.modeId)?.questionCount || 1)).toFixed(1)) : null)
+        };
+        if (!prev) {
+          summaryDaily[key] = candidate;
+        } else {
+          prev.playCount += candidate.playCount;
+          const prevAvg = prev.bestAverageSeconds ?? Infinity;
+          const nextAvg = candidate.bestAverageSeconds ?? Infinity;
+          if (candidate.bestScore > prev.bestScore || (candidate.bestScore === prev.bestScore && nextAvg < prevAvg)) {
+            summaryDaily[key] = { ...candidate, playCount: prev.playCount };
+          }
+        }
+      });
+      const dailyMap = { ...summaryDaily, ...historyDaily };
+      const dailyRows = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
+      const chartRows = dailyRows.slice(-60);
+      const maxScore = Math.max(1, ...chartRows.map(row => row.bestScore));
       const weakItems = Object.entries(problemStats || {})
         .map(([baseId, stat]) => ({ baseId, ...stat, rate: stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : null }))
         .filter(item => item.total > 0)
@@ -2736,7 +2805,7 @@
             })}
           </div>
 
-          <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">スコア推移</h3>
+          <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">日別ベスト推移</h3>
           <div className="mt-3 grid grid-cols-5 gap-1 rounded-full bg-black/20 p-1">
             {modes.map(([id, label]) => (
               <button key={id} className={`rounded-full px-2 py-2 text-[11px] font-black ${modeId === id ? "btn-main" : "btn-quiet"}`} {...tap(() => setModeId(id))}>{label}</button>
@@ -2744,8 +2813,24 @@
           </div>
           <div className="mt-3 flex h-24 items-end gap-1 rounded-2xl bg-black/20 p-3">
             {chartRows.length ? chartRows.map((row, idx) => (
-              <div key={`${row.finishedAt}-${idx}`} className="flex-1 rounded-t bg-[color:var(--gold)] opacity-80" style={{ height: `${Math.max(8, (row.score / maxScore) * 100)}%` }} title={`${row.score}pt`} />
+              <div key={`${row.date}-${row.modeId || "all"}-${idx}`} className="flex-1 rounded-t bg-[color:var(--gold)] opacity-80" style={{ height: `${Math.max(8, (row.bestScore / maxScore) * 100)}%` }} title={`${row.date} ${row.bestScore}pt`} />
             )) : <p className="m-auto text-sm font-bold text-[color:var(--muted)]">履歴がまだありません。</p>}
+          </div>
+
+          <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">日別記録</h3>
+          <div className="mt-3 space-y-2">
+            {dailyRows.length ? dailyRows.slice().reverse().slice(0, 30).map(row => (
+              <div key={`${row.date}-${row.modeId || "all"}`} className="grid grid-cols-[1fr_auto] gap-2 rounded-2xl bg-black/20 p-3">
+                <div>
+                  <p className="text-sm font-black">{row.date}</p>
+                  <p className="text-[11px] font-bold text-[color:var(--muted)]">{row.playCount}プレイ</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-black">{row.bestScore}pt <span className={rankClass(row.bestRank)}><RankBadge rank={row.bestRank} size="leaderboard" /></span></p>
+                  <p className="text-[11px] font-bold text-[color:var(--muted)]">{row.bestAverageSeconds ?? "--"}秒/問</p>
+                </div>
+              </div>
+            )) : <p className="py-4 text-center text-sm font-bold text-[color:var(--muted)]">日別記録はまだありません。</p>}
           </div>
 
           <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">苦手な形</h3>

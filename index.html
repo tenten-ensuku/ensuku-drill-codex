@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver3</title>
+  <title>エンスクドリル ver4</title>
   <meta name="description" content="麻雀の待ち牌を読むタイムアタックドリル。" />
-  <meta property="og:title" content="エンスクドリル ver3" />
+  <meta property="og:title" content="エンスクドリル ver4" />
   <meta property="og:description" content="競技卓ミニマル版の待ち牌ドリル。" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1008,7 +1008,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 66;
+    const APP_VERSION = 67;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2303,7 +2303,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver3</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver4</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />
@@ -2962,6 +2962,30 @@
       const isUra = game.variant === "ura";
       const showGameOver = isUra && game.gameOverWrong;
       const promptTitle = game.mode.tileCount === 6 ? "2面子完成となる受け入れは？" : "何待ち？";
+
+      useEffect(() => {
+        function onKey(e) {
+          if (e.metaKey || e.ctrlKey || e.altKey) return;
+          const tag = (e.target?.tagName || "").toLowerCase();
+          if (tag === "input" || tag === "textarea") return;
+          if (e.isComposing) return;
+          if (showGameOver || game.feedback) return;
+          if (e.key >= "1" && e.key <= "9") {
+            const num = Number(e.key);
+            if ((counts[num] || 0) >= 4) return;
+            e.preventDefault();
+            selectAnswer(num);
+          } else if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+            if (isUra) return;
+            if (game.selected.length === 0) return;
+            e.preventDefault();
+            confirmAnswer();
+          }
+        }
+        document.addEventListener("keydown", onKey);
+        return () => document.removeEventListener("keydown", onKey);
+      }, [game, q, selectAnswer, confirmAnswer, isUra, showGameOver]);
+
       return (
         <div className={`play-pad mx-auto flex h-screen max-h-screen w-full max-w-md flex-col overflow-hidden px-4 py-3 ${showGameOver ? "game-over-active" : ""}`}>
           <div className="play-content flex min-h-0 flex-1 flex-col">

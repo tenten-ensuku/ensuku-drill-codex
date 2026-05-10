@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 59;
+    const APP_VERSION = 60;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2666,7 +2666,6 @@
 
     function SelfAnalysis({ resultsHistory, dailySummary, problemStats, tap }) {
       const [modeId, setModeId] = useState("6");
-      const [showDailyRecords, setShowDailyRecords] = useState(false);
       const selectedMode = getMode(modeId);
       const completed = resultsHistory.filter(r => (r.variant === "normal" || r.variant === "ura") && !r.gameOver && r.modeId === modeId);
       const summaries = Object.values(dailySummary || {});
@@ -2792,10 +2791,11 @@
             )) : <p className="m-auto text-sm font-bold text-[color:var(--muted)]">履歴がまだありません。</p>}
           </div>
 
-          <button className="btn-quiet mt-5 w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => setShowDailyRecords(v => !v))}>
-            日別記録 {showDailyRecords ? "を閉じる" : "を見る"}
-          </button>
-          {showDailyRecords && <div className="mt-3 space-y-2">
+          <details className="mt-5 rounded-2xl bg-black/20 p-2">
+            <summary className="btn-quiet cursor-pointer list-none rounded-2xl px-4 py-3 text-center text-sm font-black">
+              日別記録を見る
+            </summary>
+            <div className="mt-3 space-y-2">
             {dailyRows.length ? dailyRows.slice().reverse().slice(0, 30).map(row => (
               <div key={`${row.date}-${row.modeId || "all"}`} className="grid grid-cols-[1fr_auto] gap-2 rounded-2xl bg-black/20 p-3">
                 <div>
@@ -2808,7 +2808,8 @@
                 </div>
               </div>
             )) : <p className="py-4 text-center text-sm font-bold text-[color:var(--muted)]">日別記録はまだありません。</p>}
-          </div>}
+            </div>
+          </details>
 
           <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">苦手な形</h3>
           <div className="mt-3 space-y-2">

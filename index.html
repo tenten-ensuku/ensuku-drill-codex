@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 60;
+    const APP_VERSION = 61;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -3228,23 +3228,6 @@
             <button className="btn-main rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => startMode(result.modeId, result.variant, result.sourceList))}>もう一度</button>
           </footer>
 
-          {result.wrongQuestions.length > 0 && (
-            <section className="panel mt-4 rounded-3xl p-4">
-              <h2 className="text-lg font-black">誤答問題</h2>
-              <div className="mt-3 space-y-3">
-                {result.wrongQuestions.map(item => (
-                  <div key={item.instanceId} className="rounded-2xl bg-black/20 p-3">
-                    <MiniHand q={item} compact />
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <p className="min-w-0 text-xs text-[color:var(--muted)]">正解 {item.answers.join(", ")} / 選択 {(item.selected || []).join(", ") || "-"}</p>
-                      <StarFavoriteButton active={isFavorite(item)} justAdded={favoriteFlash === normalizeSavedQuestion(item).favoriteId} onPress={() => addFavorite(item)} tap={tap} label="お気に入りに追加" small />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
           {canPostRanking && (
           <section className="panel mt-3 rounded-3xl p-4">
             <button className="btn-quiet w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(() => setShowPost(v => !v))}>ランキング投稿</button>
@@ -3275,6 +3258,23 @@
               </div>
             )}
           </section>
+          )}
+
+          {result.wrongQuestions.length > 0 && (
+            <section className="panel mt-4 rounded-3xl p-4">
+              <h2 className="text-lg font-black">誤答問題</h2>
+              <div className="mt-3 space-y-3">
+                {result.wrongQuestions.map(item => (
+                  <div key={item.instanceId} className="rounded-2xl bg-black/20 p-3">
+                    <MiniHand q={item} compact />
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <p className="min-w-0 text-xs text-[color:var(--muted)]">正解 {item.answers.join(", ")} / 選択 {(item.selected || []).join(", ") || "-"}</p>
+                      <StarFavoriteButton active={isFavorite(item)} justAdded={favoriteFlash === normalizeSavedQuestion(item).favoriteId} onPress={() => addFavorite(item)} tap={tap} label="お気に入りに追加" small />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
 
         </div>

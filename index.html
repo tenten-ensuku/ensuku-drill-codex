@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver2</title>
+  <title>エンスクドリル ver3</title>
   <meta name="description" content="麻雀の待ち牌を読むタイムアタックドリル。" />
-  <meta property="og:title" content="エンスクドリル ver2" />
+  <meta property="og:title" content="エンスクドリル ver3" />
   <meta property="og:description" content="競技卓ミニマル版の待ち牌ドリル。" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -398,6 +398,34 @@
     }
     .judge-flash.ok { color: #ff4b4b; }
     .judge-flash.ng { color: #63a7ff; }
+    .answer-zone.align-left { justify-content: flex-start; }
+    .answer-zone.align-center { justify-content: center; }
+    .answer-zone.align-right { justify-content: flex-end; }
+    .answer-pad.size-small.align-left,
+    .answer-action.size-small.align-left,
+    .ura-fail-pad.size-small.align-left,
+    .settings-preview .answer-pad.size-small.align-left {
+      margin-left: 0;
+      margin-right: auto;
+    }
+    .answer-pad.size-small.align-center,
+    .answer-action.size-small.align-center,
+    .ura-fail-pad.size-small.align-center,
+    .settings-preview .answer-pad.size-small.align-center {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .answer-pad.size-small.align-right,
+    .answer-action.size-small.align-right,
+    .ura-fail-pad.size-small.align-right,
+    .settings-preview .answer-pad.size-small.align-right {
+      margin-left: auto;
+      margin-right: 0;
+    }
+    .answer-zone.align-left .judge-flash {
+      left: auto;
+      right: 4px;
+    }
     @keyframes judge-flash {
       0% { opacity: 0; transform: scale(0.72) translateY(6px); }
       16% { opacity: 1; transform: scale(1.08) translateY(0); }
@@ -980,7 +1008,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 65;
+    const APP_VERSION = 66;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1124,6 +1152,7 @@
       problemStats: "mahjong_problem_stats",
       playerName: "mahjong_player_name",
       answerPadSize: "mahjong_answer_pad_size",
+      answerPadAlign: "mahjong_answer_pad_align",
       soundVolume: "mahjong_sound_volume",
       soundVolumeDefaulted: "mahjong_sound_volume_defaulted_v2",
       deviceId: "mahjong_device_id"
@@ -1571,6 +1600,10 @@
         const saved = localStorage.getItem(STORAGE.answerPadSize);
         return saved === "small" ? "small" : "normal";
       });
+      const [answerPadAlign, setAnswerPadAlign] = useState(() => {
+        const saved = localStorage.getItem(STORAGE.answerPadAlign);
+        return saved === "left" || saved === "center" ? saved : "right";
+      });
       const [playerName, setPlayerName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
       const [soundVolume, setSoundVolume] = useState(() => {
         const raw = localStorage.getItem(STORAGE.soundVolume);
@@ -1642,6 +1675,10 @@
       useEffect(() => {
         localStorage.setItem(STORAGE.answerPadSize, answerPadSize);
       }, [answerPadSize]);
+
+      useEffect(() => {
+        localStorage.setItem(STORAGE.answerPadAlign, answerPadAlign);
+      }, [answerPadAlign]);
 
       useEffect(() => {
         localStorage.setItem(STORAGE.playerName, playerName);
@@ -2187,6 +2224,8 @@
               clearReview={clearReview}
               answerPadSize={answerPadSize}
               setAnswerPadSize={setAnswerPadSize}
+              answerPadAlign={answerPadAlign}
+              setAnswerPadAlign={setAnswerPadAlign}
               playerName={playerName}
               setPlayerName={setPlayerName}
               soundVolume={soundVolume}
@@ -2211,6 +2250,7 @@
               quit={quitGame}
               retry={retryGame}
               answerPadSize={answerPadSize}
+              answerPadAlign={answerPadAlign}
               judgeFlash={judgeFlash}
               tap={tap}
             />
@@ -2224,6 +2264,7 @@
               startMode={startMode}
               goHome={() => setScreen("home")}
               answerPadSize={answerPadSize}
+              answerPadAlign={answerPadAlign}
               tap={tap}
             />
           )}
@@ -2246,18 +2287,23 @@
       );
     }
 
-    function Home({ records, favorites, review, resultsHistory, dailySummary, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, playerName, setPlayerName, soundVolume, setSoundVolume, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
+    function Home({ records, favorites, review, resultsHistory, dailySummary, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, answerPadAlign, setAnswerPadAlign, playerName, setPlayerName, soundVolume, setSoundVolume, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
       const sizeOptions = [
         ["normal", "通常"],
         ["small", "小さめ"]
+      ];
+      const alignOptions = [
+        ["left", "左"],
+        ["center", "中"],
+        ["right", "右"]
       ];
       return (
         <div className="app-pad mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver2</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver3</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />
@@ -2376,9 +2422,26 @@
                 </div>
               </div>
 
+              {answerPadSize === "small" && (
+                <div className="mt-5">
+                  <p className="text-sm font-black text-[color:var(--muted)]">ボタン表示位置</p>
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {alignOptions.map(([id, label]) => (
+                      <button
+                        key={id}
+                        className={`rounded-2xl px-2 py-3 text-sm font-black ${answerPadAlign === id ? "btn-main" : "btn-quiet"}`}
+                        {...tap(() => setAnswerPadAlign(id))}
+                      >
+                        <span className="block">{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="settings-preview mt-5 rounded-2xl bg-black/20 p-3">
                 <p className="text-xs font-black text-[color:var(--muted)]">プレビュー</p>
-                <div className={`answer-pad size-${answerPadSize} mt-3 grid grid-cols-3 content-start gap-0`}>
+                <div className={`answer-pad size-${answerPadSize} align-${answerPadAlign} mt-3 grid grid-cols-3 content-start gap-0`}>
                   {[1,2,3,4,5,6,7,8,9].map(num => (
                     <button key={num} className="answer-btn" type="button" {...tap(() => tone("tap"))}>{num}</button>
                   ))}
@@ -2894,7 +2957,7 @@
       );
     }
 
-    function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, isFavorite, favoriteFlash, quit, retry, answerPadSize, judgeFlash, tap }) {
+    function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, isFavorite, favoriteFlash, quit, retry, answerPadSize, answerPadAlign, judgeFlash, tap }) {
       const counts = q.tiles.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {});
       const isUra = game.variant === "ura";
       const showGameOver = isUra && game.gameOverWrong;
@@ -2920,13 +2983,13 @@
               <Hand q={q} />
             </section>
 
-            <div className="answer-zone">
+            <div className={`answer-zone align-${answerPadAlign}`}>
               {judgeFlash && (
                 <div key={judgeFlash.id} className={`judge-flash ${judgeFlash.type}`}>
                   {judgeFlash.type === "ok" ? "○" : "×"}
                 </div>
               )}
-              <section className={`answer-pad size-${answerPadSize} grid grid-cols-3 content-start gap-0`}>
+              <section className={`answer-pad size-${answerPadSize} align-${answerPadAlign} grid grid-cols-3 content-start gap-0`}>
                 {[1,2,3,4,5,6,7,8,9].map(num => {
                   const disabled = (counts[num] || 0) >= 4;
                   const selected = game.selected.includes(num);
@@ -2939,7 +3002,7 @@
               </section>
             </div>
 
-            <div className={`answer-action size-${answerPadSize} mt-1.5 ${isUra ? "pointer-events-none invisible" : ""}`}>
+            <div className={`answer-action size-${answerPadSize} align-${answerPadAlign} mt-1.5 ${isUra ? "pointer-events-none invisible" : ""}`}>
               <button className="answer-confirm btn-main pressable w-full px-4 py-4 text-lg font-black disabled:opacity-40" disabled={isUra || game.selected.length === 0 || !!game.feedback} {...tap(confirmAnswer)}>確定</button>
             </div>
 
@@ -3003,7 +3066,7 @@
       );
     }
 
-    function GameOverResult({ result, addFavorite, isFavorite, favoriteFlash, startMode, goHome, answerPadSize, tap }) {
+    function GameOverResult({ result, addFavorite, isFavorite, favoriteFlash, startMode, goHome, answerPadSize, answerPadAlign, tap }) {
       const wrong = result.wrongQuestions[0];
       const selected = wrong?.selected || [];
       const wrongPick = selected.find(num => !wrong?.answers.includes(num));
@@ -3032,7 +3095,7 @@
 
             <div className="feedback ng my-4">待ち {wrong?.answers.join(", ")}</div>
 
-            <section className={`ura-fail-pad size-${answerPadSize} grid grid-cols-3 content-start gap-0`}>
+            <section className={`ura-fail-pad size-${answerPadSize} align-${answerPadAlign} grid grid-cols-3 content-start gap-0`}>
               {[1,2,3,4,5,6,7,8,9].map(num => {
                 const disabled = wrong ? (wrong.tiles.filter(n => n === num).length >= 4) : false;
                 return (

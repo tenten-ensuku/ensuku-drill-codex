@@ -988,7 +988,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 62;
+    const APP_VERSION = 63;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2755,6 +2755,13 @@
       const chartRows = dailyRows.slice(-60);
       const maxScore = Math.max(1, ...chartRows.map(row => row.bestScore));
       const chartTip = chartTipIndex === null ? null : chartRows[chartTipIndex];
+      const chartLinePoints = chartRows
+        .map((row, idx) => {
+          const x = ((idx + 0.5) / Math.max(1, chartRows.length)) * 100;
+          const y = 100 - Math.max(8, (row.bestScore / maxScore) * 100);
+          return `${x.toFixed(2)},${y.toFixed(2)}`;
+        })
+        .join(" ");
       const problemKind = selectedMode?.tileCount === 10 ? "10" : String(selectedMode?.tileCount || 6);
       const weakItems = Object.entries(problemStats || {})
         .map(([baseId, stat]) => ({ baseId, ...stat, rate: stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : null }))
@@ -2786,12 +2793,22 @@
           </div>
 
           <h3 className="mt-5 text-sm font-black text-[color:var(--muted)]">日別ベスト推移</h3>
-          <div className="mt-3 flex h-24 items-end gap-1 rounded-2xl bg-black/20 p-3">
+          <div className="relative mt-3 flex h-24 items-end gap-1 rounded-2xl bg-black/20 p-3">
+            {chartRows.length > 1 && (
+              <svg className="pointer-events-none absolute inset-3 z-30 overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <polyline points={chartLinePoints} fill="none" stroke="rgba(255,247,218,0.9)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                {chartRows.map((row, idx) => {
+                  const x = ((idx + 0.5) / Math.max(1, chartRows.length)) * 100;
+                  const y = 100 - Math.max(8, (row.bestScore / maxScore) * 100);
+                  return <circle key={`${row.date}-${idx}-point`} cx={x} cy={y} r="1.8" fill="rgba(255,247,218,0.98)" stroke="rgba(26,186,193,0.9)" strokeWidth="0.8" />;
+                })}
+              </svg>
+            )}
             {chartRows.length ? chartRows.map((row, idx) => (
               <button
                 key={`${row.date}-${row.modeId || "all"}-${idx}`}
                 type="button"
-                className="flex flex-1 items-end justify-center self-stretch rounded outline-none"
+                className="relative z-20 flex flex-1 items-end justify-center self-stretch rounded outline-none"
                 aria-label={`${row.date} ${row.bestScore}pt`}
                 {...tap(() => setChartTipIndex(idx))}
               >

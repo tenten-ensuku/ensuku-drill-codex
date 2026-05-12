@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver8</title>
+  <title>エンスクドリル ver9</title>
   <meta name="description" content="麻雀の待ち牌を読むタイムアタックドリル。" />
-  <meta property="og:title" content="エンスクドリル ver8" />
+  <meta property="og:title" content="エンスクドリル ver9" />
   <meta property="og:description" content="競技卓ミニマル版の待ち牌ドリル。" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1017,7 +1017,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 71;
+    const APP_VERSION = 72;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1610,6 +1610,7 @@
       const [dailySummary, setDailySummary] = useState(() => readJson(STORAGE.dailySummary, {}));
       const [problemStats, setProblemStats] = useState(() => readJson(STORAGE.problemStats, {}));
       const [unlockFlash, setUnlockFlash] = useState(null);
+      const [unlockQueue, setUnlockQueue] = useState([]);
       const [unlockHighlight, setUnlockHighlight] = useState(null);
       const [favoriteFlash, setFavoriteFlash] = useState(null);
       const [judgeFlash, setJudgeFlash] = useState(null);
@@ -1696,6 +1697,18 @@
       useEffect(() => {
         localStorage.setItem(STORAGE.answerPadAlign, answerPadAlign);
       }, [answerPadAlign]);
+
+      useEffect(() => {
+        if (unlockFlash || unlockQueue.length === 0) return;
+        const id = setTimeout(() => {
+          setUnlockQueue(current => {
+            const [next, ...rest] = current;
+            if (next) setUnlockFlash(next);
+            return rest;
+          });
+        }, 420);
+        return () => clearTimeout(id);
+      }, [unlockFlash, unlockQueue]);
 
       useEffect(() => {
         localStorage.setItem(STORAGE.playerName, playerName);
@@ -2081,15 +2094,16 @@
           localStorage.setItem(mode.elapsedKey, String(res.elapsedSeconds));
           if (res.variant === "normal") {
             const previousRank = rankFor(res.modeId, oldBest);
-              if (!rankAtLeast(previousRank, "S") && rankAtLeast(res.rank, "S")) {
-                setUnlockFlash({ label: mode.label, variant: "ura", modeIds: [mode.id] });
-              } else {
-                const next = newlyUnlockedModes(res.modeId, previousRank, res.rank);
-                if (next.length) {
-                  const label = next.map(mode => mode.label.replace("十枚形 ", "")).join("・");
-                  setUnlockFlash({ label: next.length > 1 ? `十枚形 ${label}` : next[0].label, variant: "normal", modeIds: next.map(mode => mode.id) });
-                }
-              }
+            const unlocks = [];
+            if (!rankAtLeast(previousRank, "S") && rankAtLeast(res.rank, "S")) {
+              unlocks.push({ label: mode.label, variant: "ura", modeIds: [mode.id] });
+            }
+            const next = newlyUnlockedModes(res.modeId, previousRank, res.rank);
+            if (next.length) {
+              const label = next.map(mode => mode.label.replace("十枚形 ", "")).join("・");
+              unlocks.push({ label: next.length > 1 ? `十枚形 ${label}` : next[0].label, variant: "normal", modeIds: next.map(mode => mode.id) });
+            }
+            enqueueUnlockFlashes(unlocks);
           }
         }
         if ((res.variant === "normal" || res.variant === "ura") && res.wrongQuestions.length) {
@@ -2159,6 +2173,18 @@
           !rankAtLeast(previousRank, m.unlock.rank) &&
           rankAtLeast(currentRank, m.unlock.rank)
         );
+      }
+
+      function enqueueUnlockFlashes(payloads) {
+        const list = payloads.filter(Boolean);
+        if (!list.length) return;
+        if (unlockFlash) {
+          setUnlockQueue(current => [...current, ...list]);
+          return;
+        }
+        const [first, ...rest] = list;
+        setUnlockFlash(first);
+        setUnlockQueue(current => [...current, ...rest]);
       }
 
       function addFavorite(q = currentQuestion()) {
@@ -2320,7 +2346,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver8</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver9</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />

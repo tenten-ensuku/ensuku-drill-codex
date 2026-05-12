@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver7</title>
+  <title>エンスクドリル ver8</title>
   <meta name="description" content="麻雀の待ち牌を読むタイムアタックドリル。" />
-  <meta property="og:title" content="エンスクドリル ver7" />
+  <meta property="og:title" content="エンスクドリル ver8" />
   <meta property="og:description" content="競技卓ミニマル版の待ち牌ドリル。" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -81,6 +81,15 @@
       border: 1px solid rgba(185,139,85,0.68);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 24px rgba(0,0,0,0.30);
       text-shadow: 0 2px 4px rgba(0,0,0,0.72);
+    }
+    .btn-play-normal {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,0.36), transparent 64%),
+        linear-gradient(180deg, #ffcf6a, #f08a24 42%, #632308);
+      color: #1e1004;
+      border: 1px solid rgba(255,225,154,0.58);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.26), 0 12px 24px rgba(0,0,0,0.32), 0 0 18px rgba(240,138,36,0.18);
+      text-shadow: 0 1px 1px rgba(255,237,189,0.38);
     }
     .btn-danger {
       background: linear-gradient(180deg, #e05248, #9f211d);
@@ -861,9 +870,9 @@
     }
     .unlock-card.normal {
       background:
-        radial-gradient(circle at 50% 0%, rgba(216,168,60,0.24), transparent 12rem),
-        linear-gradient(180deg, rgba(41,29,19,0.98), rgba(8,6,4,0.98));
-      box-shadow: 0 28px 90px rgba(0,0,0,0.58), 0 0 0 1px rgba(185,139,85,0.22) inset;
+        radial-gradient(circle at 50% 0%, rgba(255,207,106,0.28), transparent 12rem),
+        linear-gradient(180deg, rgba(75,31,8,0.98), rgba(18,8,3,0.98));
+      box-shadow: 0 28px 90px rgba(0,0,0,0.58), 0 0 0 1px rgba(255,225,154,0.22) inset;
     }
     .unlock-card::before {
       content: "";
@@ -897,8 +906,8 @@
       animation: unlock-target-ring 3s ease-out both;
     }
     .unlock-target-highlight.normal::after {
-      background: radial-gradient(circle at 50% 50%, rgba(242,210,123,0.55), rgba(185,139,85,0.16) 55%, transparent 72%);
-      box-shadow: 0 0 0 2px rgba(242,210,123,0.45), 0 0 22px rgba(242,210,123,0.5);
+      background: radial-gradient(circle at 50% 50%, rgba(255,207,106,0.58), rgba(240,138,36,0.2) 55%, transparent 72%);
+      box-shadow: 0 0 0 2px rgba(255,225,154,0.48), 0 0 24px rgba(240,138,36,0.52);
     }
     .unlock-target-highlight.ura::after {
       background: radial-gradient(circle at 50% 50%, rgba(169,128,255,0.58), rgba(91,50,144,0.18) 55%, transparent 72%);
@@ -1008,7 +1017,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 70;
+    const APP_VERSION = 71;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2311,7 +2320,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver7</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver8</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />
@@ -2488,7 +2497,7 @@
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             {normalUnlocked ? (
-              <button className={`pressable btn-main rounded-2xl px-4 py-3 text-sm font-black ${highlightNormal ? "unlock-target-highlight normal" : ""}`} {...tap(() => startMode(mode.id, "normal"))}>
+              <button className={`pressable btn-play-normal rounded-2xl px-4 py-3 text-sm font-black ${highlightNormal ? "unlock-target-highlight normal" : ""}`} {...tap(() => startMode(mode.id, "normal"))}>
                 プレイ
               </button>
             ) : (
@@ -3555,9 +3564,9 @@
       const isUra = payload?.variant === "ura";
       const plateStops = isUra
         ? ["#3a1f58", "#211134", "#0c0715"]
-        : ["#6b492f", "#372319", "#15100d"];
-      const plateStroke = isUra ? "#8e6ade" : "#b98b55";
-      const plateText = isUra ? "#f6f2df" : "#f7e0a7";
+        : ["#ffcf6a", "#f08a24", "#632308"];
+      const plateStroke = isUra ? "#8e6ade" : "#ffe19a";
+      const plateText = isUra ? "#f6f2df" : "#1e1004";
       const stageText = isUra ? "裏モード" : modeLabel;
       const stageFontSize = stageText.length > 8 ? 18 : 24;
       useEffect(() => {

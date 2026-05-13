@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver12</title>
+  <title>エンスクドリル ver13</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver12" />
+  <meta property="og:title" content="エンスクドリル ver13" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -37,7 +37,7 @@
     html, body, #root { min-height: 100%; }
     body {
       margin: 0;
-      font-family: Inter, "Yu Gothic UI", Meiryo, sans-serif;
+      font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "HGS明朝E", "MS PMincho", serif;
       background:
         radial-gradient(circle at 50% -10%, rgba(242, 210, 123, 0.13), transparent 34rem),
         linear-gradient(135deg, var(--felt-1), var(--felt-2) 48%, var(--felt-0));
@@ -1029,7 +1029,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 75;
+    const APP_VERSION = 76;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2358,7 +2358,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver12</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver13</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />

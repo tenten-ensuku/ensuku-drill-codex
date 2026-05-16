@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver17</title>
+  <title>エンスクドリル ver18</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver17" />
+  <meta property="og:title" content="エンスクドリル ver18" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1035,7 +1035,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 80;
+    const APP_VERSION = 81;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2372,7 +2372,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver17</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver18</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />
@@ -2918,6 +2918,7 @@
           ? dailyRows
           : dailyRows.slice(-30);
       const chartRangeLabel = chartRange === "initial" ? "最初の30記録日" : chartRange === "all" ? "全記録日" : "直近30記録日";
+      const chartListRows = chartRows.slice().reverse();
       const chartMinWidth = chartRange === "all" && chartRows.length > 30 ? `${chartRows.length * 18}px` : "100%";
       const maxScore = Math.max(1, ...chartRows.map(row => row.bestScore));
       const chartTip = chartTipIndex === null ? null : chartRows[chartTipIndex];
@@ -3017,10 +3018,10 @@
 
           <details className="mt-5 rounded-2xl bg-black/20 p-2">
             <summary className="btn-quiet cursor-pointer list-none rounded-2xl px-4 py-3 text-center text-sm font-black">
-              日別記録を見る（直近30日）
+              日別記録を見る（{chartRangeLabel}）
             </summary>
             <div className="mt-3 space-y-2">
-            {dailyRows.length ? dailyRows.slice().reverse().slice(0, 30).map(row => (
+            {chartListRows.length ? chartListRows.map(row => (
               <div key={`${row.date}-${row.modeId || "all"}`} className="grid grid-cols-[1fr_auto] gap-2 rounded-2xl bg-black/20 p-3">
                 <div>
                   <p className="text-sm font-black">{row.date}</p>

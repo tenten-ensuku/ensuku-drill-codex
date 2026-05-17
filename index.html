@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver19</title>
+  <title>エンスクドリル ver20</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver19" />
+  <meta property="og:title" content="エンスクドリル ver20" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1035,7 +1035,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 82;
+    const APP_VERSION = 83;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1281,12 +1281,12 @@
     function getValidShifts(tiles, answers) {
       const minTile = Math.min(...tiles);
       const maxTile = Math.max(...tiles);
-      const minAns = Math.min(...answers);
-      const maxAns = Math.max(...answers);
-      const minK = Math.max(-3, 1 - minTile, 1 - minAns);
-      const maxK = Math.min(3, 9 - maxTile, 9 - maxAns);
+      const minK = Math.max(-3, 1 - minTile);
+      const maxK = Math.min(3, 9 - maxTile);
       const shifts = [];
-      for (let k = minK; k <= maxK; k++) shifts.push(k);
+      for (let k = minK; k <= maxK; k++) {
+        if (answers.some(n => n + k >= 1 && n + k <= 9)) shifts.push(k);
+      }
       if (shifts.length === 0) shifts.push(0);
       return shifts;
     }
@@ -1300,7 +1300,7 @@
       const shifts = getValidShifts(mirroredTiles, mirroredAnswers);
       const k = shifts[Math.floor(Math.random() * shifts.length)];
       const tiles = mirroredTiles.map(n => n + k).sort((a, b) => a - b);
-      const answers = uniqueSorted(mirroredAnswers.map(n => n + k));
+      const answers = uniqueSorted(mirroredAnswers.map(n => n + k).filter(n => n >= 1 && n <= 9));
       return {
         ...base,
         instanceId: `${base.baseId}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -2395,7 +2395,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver19</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver20</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />

@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver22</title>
+  <title>エンスクドリル ver23</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver22" />
+  <meta property="og:title" content="エンスクドリル ver23" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1035,7 +1035,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 85;
+    const APP_VERSION = 86;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2398,7 +2398,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver22</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver23</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />
@@ -2771,19 +2771,22 @@
             <p className="py-8 text-center text-sm leading-6 text-[color:var(--muted)]">まだ投稿がありません。</p>
           ) : (
             <div className="mt-4 space-y-2">
-              {rows.map((row, idx) => (
-                <div key={`${row.submitted_at}-${idx}`} className="grid grid-cols-[2.2rem_1fr_auto] items-center gap-2 rounded-2xl bg-black/20 px-3 py-2">
-                  <div className="text-center text-lg font-black text-[color:var(--gold-2)]">{idx + 1}</div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-black">{row.player_name}</p>
-                    <p className="text-[11px] font-bold text-[color:var(--muted)]">{row.elapsed_seconds}秒 / {Number(row.average_seconds).toFixed(1)}秒/問</p>
+              {rows.map((row, idx) => {
+                const displayRankValue = rankFor(row.mode_id || row.modeId, Number(row.score) || 0);
+                return (
+                  <div key={`${row.submitted_at}-${idx}`} className="grid grid-cols-[2.2rem_1fr_auto] items-center gap-2 rounded-2xl bg-black/20 px-3 py-2">
+                    <div className="text-center text-lg font-black text-[color:var(--gold-2)]">{idx + 1}</div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black">{row.player_name}</p>
+                      <p className="text-[11px] font-bold text-[color:var(--muted)]">{row.elapsed_seconds}秒 / {Number(row.average_seconds).toFixed(1)}秒/問</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-black">{row.score}<span className="text-xs text-[color:var(--gold)]">pt</span></p>
+                      <p className={`text-xs font-black ${rankClass(displayRankValue)}`}><RankBadge rank={displayRankValue} size="leaderboard" /></p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-black">{row.score}<span className="text-xs text-[color:var(--gold)]">pt</span></p>
-                    <p className={`text-xs font-black ${rankClass(row.rank)}`}><RankBadge rank={row.rank} size="leaderboard" /></p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

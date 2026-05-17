@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver25</title>
+  <title>エンスクドリル ver26</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver25" />
+  <meta property="og:title" content="エンスクドリル ver26" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1035,7 +1035,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 88;
+    const APP_VERSION = 89;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2398,7 +2398,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver25</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver26</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />
@@ -2867,10 +2867,9 @@
 
     function SelfAnalysis({ resultsHistory, dailySummary, problemStats, tap }) {
       const [modeId, setModeId] = useState("6");
-      const [chartRange, setChartRange] = useState("recent");
       const [chartTipIndex, setChartTipIndex] = useState(null);
       const selectedMode = getMode(modeId);
-      useEffect(() => setChartTipIndex(null), [modeId, chartRange]);
+      useEffect(() => setChartTipIndex(null), [modeId]);
       const completed = resultsHistory.filter(r => (r.variant === "normal" || r.variant === "ura") && !r.gameOver && r.modeId === modeId);
       const summaries = Object.values(dailySummary || {});
       const modeSummaries = summaries.filter(row => row.modeId === modeId);
@@ -2917,7 +2916,7 @@
             modeId: row.modeId,
             playCount: 1,
             bestScore: row.score,
-            bestRank: row.rank,
+            bestRank: rankFor(row.modeId, row.score),
             bestElapsed: row.elapsedSeconds,
             bestQuestionCount: row.questionCount,
             bestAverageSeconds: averageSeconds
@@ -2926,7 +2925,7 @@
           prev.playCount += 1;
           if (row.score > prev.bestScore || (row.score === prev.bestScore && averageSeconds < prev.bestAverageSeconds)) {
             prev.bestScore = row.score;
-            prev.bestRank = row.rank;
+            prev.bestRank = rankFor(row.modeId, row.score);
             prev.bestElapsed = row.elapsedSeconds;
             prev.bestQuestionCount = row.questionCount;
             prev.bestAverageSeconds = averageSeconds;
@@ -2943,7 +2942,7 @@
           modeId: row.modeId,
           playCount: row.playCount || 0,
           bestScore: row.bestScore || 0,
-          bestRank: row.bestRank || rankFor(row.modeId, row.bestScore || 0),
+          bestRank: rankFor(row.modeId, row.bestScore || 0),
           bestElapsed: row.bestElapsed || 0,
           bestQuestionCount: row.bestQuestionCount || getMode(row.modeId)?.questionCount || 1,
           bestAverageSeconds: row.bestAverageSeconds ?? (row.bestElapsed ? Number((row.bestElapsed / Math.max(1, row.bestQuestionCount || getMode(row.modeId)?.questionCount || 1)).toFixed(1)) : null)
@@ -2961,20 +2960,42 @@
       });
       const dailyMap = { ...summaryDaily, ...historyDaily };
       const dailyRows = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
-      const chartRows = chartRange === "initial"
-        ? dailyRows.slice(0, 30)
-        : chartRange === "all"
-          ? dailyRows
-          : dailyRows.slice(-30);
-      const chartRangeLabel = chartRange === "initial" ? "最初の30記録日" : chartRange === "all" ? "全記録日" : "直近30記録日";
+      let runningBestScore = -Infinity;
+      const chartRows = dailyRows.filter(row => {
+        if ((row.bestScore || 0) <= runningBestScore) return false;
+        runningBestScore = row.bestScore || 0;
+        return true;
+      });
       const chartListRows = chartRows.slice().reverse();
-      const chartMinWidth = chartRange === "all" && chartRows.length > 30 ? `${chartRows.length * 18}px` : "100%";
-      const maxScore = Math.max(1, ...chartRows.map(row => row.bestScore));
+      const chartMinWidth = chartRows.length > 16 ? `${chartRows.length * 24}px` : "100%";
       const chartTip = chartTipIndex === null ? null : chartRows[chartTipIndex];
+      const firstRecord = chartRows[0] || null;
+      const latestRecord = chartRows[chartRows.length - 1] || null;
+      const recordGrowth = firstRecord && latestRecord ? latestRecord.bestScore - firstRecord.bestScore : 0;
+      const rankKey = selectedMode?.rankKey || modeId;
+      const finiteThresholds = (RANKS[rankKey] || RANKS["6"])
+        .map(([, threshold]) => threshold)
+        .filter(Number.isFinite)
+        .sort((a, b) => a - b);
+      const firstScore = firstRecord?.bestScore || 0;
+      const latestScore = latestRecord?.bestScore || firstScore;
+      const belowRankLine = [...finiteThresholds].reverse().find(value => value < firstScore);
+      const aboveRankLine = finiteThresholds.find(value => value > latestScore);
+      const minChartSpan = modeId === "10_all" ? 200 : selectedMode?.tileCount === 10 ? 45 : 20;
+      let chartMin = Math.max(0, Math.min(belowRankLine ?? Math.max(0, firstScore - minChartSpan), Math.max(0, firstScore - 5)));
+      let chartMax = Math.max(aboveRankLine ?? latestScore + minChartSpan, latestScore + 5);
+      if (chartMax - chartMin < minChartSpan) {
+        const mid = (chartMax + chartMin) / 2;
+        chartMin = Math.max(0, Math.floor(mid - minChartSpan / 2));
+        chartMax = Math.ceil(chartMin + minChartSpan);
+      }
+      const chartSpan = Math.max(1, chartMax - chartMin);
+      const scoreRatio = score => Math.min(Math.max(((Number(score) || 0) - chartMin) / chartSpan, 0), 1);
+      const chartPointY = score => 92 - scoreRatio(score) * 82;
       const chartLinePoints = chartRows
         .map((row, idx) => {
           const x = ((idx + 0.5) / Math.max(1, chartRows.length)) * 100;
-          const y = 100 - Math.max(8, (row.bestScore / maxScore) * 100);
+          const y = chartPointY(row.bestScore);
           return `${x.toFixed(2)},${y.toFixed(2)}`;
         })
         .join(" ");
@@ -3001,7 +3022,7 @@
           <div className="mt-4 grid grid-cols-3 gap-2 text-center">
             <Stat label="総プレイ" value={totals.plays} compact />
             <Stat label="今日" value={todayCount} compact />
-            <Stat label="最高" value={best ? <RankBadge rank={best.rank} size="leaderboard" /> : "--"} compact />
+            <Stat label="最高" value={best ? <RankBadge rank={rankFor(best.modeId, best.score)} size="leaderboard" /> : "--"} compact />
             <Stat label="平均正答率" value={avgRate === null ? "--" : `${avgRate}%`} compact />
             <Stat label="平均秒/問" value={`${avgSec}秒`} compact />
             <Stat label="記録更新" value={totals.records} compact />
@@ -3009,20 +3030,19 @@
 
           <div className="mt-5 flex items-end justify-between gap-3">
             <div>
-              <h3 className="text-sm font-black text-[color:var(--muted)]">日別ベスト推移</h3>
-              <p className="mt-1 text-[11px] font-bold text-[color:var(--muted)]">プレイ記録がある日だけを集計</p>
+              <h3 className="text-sm font-black text-[color:var(--muted)]">自己ベスト更新推移</h3>
+              <p className="mt-1 text-[11px] font-bold text-[color:var(--muted)]">自己記録を更新した日だけを表示</p>
             </div>
-            <p className="shrink-0 text-[11px] font-black text-[color:var(--gold-2)]">{chartRangeLabel}</p>
+            <div className="shrink-0 text-right">
+              <p className="text-sm font-black text-[color:var(--gold-2)]">{recordGrowth > 0 ? `+${recordGrowth}pt` : "--"}</p>
+              <p className="text-[10px] font-bold text-[color:var(--muted)]">{chartRows.length ? `${Math.max(0, chartRows.length - 1)}回更新` : "更新なし"}</p>
+            </div>
           </div>
-          <div className="mt-2 grid grid-cols-3 gap-1 rounded-full bg-black/20 p-1">
-            {[
-              ["initial", "初期"],
-              ["recent", "直近"],
-              ["all", "全期間"]
-            ].map(([id, label]) => (
-              <button key={id} className={`rounded-full px-3 py-2 text-xs font-black ${chartRange === id ? "btn-main" : "btn-quiet"}`} {...tap(() => setChartRange(id))}>{label}</button>
-            ))}
-          </div>
+          {chartRows.length > 1 && (
+            <div className="mt-2 rounded-2xl bg-black/20 px-3 py-2 text-[11px] font-bold text-[color:var(--muted)]">
+              初回 {firstRecord.bestScore}pt → 現在 {latestRecord.bestScore}pt / 表示範囲 {chartMin}〜{chartMax}pt
+            </div>
+          )}
           <div className="mt-3 overflow-x-auto pb-1">
             <div className="relative flex h-24 items-end gap-1 rounded-2xl bg-black/20 p-3" style={{ minWidth: chartMinWidth }}>
               {chartRows.length > 1 && (
@@ -3030,7 +3050,7 @@
                   <polyline points={chartLinePoints} fill="none" stroke="rgba(255,247,218,0.9)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
                   {chartRows.map((row, idx) => {
                     const x = ((idx + 0.5) / Math.max(1, chartRows.length)) * 100;
-                    const y = 100 - Math.max(8, (row.bestScore / maxScore) * 100);
+                    const y = chartPointY(row.bestScore);
                     return <circle key={`${row.date}-${idx}-point`} cx={x} cy={y} r="1.8" fill="rgba(255,247,218,0.98)" stroke="rgba(26,186,193,0.9)" strokeWidth="0.8" />;
                   })}
                 </svg>
@@ -3045,7 +3065,7 @@
                 >
                   <span
                     className={`w-full max-w-[18px] rounded-t bg-[color:var(--gold)] transition ${chartTipIndex === idx ? "opacity-100 ring-2 ring-[color:var(--cream)]" : "opacity-80"}`}
-                    style={{ height: `${Math.max(8, (row.bestScore / maxScore) * 100)}%` }}
+                    style={{ height: `${10 + scoreRatio(row.bestScore) * 82}%` }}
                     title={`${row.date} ${row.bestScore}pt`}
                   />
                 </button>
@@ -3066,7 +3086,7 @@
 
           <details className="mt-5 rounded-2xl bg-black/20 p-2">
             <summary className="btn-quiet cursor-pointer list-none rounded-2xl px-4 py-3 text-center text-sm font-black">
-              日別記録を見る（{chartRangeLabel}）
+              自己ベスト更新履歴を見る
             </summary>
             <div className="mt-3 space-y-2">
             {chartListRows.length ? chartListRows.map(row => (
@@ -3080,7 +3100,7 @@
                   <p className="text-[11px] font-bold text-[color:var(--muted)]">{row.bestAverageSeconds ?? "--"}秒/問</p>
                 </div>
               </div>
-            )) : <p className="py-4 text-center text-sm font-bold text-[color:var(--muted)]">日別記録はまだありません。</p>}
+            )) : <p className="py-4 text-center text-sm font-bold text-[color:var(--muted)]">自己ベスト更新履歴はまだありません。</p>}
             </div>
           </details>
 

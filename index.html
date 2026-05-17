@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver24</title>
+  <title>エンスクドリル ver25</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver24" />
+  <meta property="og:title" content="エンスクドリル ver25" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1035,7 +1035,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 87;
+    const APP_VERSION = 88;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2398,7 +2398,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver24</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver25</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />
@@ -2895,8 +2895,15 @@
       const todayFromSummary = summaries.filter(row => row.date === today).reduce((sum, row) => sum + (row.playCount || 0), 0);
       const todayCount = todayFromSummary || completed.filter(row => dateKey(row.finishedAt) === today).length;
       const best = completed.reduce((top, row) => !top || row.score > top.score ? row : top, null);
+      const problemKind = selectedMode?.tileCount === 10 ? "10" : String(selectedMode?.tileCount || 6);
+      const problemTotals = Object.entries(problemStats || {})
+        .filter(([baseId]) => baseId.startsWith(`${problemKind}-`))
+        .reduce((acc, [, stat]) => ({
+          correct: acc.correct + (stat.correct || 0),
+          total: acc.total + (stat.total || 0)
+        }), { correct: 0, total: 0 });
       const answerTotal = totals.correct + totals.mistakes;
-      const avgRate = answerTotal ? Math.round((totals.correct / answerTotal) * 100) : null;
+      const avgRate = problemTotals.total ? Math.round((problemTotals.correct / problemTotals.total) * 100) : (answerTotal ? Math.round((totals.correct / answerTotal) * 100) : null);
       const avgSec = answerTotal ? (totals.elapsed / answerTotal).toFixed(1) : "--";
       const historyDaily = {};
       completed.forEach(row => {
@@ -2971,7 +2978,6 @@
           return `${x.toFixed(2)},${y.toFixed(2)}`;
         })
         .join(" ");
-      const problemKind = selectedMode?.tileCount === 10 ? "10" : String(selectedMode?.tileCount || 6);
       const weakItems = Object.entries(problemStats || {})
         .map(([baseId, stat]) => ({ baseId, ...stat, rate: stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : null }))
         .filter(item => item.baseId.startsWith(`${problemKind}-`))

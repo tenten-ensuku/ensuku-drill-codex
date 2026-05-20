@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver26</title>
+  <title>エンスクドリル ver27</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver26" />
+  <meta property="og:title" content="エンスクドリル ver27" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1035,7 +1035,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 89;
+    const APP_VERSION = 90;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1185,6 +1185,7 @@
       soundVolumeDefaulted: "mahjong_sound_volume_defaulted_v2",
       deviceId: "mahjong_device_id"
     };
+    const BACKUP_STORAGE_KEYS = Object.values(STORAGE);
 
     const SUPABASE_CONFIG = {
       url: "https://kclkzevcgpfbavegwbnf.supabase.co",
@@ -1435,6 +1436,31 @@
       return id;
     }
 
+    function makeBackupPayload() {
+      getDeviceId();
+      const data = {};
+      BACKUP_STORAGE_KEYS.forEach(key => {
+        const value = localStorage.getItem(key);
+        if (value !== null) data[key] = value;
+      });
+      return JSON.stringify({
+        app: "ensuku-drill-codex",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        data
+      });
+    }
+
+    function parseBackupPayload(text) {
+      const parsed = JSON.parse((text || "").trim());
+      const data = parsed?.data && typeof parsed.data === "object" ? parsed.data : parsed;
+      if (!data || typeof data !== "object") throw new Error("バックアップデータを読み取れませんでした");
+      const allowed = new Set(BACKUP_STORAGE_KEYS);
+      const entries = Object.entries(data).filter(([key, value]) => allowed.has(key) && typeof value === "string");
+      if (!entries.length) throw new Error("復元できるデータが見つかりませんでした");
+      return Object.fromEntries(entries);
+    }
+
     function rankingPayload(result, name) {
       return {
         player_name: normalizePlayerName(name),
@@ -1674,6 +1700,7 @@
         return Number.isFinite(saved) && saved >= 0 && saved <= 3 ? saved : 3;
       });
       const [tick, setTick] = useState(0);
+      const [storageRevision, setStorageRevision] = useState(0);
       const audioRef = useRef(null);
       const touchRef = useRef(false);
       const inputLockRef = useRef(false);
@@ -1803,7 +1830,7 @@
           out[mode.id] = { best, rank: rankFor(mode.id, best), elapsed: readNumber(mode.elapsedKey) };
         }
         return out;
-      }, [screen, result, unlockFlash]);
+      }, [screen, result, unlockFlash, storageRevision]);
 
       function tap(handler) {
         return {
@@ -1814,6 +1841,44 @@
             handler();
           }
         };
+      }
+
+      async function copyBackupData() {
+        const payload = makeBackupPayload();
+        let copied = false;
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(payload);
+            copied = true;
+          }
+        } catch {}
+        return { payload, copied };
+      }
+
+      function restoreBackupData(text) {
+        const data = parseBackupPayload(text);
+        Object.entries(data).forEach(([key, value]) => {
+          localStorage.setItem(key, value);
+        });
+        setFavorites(readJson(STORAGE.favorites, []));
+        setReview(readJson(STORAGE.review, []));
+        setResultsHistory(readJson(STORAGE.results, []));
+        setDailySummary(readJson(STORAGE.dailySummary, {}));
+        setProblemStats(readJson(STORAGE.problemStats, {}));
+        setPlayerName(localStorage.getItem(STORAGE.playerName) || "");
+        const restoredSize = localStorage.getItem(STORAGE.answerPadSize);
+        setAnswerPadSize(restoredSize === "small" ? "small" : "normal");
+        const restoredAlign = localStorage.getItem(STORAGE.answerPadAlign);
+        setAnswerPadAlign(restoredAlign === "left" || restoredAlign === "center" ? restoredAlign : "right");
+        const restoredLayout = localStorage.getItem(STORAGE.answerPadLayout);
+        setAnswerPadLayout(restoredLayout === "tenkey" ? "tenkey" : "default");
+        const restoredVolume = Number(localStorage.getItem(STORAGE.soundVolume));
+        setSoundVolume(Number.isFinite(restoredVolume) && restoredVolume >= 0 && restoredVolume <= 3 ? restoredVolume : 3);
+        setResult(null);
+        setGame(null);
+        setScreen("home");
+        setStorageRevision(v => v + 1);
+        return Object.keys(data).length;
       }
 
       function ensureAudio() {
@@ -2318,6 +2383,8 @@
               setPlayerName={setPlayerName}
               soundVolume={soundVolume}
               setSoundVolume={setSoundVolume}
+              copyBackupData={copyBackupData}
+              restoreBackupData={restoreBackupData}
               tone={tone}
               tap={tap}
               unlockFlash={unlockFlash}
@@ -2377,8 +2444,11 @@
       );
     }
 
-    function Home({ records, favorites, review, resultsHistory, dailySummary, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, answerPadAlign, setAnswerPadAlign, answerPadLayout, setAnswerPadLayout, playerName, setPlayerName, soundVolume, setSoundVolume, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
+    function Home({ records, favorites, review, resultsHistory, dailySummary, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, answerPadAlign, setAnswerPadAlign, answerPadLayout, setAnswerPadLayout, playerName, setPlayerName, soundVolume, setSoundVolume, copyBackupData, restoreBackupData, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
+      const [backupText, setBackupText] = useState("");
+      const [restoreText, setRestoreText] = useState("");
+      const [backupStatus, setBackupStatus] = useState("");
       const sizeOptions = [
         ["normal", "通常"],
         ["small", "小さめ"]
@@ -2393,12 +2463,27 @@
         ["tenkey", "テンキー配列"]
       ];
       const previewNumbers = ANSWER_PAD_LAYOUTS[answerPadLayout] || ANSWER_PAD_LAYOUTS.default;
+      async function handleBackupCopy() {
+        const { payload, copied } = await copyBackupData();
+        setBackupText(payload);
+        setBackupStatus(copied ? "バックアップデータをコピーしました。" : "下の欄からバックアップデータをコピーしてください。");
+      }
+      function handleRestore() {
+        try {
+          const count = restoreBackupData(restoreText);
+          setBackupText("");
+          setRestoreText("");
+          setBackupStatus(`${count}項目を復元しました。`);
+        } catch (err) {
+          setBackupStatus(err.message || "復元に失敗しました。");
+        }
+      }
       return (
         <div className="app-pad menu-mincho mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver26</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver27</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />
@@ -2555,6 +2640,27 @@
                     <button key={num} className="answer-btn" type="button" {...tap(() => tone("tap"))}>{num}</button>
                   ))}
                 </div>
+              </div>
+
+              <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-3">
+                <p className="text-sm font-black text-[color:var(--muted)]">データ引き継ぎ</p>
+                <p className="mt-2 text-xs font-bold leading-5 text-[color:var(--muted)]">端末IDを含めて、記録・復習・お気に入り・設定をまとめて移せます。</p>
+                <button className="pressable btn-main mt-3 w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(handleBackupCopy)}>バックアップをコピー</button>
+                {backupText && (
+                  <textarea
+                    className="mt-3 h-24 w-full rounded-2xl border border-white/10 bg-black/25 p-3 text-[11px] font-bold leading-5 outline-none focus:border-[color:var(--gold)]"
+                    value={backupText}
+                    readOnly
+                  />
+                )}
+                <textarea
+                  className="mt-3 h-24 w-full rounded-2xl border border-white/10 bg-black/25 p-3 text-xs font-bold leading-5 outline-none focus:border-[color:var(--gold)]"
+                  value={restoreText}
+                  onChange={e => setRestoreText(e.target.value)}
+                  placeholder="新しい端末では、ここにバックアップデータを貼り付けます。"
+                />
+                <button className="pressable btn-quiet mt-2 w-full rounded-2xl px-4 py-3 text-sm font-black" disabled={!restoreText.trim()} {...tap(handleRestore)}>復元する</button>
+                {backupStatus && <p className="mt-2 text-xs font-black leading-5 text-[color:var(--gold-2)]">{backupStatus}</p>}
               </div>
             </section>
           )}

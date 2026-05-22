@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver27</title>
+  <title>エンスクドリル ver28</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver27" />
+  <meta property="og:title" content="エンスクドリル ver28" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1035,7 +1035,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 90;
+    const APP_VERSION = 91;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1213,7 +1213,7 @@
 
     const RANKS = {
       "6": [
-        ["神", 373], ["SS", 365], ["S", 355], ["A+", 345], ["A", 335], ["A-", 325],
+        ["神", 374], ["SS", 365], ["S", 355], ["A+", 345], ["A", 335], ["A-", 325],
         ["B+", 315], ["B", 305], ["B-", 295], ["C", 285], ["D", 275], ["E", -Infinity]
       ],
       "7": [
@@ -2483,7 +2483,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver27</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver28</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />

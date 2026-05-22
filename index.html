@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver29</title>
+  <title>エンスクドリル ver30</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver29" />
+  <meta property="og:title" content="エンスクドリル ver30" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1035,7 +1035,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 92;
+    const APP_VERSION = 93;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1294,6 +1294,15 @@
       return shifts;
     }
 
+    function forcedShiftsFor(baseId, mirrored) {
+      if (baseId === "7-18") return [0];
+      if (baseId === "6-12") return mirrored ? [-3, -2, -1, 0] : [0, 1, 2, 3];
+      if (baseId === "7-2") return [0];
+      if (baseId === "7-10") return mirrored ? [-2, -1, 0, 1] : [-1, 0, 1, 2];
+      if (baseId === "7-13") return [-2, -1, 0, 1, 2];
+      return null;
+    }
+
     function transformQuestion(base) {
       const suit = ["m", "p", "s"][Math.floor(Math.random() * 3)];
       const mirrored = Math.random() < 0.5;
@@ -1301,11 +1310,8 @@
       const mirroredTiles = base.tiles.map(mirror);
       const mirroredAnswers = base.answers.map(mirror);
       const allowClippedAnswers = base.tileCount !== 10;
-      const shifts = base.baseId === "7-18"
-        ? [0]
-        : base.baseId === "6-12"
-          ? (mirrored ? [-3, -2, -1, 0] : [0, 1, 2, 3])
-          : getValidShifts(mirroredTiles, mirroredAnswers, allowClippedAnswers);
+      const forcedShifts = forcedShiftsFor(base.baseId, mirrored);
+      const shifts = forcedShifts || getValidShifts(mirroredTiles, mirroredAnswers, allowClippedAnswers);
       const k = shifts[Math.floor(Math.random() * shifts.length)];
       const tiles = mirroredTiles.map(n => n + k).sort((a, b) => a - b);
       const answers = uniqueSorted(mirroredAnswers.map(n => n + k).filter(n => n >= 1 && n <= 9));
@@ -2487,7 +2493,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver29</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver30</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />

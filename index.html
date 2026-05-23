@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>エンスクドリル ver30</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>エンスクドリル ver31</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver30" />
+  <meta property="og:title" content="エンスクドリル ver31" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -34,7 +34,7 @@
       --green: #36a371;
     }
     * { box-sizing: border-box; }
-    html, body, #root { min-height: 100%; }
+    html, body, #root { min-height: 100%; touch-action: pan-x pan-y; }
     body {
       margin: 0;
       font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "HGS明朝E", "MS PMincho", serif;
@@ -1035,7 +1035,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 93;
+    const APP_VERSION = 94;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1804,6 +1804,23 @@
       }, [screen]);
 
       useEffect(() => {
+        const preventZoomGesture = e => e.preventDefault();
+        const preventMultiTouchMove = e => {
+          if (e.touches && e.touches.length > 1) e.preventDefault();
+        };
+        document.addEventListener("gesturestart", preventZoomGesture);
+        document.addEventListener("gesturechange", preventZoomGesture);
+        document.addEventListener("gestureend", preventZoomGesture);
+        document.addEventListener("touchmove", preventMultiTouchMove, { passive: false });
+        return () => {
+          document.removeEventListener("gesturestart", preventZoomGesture);
+          document.removeEventListener("gesturechange", preventZoomGesture);
+          document.removeEventListener("gestureend", preventZoomGesture);
+          document.removeEventListener("touchmove", preventMultiTouchMove);
+        };
+      }, []);
+
+      useEffect(() => {
         const wakeAudio = () => ensureAudio();
         const wakeWhenVisible = () => {
           if (!document.hidden) wakeAudio();
@@ -2493,7 +2510,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver30</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver31</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />

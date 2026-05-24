@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver31</title>
+  <title>エンスクドリル ver32</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver31" />
+  <meta property="og:title" content="エンスクドリル ver32" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1035,7 +1035,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 94;
+    const APP_VERSION = 95;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1324,6 +1324,13 @@
         mirrored,
         shift: k
       };
+    }
+
+    function transformSavedPracticeQuestion(q) {
+      const saved = normalizeSavedQuestion(q);
+      const datasetKey = Number(saved.tileCount) === 10 ? "10" : String(saved.tileCount || saved.tiles.length);
+      const base = DATASETS[datasetKey]?.find(item => item.baseId === saved.baseId);
+      return transformQuestion(base || saved);
     }
 
     function getMode(modeId) {
@@ -2016,15 +2023,7 @@
         }
         if (!bases.length) return;
         const questions = sourceList?.length
-          ? bases.map((q, index) => ({
-              ...q,
-              instanceId: `${q.favoriteId || q.baseId || "saved"}-${Date.now()}-${index}`,
-              baseId: q.baseId || `${q.tileCount || q.tiles.length}-saved-${index}`,
-              tileCount: q.tileCount || q.tiles.length,
-              tiles: sortedTiles(q.tiles),
-              answers: uniqueSorted(q.answers),
-              suit: q.suit || "m"
-            }))
+          ? bases.map(q => transformSavedPracticeQuestion(q))
           : bases.map(q => transformQuestion(q));
         setGame({
           mode: baseMode,
@@ -2510,7 +2509,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver31</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver32</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />

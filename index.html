@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver35</title>
+  <title>エンスクドリル ver36</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver35" />
+  <meta property="og:title" content="エンスクドリル ver36" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1052,7 +1052,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 98;
+    const APP_VERSION = 99;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1843,9 +1843,26 @@
         const lockedViewport = "width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover";
         if (viewport) viewport.setAttribute("content", lockedViewport);
         let lastTouchEnd = 0;
+        let touchStartX = 0;
+        let touchStartY = 0;
         const preventZoomGesture = e => e.preventDefault();
-        const preventMultiTouch = e => {
+        const trackTouchStart = e => {
+          if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+            return;
+          }
+          const touch = e.touches?.[0];
+          if (!touch) return;
+          touchStartX = touch.clientX;
+          touchStartY = touch.clientY;
+        };
+        const preventHorizontalMove = e => {
           if (e.touches && e.touches.length > 1) e.preventDefault();
+          const touch = e.touches?.[0];
+          if (!touch) return;
+          const dx = touch.clientX - touchStartX;
+          const dy = touch.clientY - touchStartY;
+          if (Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(dy)) e.preventDefault();
         };
         const preventDoubleTapZoom = e => {
           const now = Date.now();
@@ -1856,16 +1873,16 @@
         document.addEventListener("gesturestart", preventZoomGesture);
         document.addEventListener("gesturechange", preventZoomGesture);
         document.addEventListener("gestureend", preventZoomGesture);
-        document.addEventListener("touchstart", preventMultiTouch, { passive: false });
-        document.addEventListener("touchmove", preventMultiTouch, { passive: false });
+        document.addEventListener("touchstart", trackTouchStart, { passive: false });
+        document.addEventListener("touchmove", preventHorizontalMove, { passive: false });
         document.addEventListener("touchend", preventDoubleTapZoom, { passive: false });
         document.addEventListener("dblclick", preventDoubleClickZoom, { passive: false });
         return () => {
           document.removeEventListener("gesturestart", preventZoomGesture);
           document.removeEventListener("gesturechange", preventZoomGesture);
           document.removeEventListener("gestureend", preventZoomGesture);
-          document.removeEventListener("touchstart", preventMultiTouch);
-          document.removeEventListener("touchmove", preventMultiTouch);
+          document.removeEventListener("touchstart", trackTouchStart);
+          document.removeEventListener("touchmove", preventHorizontalMove);
           document.removeEventListener("touchend", preventDoubleTapZoom);
           document.removeEventListener("dblclick", preventDoubleClickZoom);
         };
@@ -2553,7 +2570,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-5 flex items-start justify-between gap-3 pt-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver35</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver36</span></h1>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <img className="server-logo" src="assets/ensuku.png" alt="エンスクロゴ" />

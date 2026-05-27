@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver39</title>
+  <title>エンスクドリル ver40</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver39" />
+  <meta property="og:title" content="エンスクドリル ver40" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -112,6 +112,8 @@
       -webkit-overflow-scrolling: touch;
     }
     .app-play {
+      position: fixed;
+      inset: 0;
       height: 100vh;
       height: 100dvh;
       overflow: hidden;
@@ -1074,7 +1076,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 102;
+    const APP_VERSION = 103;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1718,6 +1720,7 @@
     }
 
     function App() {
+      const appShellRef = useRef(null);
       const [screen, setScreen] = useState("home");
       const [game, setGame] = useState(null);
       const [result, setResult] = useState(null);
@@ -1845,7 +1848,9 @@
       }, [soundVolume]);
 
       useEffect(() => {
+        if (screen === "game") resetViewportScroll();
         document.body.classList.toggle("play-lock", screen === "game");
+        if (screen === "game") requestAnimationFrame(resetViewportScroll);
         return () => document.body.classList.remove("play-lock");
       }, [screen]);
 
@@ -1940,6 +1945,21 @@
             handler();
           }
         };
+      }
+
+      function resetViewportScroll() {
+        const targets = [
+          appShellRef.current,
+          document.scrollingElement,
+          document.documentElement,
+          document.body
+        ].filter(Boolean);
+        targets.forEach(target => {
+          target.scrollTop = 0;
+          target.scrollLeft = 0;
+          if (target.scrollTo) target.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        });
+        window.scrollTo(0, 0);
       }
 
       async function copyBackupData() {
@@ -2076,6 +2096,7 @@
 
       function startMode(modeId, variant = "normal", sourceList = null) {
         ensureAudio();
+        resetViewportScroll();
         inputLockRef.current = false;
         setJudgeFlash(null);
         const baseMode = getMode(modeId) || MODES[0];
@@ -2106,6 +2127,7 @@
         });
         setTick(v => v + 1);
         setScreen("game");
+        requestAnimationFrame(resetViewportScroll);
       }
 
       function currentQuestion() {
@@ -2446,7 +2468,7 @@
       const q = currentQuestion();
 
       return (
-        <main className={`app-shell ${screen === "game" ? "app-play" : "app-scroll"} ${game?.variant === "ura" ? "bg-black/45" : ""}`}>
+        <main ref={appShellRef} className={`app-shell ${screen === "game" ? "app-play" : "app-scroll"} ${game?.variant === "ura" ? "bg-black/45" : ""}`}>
           {screen === "home" && (
             <Home
               records={records}

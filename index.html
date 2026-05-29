@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver43</title>
+  <title>エンスクドリル ver44</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver43" />
+  <meta property="og:title" content="エンスクドリル ver44" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1076,7 +1076,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 106;
+    const APP_VERSION = 107;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1233,6 +1233,10 @@
       anonKey: "sb_publishable__8xy0NDda20OtQPc1zSEng_6440qlY2",
       table: "ensuku_rankings"
     };
+    const PLAYER_NAME_MAX_LENGTH = 12;
+    const PLAYER_NAME_BLOCKED_CHARS = /[<>"'`/\\\u0000-\u001f\u007f]/g;
+    const RANKING_DISPLAY_LIMIT = 20;
+    const RANKING_FETCH_LIMIT = 500;
 
     const ANSWER_PAD_LAYOUTS = {
       default: [1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -1475,9 +1479,17 @@
       return window.__ensukuSupabase;
     }
 
+    function sanitizePlayerNameInput(name) {
+      return (name || "")
+        .replace(PLAYER_NAME_BLOCKED_CHARS, "")
+        .replace(/\s+/g, " ")
+        .trimStart()
+        .slice(0, PLAYER_NAME_MAX_LENGTH);
+    }
+
     function normalizePlayerName(name) {
-      const trimmed = (name || "").trim();
-      return (trimmed || "名無し").slice(0, 12);
+      const trimmed = sanitizePlayerNameInput(name).trim();
+      return trimmed || "名無し";
     }
 
     function getDeviceId() {
@@ -1556,7 +1568,7 @@
       if (error) throw error;
     }
 
-    function dedupeRankingRows(rows, limit = 20) {
+    function dedupeRankingRows(rows, limit = RANKING_DISPLAY_LIMIT) {
       const seenNames = new Set();
       return (rows || []).filter(row => {
         const key = normalizePlayerName(row.player_name);
@@ -1575,12 +1587,12 @@
         .eq("mode_id", modeId)
         .order("score", { ascending: false })
         .order("elapsed_seconds", { ascending: true })
-        .limit(200);
+        .limit(RANKING_FETCH_LIMIT);
       const startIso = periodStartIso(period);
       if (startIso) query = query.gte("submitted_at", startIso);
       const { data, error } = await query;
       if (error) throw error;
-      return dedupeRankingRows(data, 20);
+      return dedupeRankingRows(data, RANKING_DISPLAY_LIMIT);
     }
 
     async function fetchRankPosition(modeId, period, playerName) {
@@ -1592,12 +1604,12 @@
         .eq("mode_id", modeId)
         .order("score", { ascending: false })
         .order("elapsed_seconds", { ascending: true })
-        .limit(500);
+        .limit(RANKING_FETCH_LIMIT);
       const startIso = periodStartIso(period);
       if (startIso) query = query.gte("submitted_at", startIso);
       const { data, error } = await query;
       if (error) throw error;
-      const rows = dedupeRankingRows(data, 500);
+      const rows = dedupeRankingRows(data, RANKING_FETCH_LIMIT);
       const nameKey = normalizePlayerName(playerName);
       const index = rows.findIndex(row => normalizePlayerName(row.player_name) === nameKey);
       return index >= 0 ? index + 1 : null;
@@ -1746,7 +1758,7 @@
         const saved = localStorage.getItem(STORAGE.answerPadLayout);
         return saved === "tenkey" ? "tenkey" : "default";
       });
-      const [playerName, setPlayerName] = useState(() => localStorage.getItem(STORAGE.playerName) || "");
+      const [playerName, setPlayerName] = useState(() => sanitizePlayerNameInput(localStorage.getItem(STORAGE.playerName) || ""));
       const [soundVolume, setSoundVolume] = useState(() => {
         const raw = localStorage.getItem(STORAGE.soundVolume);
         const wasDefaulted = localStorage.getItem(STORAGE.soundVolumeDefaulted);
@@ -1984,7 +1996,7 @@
         setResultsHistory(readJson(STORAGE.results, []));
         setDailySummary(readJson(STORAGE.dailySummary, {}));
         setProblemStats(readJson(STORAGE.problemStats, {}));
-        setPlayerName(localStorage.getItem(STORAGE.playerName) || "");
+        setPlayerName(sanitizePlayerNameInput(localStorage.getItem(STORAGE.playerName) || ""));
         const restoredSize = localStorage.getItem(STORAGE.answerPadSize);
         setAnswerPadSize(restoredSize === "small" ? "small" : "normal");
         const restoredAlign = localStorage.getItem(STORAGE.answerPadAlign);
@@ -2596,7 +2608,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-3 flex items-start justify-between gap-3 pt-1">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver43</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver44</span></h1>
             </div>
             <button className={`min-w-[76px] rounded-2xl px-4 py-2 text-[11px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
               <span className="block text-base leading-none sm:text-lg">⚙️</span>
@@ -2665,8 +2677,8 @@
                 <input
                   className="mt-3 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 font-bold outline-none focus:border-[color:var(--gold)]"
                   value={playerName}
-                  onChange={e => setPlayerName(e.target.value)}
-                  maxLength={12}
+                  onChange={e => setPlayerName(sanitizePlayerNameInput(e.target.value))}
+                  maxLength={PLAYER_NAME_MAX_LENGTH}
                   placeholder=""
                 />
                 <p className="mt-2 text-xs font-bold leading-5 text-[color:var(--muted)]">この名前でランキングに反映させることが可能です。</p>

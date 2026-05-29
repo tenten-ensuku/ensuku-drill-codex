@@ -1,6 +1,10 @@
 create table if not exists public.ensuku_rankings (
   id uuid primary key default gen_random_uuid(),
-  player_name text not null check (char_length(player_name) between 1 and 12),
+  player_name text not null check (
+    char_length(player_name) between 1 and 12
+    and player_name !~ '[<>"''`/\\]'
+    and player_name !~ '[[:cntrl:]]'
+  ),
   device_id text not null check (char_length(device_id) between 4 and 64),
   mode_id text not null check (mode_id in ('6', '7', '10_20', '10_all')),
   mode_label text not null,
@@ -37,6 +41,8 @@ with check (
   and variant in ('normal', 'ura')
   and score >= 0
   and char_length(player_name) between 1 and 12
+  and player_name !~ '[<>"''`/\\]'
+  and player_name !~ '[[:cntrl:]]'
   and char_length(device_id) between 4 and 64
 );
 

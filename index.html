@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver44</title>
+  <title>エンスクドリル ver45</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver44" />
+  <meta property="og:title" content="エンスクドリル ver45" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1076,7 +1076,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 107;
+    const APP_VERSION = 108;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1235,6 +1235,7 @@
     };
     const PLAYER_NAME_MAX_LENGTH = 12;
     const PLAYER_NAME_BLOCKED_CHARS = /[<>"'`/\\\u0000-\u001f\u007f]/g;
+    const BLOCKED_RANKING_PLAYER_NAMES = new Set(["にんじん", "だいこん", "にら", "てんpc"]);
     const RANKING_DISPLAY_LIMIT = 20;
     const RANKING_FETCH_LIMIT = 500;
 
@@ -1492,6 +1493,14 @@
       return trimmed || "名無し";
     }
 
+    function rankingNameKey(name) {
+      return normalizePlayerName(name).toLocaleLowerCase("ja-JP");
+    }
+
+    function isBlockedRankingName(name) {
+      return BLOCKED_RANKING_PLAYER_NAMES.has(rankingNameKey(name));
+    }
+
     function getDeviceId() {
       const existing = localStorage.getItem(STORAGE.deviceId);
       if (existing) return existing;
@@ -1564,6 +1573,7 @@
     async function submitRanking(result, name) {
       const client = getSupabaseClient();
       if (!client) throw new Error("Supabaseが未設定です");
+      if (isBlockedRankingName(name)) throw new Error("この名前では投稿できません");
       const { error } = await client.from(SUPABASE_CONFIG.table).insert(rankingPayload(result, name));
       if (error) throw error;
     }
@@ -1571,7 +1581,8 @@
     function dedupeRankingRows(rows, limit = RANKING_DISPLAY_LIMIT) {
       const seenNames = new Set();
       return (rows || []).filter(row => {
-        const key = normalizePlayerName(row.player_name);
+        if (isBlockedRankingName(row.player_name)) return false;
+        const key = rankingNameKey(row.player_name);
         if (seenNames.has(key)) return false;
         seenNames.add(key);
         return true;
@@ -1610,8 +1621,8 @@
       const { data, error } = await query;
       if (error) throw error;
       const rows = dedupeRankingRows(data, RANKING_FETCH_LIMIT);
-      const nameKey = normalizePlayerName(playerName);
-      const index = rows.findIndex(row => normalizePlayerName(row.player_name) === nameKey);
+      const nameKey = rankingNameKey(playerName);
+      const index = rows.findIndex(row => rankingNameKey(row.player_name) === nameKey);
       return index >= 0 ? index + 1 : null;
     }
 
@@ -2608,7 +2619,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-3 flex items-start justify-between gap-3 pt-1">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver44</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver45</span></h1>
             </div>
             <button className={`min-w-[76px] rounded-2xl px-4 py-2 text-[11px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
               <span className="block text-base leading-none sm:text-lg">⚙️</span>

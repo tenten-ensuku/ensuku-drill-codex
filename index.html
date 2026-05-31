@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver46</title>
+  <title>エンスクドリル ver47</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver46" />
+  <meta property="og:title" content="エンスクドリル ver47" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1076,7 +1076,7 @@
 
   <script type="text/babel">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 109;
+    const APP_VERSION = 110;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1547,6 +1547,11 @@
       });
     }
 
+    function makeBackupFilename() {
+      const stamp = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+      return `ensuku-drill-backup-${stamp}.json`;
+    }
+
     function parseBackupPayload(text) {
       const parsed = JSON.parse((text || "").trim());
       const data = parsed?.data && typeof parsed.data === "object" ? parsed.data : parsed;
@@ -2002,16 +2007,18 @@
         window.scrollTo(0, 0);
       }
 
-      async function copyBackupData() {
+      function downloadBackupData() {
         const payload = makeBackupPayload();
-        let copied = false;
-        try {
-          if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(payload);
-            copied = true;
-          }
-        } catch {}
-        return { payload, copied };
+        const blob = new Blob([payload], { type: "application/json;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = makeBackupFilename();
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        return link.download;
       }
 
       function restoreBackupData(text) {
@@ -2536,7 +2543,7 @@
               setPlayerName={setPlayerName}
               soundVolume={soundVolume}
               setSoundVolume={setSoundVolume}
-              copyBackupData={copyBackupData}
+              downloadBackupData={downloadBackupData}
               restoreBackupData={restoreBackupData}
               tone={tone}
               tap={tap}
@@ -2597,11 +2604,10 @@
       );
     }
 
-    function Home({ records, favorites, review, resultsHistory, dailySummary, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, answerPadAlign, setAnswerPadAlign, answerPadLayout, setAnswerPadLayout, playerName, setPlayerName, soundVolume, setSoundVolume, copyBackupData, restoreBackupData, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
+    function Home({ records, favorites, review, resultsHistory, dailySummary, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, answerPadAlign, setAnswerPadAlign, answerPadLayout, setAnswerPadLayout, playerName, setPlayerName, soundVolume, setSoundVolume, downloadBackupData, restoreBackupData, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
-      const [backupText, setBackupText] = useState("");
-      const [restoreText, setRestoreText] = useState("");
       const [backupStatus, setBackupStatus] = useState("");
+      const restoreFileInputRef = useRef(null);
       const sizeOptions = [
         ["normal", "通常"],
         ["small", "小さめ"]
@@ -2616,19 +2622,20 @@
         ["tenkey", "テンキー配列"]
       ];
       const previewNumbers = ANSWER_PAD_LAYOUTS[answerPadLayout] || ANSWER_PAD_LAYOUTS.default;
-      async function handleBackupCopy() {
-        const { payload, copied } = await copyBackupData();
-        setBackupText(payload);
-        setBackupStatus(copied ? "バックアップデータをコピーしました。" : "下の欄からバックアップデータをコピーしてください。");
+      function handleBackupDownload() {
+        const filename = downloadBackupData();
+        setBackupStatus(`${filename} を保存しました。新しい端末ではこのファイルを選んで復元してください。`);
       }
-      function handleRestore() {
+      async function handleRestoreFile(file) {
+        if (!file) return;
         try {
-          const count = restoreBackupData(restoreText);
-          setBackupText("");
-          setRestoreText("");
+          const text = await file.text();
+          const count = restoreBackupData(text);
           setBackupStatus(`${count}項目を復元しました。`);
         } catch (err) {
           setBackupStatus(err.message || "復元に失敗しました。");
+        } finally {
+          if (restoreFileInputRef.current) restoreFileInputRef.current.value = "";
         }
       }
       return (
@@ -2636,7 +2643,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-3 flex items-start justify-between gap-3 pt-1">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver46</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver47</span></h1>
             </div>
             <button className={`min-w-[76px] rounded-2xl px-4 py-2 text-[11px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
               <span className="block text-base leading-none sm:text-lg">⚙️</span>
@@ -2797,22 +2804,18 @@
 
               <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-3">
                 <p className="text-sm font-black text-[color:var(--muted)]">データ引き継ぎ</p>
-                <p className="mt-2 text-xs font-bold leading-5 text-[color:var(--muted)]">端末IDを含めて、記録・復習・お気に入り・設定をまとめて移せます。</p>
-                <button className="pressable btn-main mt-3 w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(handleBackupCopy)}>バックアップをコピー</button>
-                {backupText && (
-                  <textarea
-                    className="mt-3 h-24 w-full rounded-2xl border border-white/10 bg-black/25 p-3 text-[11px] font-bold leading-5 outline-none focus:border-[color:var(--gold)]"
-                    value={backupText}
-                    readOnly
-                  />
-                )}
-                <textarea
-                  className="mt-3 h-24 w-full rounded-2xl border border-white/10 bg-black/25 p-3 text-xs font-bold leading-5 outline-none focus:border-[color:var(--gold)]"
-                  value={restoreText}
-                  onChange={e => setRestoreText(e.target.value)}
-                  placeholder="新しい端末では、ここにバックアップデータを貼り付けます。"
+                <p className="mt-2 text-xs font-bold leading-5 text-[color:var(--muted)]">端末IDを含めて、記録・復習・お気に入り・設定をファイルでまとめて移せます。</p>
+                <button className="pressable btn-main mt-3 w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(handleBackupDownload)}>バックアップファイルを保存</button>
+                <input
+                  id="backup-restore-file"
+                  ref={restoreFileInputRef}
+                  className="hidden"
+                  type="file"
+                  accept=".json,.txt,application/json,text/plain"
+                  onChange={e => handleRestoreFile(e.target.files?.[0])}
                 />
-                <button className="pressable btn-quiet mt-2 w-full rounded-2xl px-4 py-3 text-sm font-black" disabled={!restoreText.trim()} {...tap(handleRestore)}>復元する</button>
+                <label htmlFor="backup-restore-file" className="pressable btn-quiet mt-2 block w-full rounded-2xl px-4 py-3 text-center text-sm font-black">バックアップファイルから復元</label>
+                <p className="mt-2 text-[11px] font-bold leading-5 text-[color:var(--muted)]">LINEなどに長文を貼る必要はありません。保存したJSONファイルを新しい端末へ送り、このボタンから選んでください。</p>
                 {backupStatus && <p className="mt-2 text-xs font-black leading-5 text-[color:var(--gold-2)]">{backupStatus}</p>}
               </div>
             </section>

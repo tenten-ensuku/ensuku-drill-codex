@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver49</title>
+  <title>エンスクドリル ver50</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver49" />
+  <meta property="og:title" content="エンスクドリル ver50" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 112;
+    const APP_VERSION = 113;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1620,6 +1620,7 @@
         .eq("mode_id", modeId)
         .order("score", { ascending: false })
         .order("elapsed_seconds", { ascending: true })
+        .order("submitted_at", { ascending: true })
         .limit(RANKING_FETCH_LIMIT);
       const startIso = periodStartIso(period);
       if (startIso) query = query.gte("submitted_at", startIso);
@@ -1637,6 +1638,7 @@
         .eq("mode_id", modeId)
         .order("score", { ascending: false })
         .order("elapsed_seconds", { ascending: true })
+        .order("submitted_at", { ascending: true })
         .limit(RANKING_FETCH_LIMIT);
       const startIso = periodStartIso(period);
       if (startIso) query = query.gte("submitted_at", startIso);
@@ -1645,16 +1647,41 @@
       const rows = dedupeRankingRows(data, RANKING_FETCH_LIMIT);
       const nameKey = rankingNameKey(playerName);
       const index = rows.findIndex(row => rankingNameKey(row.player_name) === nameKey);
-      return index >= 0 ? index + 1 : null;
+      return index >= 0 ? rankingPlaceLabel(rows, index) : null;
+    }
+
+    function rankingElapsedTenths(value) {
+      return Math.round((Number(value) || 0) * 10);
+    }
+
+    function sameRankingResult(a, b) {
+      return Number(a?.score) === Number(b?.score)
+        && rankingElapsedTenths(a?.elapsed_seconds) === rankingElapsedTenths(b?.elapsed_seconds);
+    }
+
+    function rankingPlace(rows, index) {
+      const row = rows?.[index];
+      if (!row) return index + 1;
+      const firstTieIndex = rows.findIndex(candidate => sameRankingResult(candidate, row));
+      return firstTieIndex >= 0 ? firstTieIndex + 1 : index + 1;
+    }
+
+    function rankingPlaceLabel(rows, index) {
+      const row = rows?.[index];
+      if (!row) return `${index + 1}位`;
+      const place = rankingPlace(rows, index);
+      const tied = rows.some((candidate, candidateIndex) => candidateIndex !== index && sameRankingResult(candidate, row));
+      return tied ? `同率${place}位` : `${place}位`;
     }
 
     function scoreGame(questionCount, correctCount, mistakes, elapsedSeconds) {
-      const timeBonus = Math.max(0, questionCount * 20 - elapsedSeconds);
+      const elapsedWholeSeconds = Math.floor(Number(elapsedSeconds) || 0);
+      const timeBonus = Math.max(0, questionCount * 20 - elapsedWholeSeconds);
       return Math.max(0, correctCount * 10 - mistakes * 20 + timeBonus);
     }
 
     function formatTime(sec) {
-      return `${Math.floor(sec)}秒`;
+      return `${(Number(sec) || 0).toFixed(1)}秒`;
     }
 
     function monotonicNow() {
@@ -1662,7 +1689,8 @@
     }
 
     function elapsedSecondsFrom(startedAt) {
-      return Math.max(0, Math.floor((monotonicNow() - startedAt) / 1000));
+      const elapsed = Math.max(0, (monotonicNow() - startedAt) / 1000);
+      return Math.floor(elapsed * 10) / 10;
     }
 
     function dateKey(iso = new Date().toISOString()) {
@@ -2645,7 +2673,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-3 flex items-start justify-between gap-3 pt-1">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver49</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver50</span></h1>
             </div>
             <button className={`min-w-[76px] rounded-2xl px-4 py-2 text-[11px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
               <span className="block text-base leading-none sm:text-lg">⚙️</span>
@@ -3038,11 +3066,11 @@
               {rows.map((row, idx) => {
                 const displayRankValue = rankFor(row.mode_id || row.modeId, Number(row.score) || 0);
                 return (
-                  <div key={`${row.submitted_at}-${idx}`} className="grid grid-cols-[2.2rem_1fr_auto] items-center gap-2 rounded-2xl bg-black/20 px-3 py-2">
-                    <div className="text-center text-lg font-black text-[color:var(--gold-2)]">{idx + 1}</div>
+                  <div key={`${row.submitted_at}-${idx}`} className="grid grid-cols-[4.3rem_1fr_auto] items-center gap-2 rounded-2xl bg-black/20 px-3 py-2">
+                    <div className="text-center text-sm font-black text-[color:var(--gold-2)]">{rankingPlaceLabel(rows, idx)}</div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-black">{row.player_name}</p>
-                      <p className="text-[11px] font-bold text-[color:var(--muted)]">{row.elapsed_seconds}秒 / {Number(row.average_seconds).toFixed(1)}秒/問</p>
+                      <p className="text-[11px] font-bold text-[color:var(--muted)]">{formatTime(Number(row.elapsed_seconds))} / {Number(row.average_seconds).toFixed(1)}秒/問</p>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-black">{row.score}<span className="text-xs text-[color:var(--gold)]">pt</span></p>
@@ -3708,7 +3736,7 @@
           setPostedRank(rank);
           setRankingSubmitted(true);
           onRankingSubmitted?.(result);
-          setSubmitStatus(rank ? `現在${rank}位です` : "順位を取得できませんでした");
+          setSubmitStatus(rank ? `現在${rank}です` : "順位を取得できませんでした");
         } catch (err) {
           setSubmitStatus(err.message || "投稿できませんでした");
           rankingSubmitLockRef.current = false;
@@ -3801,7 +3829,7 @@
             <div className="mt-3 grid grid-cols-4 gap-1.5 text-center">
               <Stat label="正解" value={result.correctCount} icon="●" iconClass="text-[#ff4b4b]" compact />
               <Stat label="ミス" value={result.mistakeCount} icon="×" iconClass="text-[#63a7ff]" compact />
-              <Stat label="時間" value={`${result.elapsedSeconds}秒`} icon="⏱" compact />
+              <Stat label="時間" value={formatTime(result.elapsedSeconds)} icon="⏱" compact />
               <Stat label="1問平均" value={averageTime} compact />
             </div>
           </section>

@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver50</title>
+  <title>エンスクドリル ver51</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver50" />
+  <meta property="og:title" content="エンスクドリル ver51" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 113;
+    const APP_VERSION = 114;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1668,10 +1668,14 @@
 
     function rankingPlaceLabel(rows, index) {
       const row = rows?.[index];
-      if (!row) return `${index + 1}位`;
+      if (!row) return rankingMedalLabel(index + 1);
       const place = rankingPlace(rows, index);
-      const tied = rows.some((candidate, candidateIndex) => candidateIndex !== index && sameRankingResult(candidate, row));
-      return tied ? `同率${place}位` : `${place}位`;
+      return rankingMedalLabel(place);
+    }
+
+    function rankingMedalLabel(place) {
+      const medals = { 1: "🥇", 2: "🥈", 3: "🥉" };
+      return `${medals[place] || ""}${place}位`;
     }
 
     function scoreGame(questionCount, correctCount, mistakes, elapsedSeconds) {
@@ -2673,7 +2677,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-3 flex items-start justify-between gap-3 pt-1">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver50</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver51</span></h1>
             </div>
             <button className={`min-w-[76px] rounded-2xl px-4 py-2 text-[11px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
               <span className="block text-base leading-none sm:text-lg">⚙️</span>

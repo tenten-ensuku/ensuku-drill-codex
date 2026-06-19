@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver51</title>
+  <title>エンスクドリル ver52</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver51" />
+  <meta property="og:title" content="エンスクドリル ver52" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 114;
+    const APP_VERSION = 115;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1263,7 +1263,7 @@
         ["B+", 315], ["B", 305], ["B-", 295], ["C", 285], ["D", 275], ["E", -Infinity]
       ],
       "7": [
-        ["神", 545], ["SS", 535], ["S", 520], ["A+", 510], ["A", 500], ["A-", 490],
+        ["神", 548], ["SS", 535], ["S", 520], ["A+", 510], ["A", 500], ["A-", 490],
         ["B+", 480], ["B", 470], ["B-", 460], ["C", 450], ["D", 440], ["E", -Infinity]
       ],
       "10_20": [
@@ -2677,7 +2677,7 @@
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="mb-3 flex items-start justify-between gap-3 pt-1">
             <div className="min-w-0 flex-1">
-              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver51</span></h1>
+              <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル <span className="align-middle text-base font-black text-[color:var(--gold-2)]">ver52</span></h1>
             </div>
             <button className={`min-w-[76px] rounded-2xl px-4 py-2 text-[11px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
               <span className="block text-base leading-none sm:text-lg">⚙️</span>

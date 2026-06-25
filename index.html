@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver53</title>
+  <title>エンスクドリル ver54</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver53" />
+  <meta property="og:title" content="エンスクドリル ver54" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 116;
+    const APP_VERSION = 117;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1824,7 +1824,7 @@
         const saved = localStorage.getItem(STORAGE.answerPadLayout);
         return saved === "tenkey" ? "tenkey" : "default";
       });
-      const [slideTouch, setSlideTouch] = useState(() => localStorage.getItem(STORAGE.slideTouch) !== "0");
+      const [slideTouch, setSlideTouch] = useState(() => localStorage.getItem(STORAGE.slideTouch) === "1");
       const [playerName, setPlayerName] = useState(() => sanitizePlayerNameInput(localStorage.getItem(STORAGE.playerName) || ""));
       const [soundVolume, setSoundVolume] = useState(() => {
         const raw = localStorage.getItem(STORAGE.soundVolume);
@@ -2076,7 +2076,7 @@
         setAnswerPadAlign(restoredAlign === "left" || restoredAlign === "center" ? restoredAlign : "right");
         const restoredLayout = localStorage.getItem(STORAGE.answerPadLayout);
         setAnswerPadLayout(restoredLayout === "tenkey" ? "tenkey" : "default");
-        setSlideTouch(localStorage.getItem(STORAGE.slideTouch) !== "0");
+        setSlideTouch(localStorage.getItem(STORAGE.slideTouch) === "1");
         const restoredVolume = Number(localStorage.getItem(STORAGE.soundVolume));
         setSoundVolume(Number.isFinite(restoredVolume) && restoredVolume >= 0 && restoredVolume <= 3 ? restoredVolume : 3);
         setResult(null);

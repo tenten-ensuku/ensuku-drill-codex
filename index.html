@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver52</title>
+  <title>エンスクドリル ver53</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver52" />
+  <meta property="og:title" content="エンスクドリル ver53" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 115;
+    const APP_VERSION = 116;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1222,6 +1222,7 @@
       answerPadSize: "mahjong_answer_pad_size",
       answerPadAlign: "mahjong_answer_pad_align",
       answerPadLayout: "mahjong_answer_pad_layout",
+      slideTouch: "mahjong_slide_touch",
       soundVolume: "mahjong_sound_volume",
       soundVolumeDefaulted: "mahjong_sound_volume_defaulted_v2",
       deviceId: "mahjong_device_id"
@@ -1823,6 +1824,7 @@
         const saved = localStorage.getItem(STORAGE.answerPadLayout);
         return saved === "tenkey" ? "tenkey" : "default";
       });
+      const [slideTouch, setSlideTouch] = useState(() => localStorage.getItem(STORAGE.slideTouch) !== "0");
       const [playerName, setPlayerName] = useState(() => sanitizePlayerNameInput(localStorage.getItem(STORAGE.playerName) || ""));
       const [soundVolume, setSoundVolume] = useState(() => {
         const raw = localStorage.getItem(STORAGE.soundVolume);
@@ -1903,6 +1905,10 @@
       useEffect(() => {
         localStorage.setItem(STORAGE.answerPadLayout, answerPadLayout);
       }, [answerPadLayout]);
+
+      useEffect(() => {
+        localStorage.setItem(STORAGE.slideTouch, slideTouch ? "1" : "0");
+      }, [slideTouch]);
 
       useEffect(() => {
         if (unlockFlash || unlockQueue.length === 0) return;
@@ -2070,6 +2076,7 @@
         setAnswerPadAlign(restoredAlign === "left" || restoredAlign === "center" ? restoredAlign : "right");
         const restoredLayout = localStorage.getItem(STORAGE.answerPadLayout);
         setAnswerPadLayout(restoredLayout === "tenkey" ? "tenkey" : "default");
+        setSlideTouch(localStorage.getItem(STORAGE.slideTouch) !== "0");
         const restoredVolume = Number(localStorage.getItem(STORAGE.soundVolume));
         setSoundVolume(Number.isFinite(restoredVolume) && restoredVolume >= 0 && restoredVolume <= 3 ? restoredVolume : 3);
         setResult(null);
@@ -2573,6 +2580,8 @@
               setAnswerPadAlign={setAnswerPadAlign}
               answerPadLayout={answerPadLayout}
               setAnswerPadLayout={setAnswerPadLayout}
+              slideTouch={slideTouch}
+              setSlideTouch={setSlideTouch}
               playerName={playerName}
               setPlayerName={setPlayerName}
               soundVolume={soundVolume}
@@ -2601,6 +2610,7 @@
               answerPadSize={answerPadSize}
               answerPadAlign={answerPadAlign}
               answerPadLayout={answerPadLayout}
+              slideTouch={slideTouch}
               judgeFlash={judgeFlash}
               tap={tap}
             />
@@ -2638,7 +2648,7 @@
       );
     }
 
-    function Home({ records, favorites, review, resultsHistory, dailySummary, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, answerPadAlign, setAnswerPadAlign, answerPadLayout, setAnswerPadLayout, playerName, setPlayerName, soundVolume, setSoundVolume, downloadBackupData, restoreBackupData, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
+    function Home({ records, favorites, review, resultsHistory, dailySummary, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, answerPadAlign, setAnswerPadAlign, answerPadLayout, setAnswerPadLayout, slideTouch, setSlideTouch, playerName, setPlayerName, soundVolume, setSoundVolume, downloadBackupData, restoreBackupData, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
       const [backupStatus, setBackupStatus] = useState("");
       const restoreFileInputRef = useRef(null);
@@ -2825,6 +2835,25 @@
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="mt-5">
+                <p className="text-sm font-black text-[color:var(--muted)]">スライドタッチ</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {[
+                    [true, "ON"],
+                    [false, "OFF"]
+                  ].map(([value, label]) => (
+                    <button
+                      key={label}
+                      className={`rounded-2xl px-2 py-3 text-sm font-black ${slideTouch === value ? "btn-main" : "btn-quiet"}`}
+                      {...tap(() => setSlideTouch(value))}
+                    >
+                      <span className="block">{label}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs font-bold leading-5 text-[color:var(--muted)]">ONにすると、数字キーを押したまま別の数字へ移動して選択できます。</p>
               </div>
 
               <div className="settings-preview mt-5 rounded-2xl bg-black/20 p-3">
@@ -3419,7 +3448,7 @@
       );
     }
 
-    function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, isFavorite, favoriteFlash, quit, retry, answerPadSize, answerPadAlign, answerPadLayout, judgeFlash, tap }) {
+    function Game({ game, q, elapsed, selectAnswer, confirmAnswer, addFavorite, isFavorite, favoriteFlash, quit, retry, answerPadSize, answerPadAlign, answerPadLayout, slideTouch, judgeFlash, tap }) {
       const counts = q.tiles.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {});
       const isUra = game.variant === "ura";
       const showGameOver = isUra && game.gameOverWrong;
@@ -3427,6 +3456,27 @@
       const questionModeLabel = modeLabelForTileCount(questionTileCount) || game.mode.label;
       const promptTitle = questionTileCount === 6 ? "2面子完成となる受け入れは？" : "何待ち？";
       const answerNumbers = ANSWER_PAD_LAYOUTS[answerPadLayout] || ANSWER_PAD_LAYOUTS.default;
+      const answerDragRef = useRef(null);
+      const lastTouchAtRef = useRef(0);
+
+      function pressAnswerKey(num, event, source = "pointer") {
+        if ((counts[num] || 0) >= 4 || game.feedback || showGameOver) return;
+        if (event) {
+          if (source !== "touch") event.preventDefault();
+          event.stopPropagation();
+        }
+        if (source === "pointer" && performance.now() - lastTouchAtRef.current < 500) return;
+        answerDragRef.current = num;
+        selectAnswer(num);
+      }
+
+      function keyFromTouch(event) {
+        const touchPoint = event.touches && event.touches[0];
+        if (!touchPoint) return null;
+        const element = document.elementFromPoint(touchPoint.clientX, touchPoint.clientY);
+        const key = element && element.closest ? element.closest("[data-answer-key]") : null;
+        return key ? Number(key.dataset.answerKey) : null;
+      }
 
       useEffect(() => {
         function onKey(e) {
@@ -3483,7 +3533,36 @@
                   const disabled = (counts[num] || 0) >= 4;
                   const selected = game.selected.includes(num);
                   return (
-                    <button key={num} disabled={disabled || !!game.feedback} className={`answer-btn pressable ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${isUra && !selected ? "ura" : ""} ${game.gameOverWrong === num ? "wrong" : ""}`} {...tap(() => selectAnswer(num))}>
+                    <button
+                      key={num}
+                      type="button"
+                      data-answer-key={num}
+                      disabled={disabled || !!game.feedback}
+                      className={`answer-btn pressable ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${isUra && !selected ? "ura" : ""} ${game.gameOverWrong === num ? "wrong" : ""}`}
+                      onPointerDown={event => {
+                        if (event.pointerType === "touch") return;
+                        pressAnswerKey(num, event, "pointer");
+                      }}
+                      onPointerEnter={event => {
+                        if (!slideTouch || event.pointerType === "touch" || event.buttons !== 1 || answerDragRef.current === num) return;
+                        pressAnswerKey(num, event, "pointer");
+                      }}
+                      onPointerUp={() => { answerDragRef.current = null; }}
+                      onPointerCancel={() => { answerDragRef.current = null; }}
+                      onTouchStart={event => {
+                        lastTouchAtRef.current = performance.now();
+                        pressAnswerKey(num, event, "touch");
+                      }}
+                      onTouchMove={event => {
+                        if (!slideTouch) return;
+                        const key = keyFromTouch(event);
+                        if (!key || key === answerDragRef.current) return;
+                        lastTouchAtRef.current = performance.now();
+                        pressAnswerKey(key, event, "touch");
+                      }}
+                      onTouchEnd={() => { answerDragRef.current = null; }}
+                      onTouchCancel={() => { answerDragRef.current = null; }}
+                    >
                       {num}
                     </button>
                   );

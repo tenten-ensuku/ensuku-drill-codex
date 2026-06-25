@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>エンスクドリル ver56</title>
+  <title>エンスクドリル ver57</title>
   <meta name="description" content="" />
-  <meta property="og:title" content="エンスクドリル ver56" />
+  <meta property="og:title" content="エンスクドリル ver57" />
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 119;
+    const APP_VERSION = 120;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -1717,6 +1717,13 @@
         ? `　${(record.elapsed / questionCount).toFixed(1)}秒／問`
         : "";
       return `Best ${record.best}pt${average}`;
+    }
+
+    function isBetterBest(score, elapsedSeconds, oldBest, oldElapsed) {
+      if (score > oldBest) return true;
+      if (score !== oldBest || oldBest <= 0) return false;
+      if (!oldElapsed) return true;
+      return Number(elapsedSeconds) < Number(oldElapsed);
     }
 
     function rankComment(rank, tileCount) {
@@ -2370,8 +2377,9 @@
           const score = scoreGame(g.questions.length, correctCount, mistakeCount, elapsedSeconds);
           const rank = rankFor(g.mode.id, score);
           const previousBest = readNumber(g.mode.bestKey);
+          const previousElapsed = readNumber(g.mode.elapsedKey);
           const isRankedRun = g.variant === "normal" || g.variant === "ura";
-          const isNewRecord = isRankedRun && score > previousBest;
+          const isNewRecord = isRankedRun && !extra.gameOver && isBetterBest(score, elapsedSeconds, previousBest, previousElapsed);
           const built = makeResult({
             mode: g.mode,
             variant: g.variant,
@@ -2397,8 +2405,9 @@
       function persistResult(res) {
         const mode = getMode(res.modeId);
         const oldBest = readNumber(mode.bestKey);
+        const oldElapsed = readNumber(mode.elapsedKey);
         const isRankedRun = (res.variant === "normal" || res.variant === "ura") && !res.gameOver;
-        if (isRankedRun && res.score > oldBest) {
+        if (isRankedRun && isBetterBest(res.score, res.elapsedSeconds, oldBest, oldElapsed)) {
           localStorage.setItem(mode.bestKey, String(res.score));
           localStorage.setItem(mode.elapsedKey, String(res.elapsedSeconds));
           if (res.variant === "normal") {

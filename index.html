@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 128;
+    const APP_VERSION = 129;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     if (new URLSearchParams(window.location.search).has("reset")) {
@@ -1587,6 +1587,11 @@
       const now = new Date();
       if (period === "daily") {
         return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      }
+      if (period === "weekly") {
+        const start = new Date(now);
+        start.setDate(start.getDate() - 7);
+        return start.toISOString();
       }
       if (period === "monthly") {
         return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -3083,6 +3088,7 @@
       const [error, setError] = useState("");
       const periods = [
         ["daily", "今日"],
+        ["weekly", "週間"],
         ["monthly", "月間"],
         ["all", "歴代"]
       ];
@@ -3120,9 +3126,9 @@
             ))}
           </div>
 
-          <div className="mt-3 grid grid-cols-3 gap-2 rounded-full bg-black/20 p-1">
+          <div className="mt-3 grid grid-cols-4 gap-1.5 rounded-full bg-black/20 p-1">
             {periods.map(([id, label]) => (
-              <button key={id} className={`rounded-full px-3 py-2 text-xs font-black ${period === id ? "btn-main" : "btn-quiet"}`} {...tap(() => setPeriod(id))}>{label}</button>
+              <button key={id} className={`rounded-full px-2 py-2 text-xs font-black ${period === id ? "btn-main" : "btn-quiet"}`} {...tap(() => setPeriod(id))}>{label}</button>
             ))}
           </div>
 

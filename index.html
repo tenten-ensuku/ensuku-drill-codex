@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 123;
+    const APP_VERSION = 124;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2698,10 +2698,21 @@
             <div className="min-w-0 flex-1">
               <h1 className="text-4xl font-black tracking-normal text-[color:var(--cream)]">エンスクドリル</h1>
             </div>
-            <button className={`min-w-[76px] rounded-2xl px-4 py-2 text-[11px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
-              <span className="block text-base leading-none sm:text-lg">⚙️</span>
-              <span className="mt-0.5 block whitespace-nowrap">設定</span>
-            </button>
+            <div className="flex shrink-0 items-start gap-2">
+              <a
+                className="btn-quiet rounded-2xl px-3 py-2 text-[11px] font-extrabold leading-tight sm:text-xs"
+                href="https://note.com/tenteninvest/n/n94cbed4f0887?app_launch=false"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="エンスクドリル紹介記事を開く"
+              >
+                <span className="block whitespace-nowrap">紹介 ↗</span>
+              </a>
+              <button className={`min-w-[76px] rounded-2xl px-4 py-2 text-[11px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
+                <span className="block text-base leading-none sm:text-lg">⚙️</span>
+                <span className="mt-0.5 block whitespace-nowrap">設定</span>
+              </button>
+            </div>
           </header>
 
           <div className="mb-3 grid grid-cols-5 gap-1 rounded-full bg-black/20 p-1">

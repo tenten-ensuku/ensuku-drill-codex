@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 124;
+    const APP_VERSION = 125;
 
     if (new URLSearchParams(window.location.search).has("reset")) {
       localStorage.clear();
@@ -2706,7 +2706,7 @@
                 rel="noopener noreferrer"
                 aria-label="エンスクドリル紹介記事を開く"
               >
-                <span className="block whitespace-nowrap">紹介 ↗</span>
+                <span className="block whitespace-nowrap underline decoration-[color:var(--gold-2)] decoration-2 underline-offset-4">紹介note ↗</span>
               </a>
               <button className={`min-w-[76px] rounded-2xl px-4 py-2 text-[11px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
                 <span className="block text-base leading-none sm:text-lg">⚙️</span>

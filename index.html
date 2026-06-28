@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 133;
+    const APP_VERSION = 134;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     if (new URLSearchParams(window.location.search).has("reset")) {
@@ -2721,23 +2721,21 @@
       return (
         <div className="app-pad menu-mincho mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-3">
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
-          <header className="mb-1 flex items-start justify-between gap-2 pt-0">
-            <h1 className="whitespace-nowrap text-4xl font-black leading-tight tracking-normal text-[color:var(--cream)]">エンスクドリル</h1>
-            <div className="flex shrink-0 items-start gap-1">
-              <a
-                className="btn-quiet rounded-xl px-2 py-1 text-center text-[10px] font-extrabold leading-tight"
-                href="https://note.com/tenteninvest/n/n94cbed4f0887?app_launch=false"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="エンスクドリル紹介記事を開く"
-              >
-                <span className="block whitespace-nowrap underline decoration-[color:var(--gold-2)] decoration-2 underline-offset-4">note⤴</span>
-              </a>
-              <button className={`w-[75px] rounded-full px-1 py-1.5 text-[10px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
-                <span className="block text-base leading-none sm:text-lg">⚙️</span>
-                <span className="mt-0.5 block whitespace-nowrap">設定</span>
-              </button>
-            </div>
+          <header className="relative mb-1 h-[54px] pt-0">
+            <h1 className="inline-block whitespace-nowrap text-4xl font-black leading-tight tracking-normal text-[color:var(--cream)]">エンスクドリル</h1>
+            <a
+              className="btn-quiet absolute bottom-1 right-[82px] rounded-xl px-2 py-1 text-center text-[10px] font-extrabold leading-tight"
+              href="https://note.com/tenteninvest/n/n94cbed4f0887?app_launch=false"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="エンスクドリル紹介記事を開く"
+            >
+              <span className="block whitespace-nowrap underline decoration-[color:var(--gold-2)] decoration-2 underline-offset-4">note⤴</span>
+            </a>
+            <button className={`absolute right-1 top-0 w-[75px] rounded-full px-1 py-1.5 text-[10px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
+              <span className="block text-base leading-none sm:text-lg">⚙️</span>
+              <span className="mt-0.5 block whitespace-nowrap">設定</span>
+            </button>
           </header>
 
           <div className="mb-3 grid grid-cols-5 gap-1 rounded-full bg-black/20 p-1">

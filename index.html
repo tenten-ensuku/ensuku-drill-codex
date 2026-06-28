@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 135;
+    const APP_VERSION = 136;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     if (new URLSearchParams(window.location.search).has("reset")) {
@@ -2721,10 +2721,10 @@
       return (
         <div className="app-pad menu-mincho mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-3">
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
-          <header className="relative mb-1 h-[54px] pt-0">
+          <header className="relative mb-1 h-[64px] pt-0">
             <h1 className="inline-block whitespace-nowrap text-4xl font-black leading-tight tracking-normal text-[color:var(--cream)]">エンスクドリル</h1>
             <a
-              className="absolute bottom-1 left-[258px] rounded-md px-1 py-0.5 text-[10px] font-extrabold leading-tight text-[color:var(--muted)]"
+              className="absolute bottom-1 left-8 rounded-md px-1 py-0.5 text-xs font-extrabold leading-tight text-[color:var(--gold-2)]"
               href="https://note.com/tenteninvest/n/n94cbed4f0887?app_launch=false"
               target="_blank"
               rel="noopener noreferrer"

@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 138;
+    const APP_VERSION = 139;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     if (new URLSearchParams(window.location.search).has("reset")) {
@@ -2836,6 +2836,25 @@
               </div>
 
               <div className="mt-5">
+                <p className="text-sm font-black text-[color:var(--muted)]">スライドタッチ</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {[
+                    [true, "ON"],
+                    [false, "OFF"]
+                  ].map(([value, label]) => (
+                    <button
+                      key={label}
+                      className={`rounded-2xl px-2 py-3 text-sm font-black ${slideTouch === value ? "btn-main" : "btn-quiet"}`}
+                      {...tap(() => setSlideTouch(value))}
+                    >
+                      <span className="block">{label}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs font-bold leading-5 text-[color:var(--muted)]">ONにすると、数字キーを押したまま別の数字へ移動して選択できます。</p>
+              </div>
+
+              <div className="mt-5">
                 <p className="text-sm font-black text-[color:var(--muted)]">ボタンサイズ</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   {sizeOptions.map(([id, label]) => (
@@ -2878,25 +2897,6 @@
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <div className="mt-5">
-                <p className="text-sm font-black text-[color:var(--muted)]">スライドタッチ</p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {[
-                    [true, "ON"],
-                    [false, "OFF"]
-                  ].map(([value, label]) => (
-                    <button
-                      key={label}
-                      className={`rounded-2xl px-2 py-3 text-sm font-black ${slideTouch === value ? "btn-main" : "btn-quiet"}`}
-                      {...tap(() => setSlideTouch(value))}
-                    >
-                      <span className="block">{label}</span>
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 text-xs font-bold leading-5 text-[color:var(--muted)]">ONにすると、数字キーを押したまま別の数字へ移動して選択できます。</p>
               </div>
 
               <div className="settings-preview mt-5 rounded-2xl bg-black/20 p-3">

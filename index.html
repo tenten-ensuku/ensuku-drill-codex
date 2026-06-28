@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 139;
+    const APP_VERSION = 140;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     if (new URLSearchParams(window.location.search).has("reset")) {
@@ -1766,7 +1766,7 @@
       const average = (Number(result.elapsedSeconds) / Math.max(1, result.questionCount)).toFixed(1);
       return [
         `エンスクドリル　${result.modeLabel}`,
-        `${result.score}pt/${displayRank(result.rank)}　${average}秒/問`,
+        `${result.score}pt/${displayRank(result.rank)}　${average}秒/問（時間${formatTime(result.elapsedSeconds)}）`,
         `#エンスクドリル ${APP_PUBLIC_URL}`
       ].join("\n");
     }

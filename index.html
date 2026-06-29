@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 141;
+    const APP_VERSION = 142;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     if (new URLSearchParams(window.location.search).has("reset")) {
@@ -2732,9 +2732,9 @@
             >
               <span className="block whitespace-nowrap underline decoration-[color:var(--gold-2)] decoration-1 underline-offset-4">note⤴</span>
             </a>
-            <button className={`absolute right-1 top-6 w-[75px] rounded-full px-1 py-1.5 text-[10px] font-extrabold leading-tight sm:text-xs ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
-              <span className="block text-base leading-none sm:text-lg">⚙️</span>
-              <span className="mt-0.5 block whitespace-nowrap">設定</span>
+            <button className={`absolute right-1 top-4 flex h-14 w-14 flex-col items-center justify-center rounded-2xl p-0 text-[10px] font-extrabold leading-tight ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
+              <span className="block text-lg leading-none">⚙️</span>
+              <span className="mt-1 block whitespace-nowrap">設定</span>
             </button>
           </header>
 

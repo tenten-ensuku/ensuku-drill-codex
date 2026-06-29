@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 140;
+    const APP_VERSION = 141;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     if (new URLSearchParams(window.location.search).has("reset")) {
@@ -3260,7 +3260,7 @@
       }), { plays: 0, score: 0, correct: 0, mistakes: 0, elapsed: 0, records: 0 });
       const totals = summaryTotals.plays > completed.length ? summaryTotals : fallbackTotals;
       const today = dateKey();
-      const todayFromSummary = summaries.filter(row => row.date === today).reduce((sum, row) => sum + (row.playCount || 0), 0);
+      const todayFromSummary = modeSummaries.filter(row => row.date === today).reduce((sum, row) => sum + (row.playCount || 0), 0);
       const todayCount = todayFromSummary || completed.filter(row => dateKey(row.finishedAt) === today).length;
       const best = completed.reduce((top, row) => !top || row.score > top.score ? row : top, null);
       const problemKind = selectedMode?.tileCount === 10 ? "10" : String(selectedMode?.tileCount || 6);

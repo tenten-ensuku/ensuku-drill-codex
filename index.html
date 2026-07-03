@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 142;
+    const APP_VERSION = 143;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     if (new URLSearchParams(window.location.search).has("reset")) {
@@ -1308,6 +1308,10 @@
 
     function writeJson(key, value) {
       localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function readSlideTouchSetting() {
+      return localStorage.getItem(STORAGE.slideTouch) !== "0";
     }
 
     function shuffle(arr) {
@@ -1858,7 +1862,7 @@
         const saved = localStorage.getItem(STORAGE.answerPadLayout);
         return saved === "tenkey" ? "tenkey" : "default";
       });
-      const [slideTouch, setSlideTouch] = useState(() => localStorage.getItem(STORAGE.slideTouch) === "1");
+      const [slideTouch, setSlideTouch] = useState(() => readSlideTouchSetting());
       const [playerName, setPlayerName] = useState(() => sanitizePlayerNameInput(localStorage.getItem(STORAGE.playerName) || ""));
       const [soundVolume, setSoundVolume] = useState(() => {
         const raw = localStorage.getItem(STORAGE.soundVolume);
@@ -2110,7 +2114,7 @@
         setAnswerPadAlign(restoredAlign === "left" || restoredAlign === "center" ? restoredAlign : "right");
         const restoredLayout = localStorage.getItem(STORAGE.answerPadLayout);
         setAnswerPadLayout(restoredLayout === "tenkey" ? "tenkey" : "default");
-        setSlideTouch(localStorage.getItem(STORAGE.slideTouch) === "1");
+        setSlideTouch(readSlideTouchSetting());
         const restoredVolume = Number(localStorage.getItem(STORAGE.soundVolume));
         setSoundVolume(Number.isFinite(restoredVolume) && restoredVolume >= 0 && restoredVolume <= 3 ? restoredVolume : 3);
         setResult(null);

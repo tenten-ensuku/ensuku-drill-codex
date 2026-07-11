@@ -1076,7 +1076,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 144;
+    const APP_VERSION = 145;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     if (new URLSearchParams(window.location.search).has("reset")) {
@@ -1592,13 +1592,15 @@
       if (period === "daily") {
         return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
       }
-      if (period === "weekly") {
+      if (period === "last7") {
         const start = new Date(now);
         start.setDate(start.getDate() - 7);
         return start.toISOString();
       }
-      if (period === "monthly") {
-        return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      if (period === "last30") {
+        const start = new Date(now);
+        start.setDate(start.getDate() - 30);
+        return start.toISOString();
       }
       return null;
     }
@@ -3088,8 +3090,8 @@
       const [error, setError] = useState("");
       const periods = [
         ["daily", "今日"],
-        ["weekly", "週間"],
-        ["monthly", "月間"],
+        ["last7", "7日間"],
+        ["last30", "30日間"],
         ["all", "歴代"]
       ];
       useEffect(() => {

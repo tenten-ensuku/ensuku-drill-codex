@@ -1,7 +1,7 @@
 create table if not exists public.ensuku_rankings (
   id uuid primary key default gen_random_uuid(),
   player_name text not null check (
-    char_length(player_name) between 1 and 12
+    char_length(player_name) between 1 and 9
     and player_name !~ '[<>"''`/\\]'
     and player_name !~ '[[:cntrl:]]'
     and lower(regexp_replace(player_name, '^[[:space:]　]+|[[:space:]　]+$', '', 'g')) not in ('にんじん', 'だいこん', 'にら', 'てんpc')
@@ -41,11 +41,12 @@ with check (
   and mode_id in ('6', '7', '10_20', '10_all')
   and variant in ('normal', 'ura')
   and score >= 0
-  and char_length(player_name) between 1 and 12
+  and char_length(player_name) between 1 and 9
   and player_name !~ '[<>"''`/\\]'
   and player_name !~ '[[:cntrl:]]'
   and lower(regexp_replace(player_name, '^[[:space:]　]+|[[:space:]　]+$', '', 'g')) not in ('にんじん', 'だいこん', 'にら', 'てんpc')
   and char_length(device_id) between 4 and 64
+  and device_id <> 'd_59d2ba0e542024381b0b018b'
 );
 
 create index if not exists ensuku_rankings_mode_day_score_idx

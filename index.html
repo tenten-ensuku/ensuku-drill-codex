@@ -9,7 +9,10 @@
   <meta property="og:description" content="" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="icon" href="data:," />
+  <meta name="theme-color" content="#0b2f28" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/ensuku-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/ensuku-180.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -1076,7 +1079,7 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 146;
+    const APP_VERSION = 148;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     if (new URLSearchParams(window.location.search).has("reset")) {
@@ -1235,7 +1238,7 @@
       anonKey: "sb_publishable__8xy0NDda20OtQPc1zSEng_6440qlY2",
       table: "ensuku_rankings"
     };
-    const PLAYER_NAME_MAX_LENGTH = 12;
+    const PLAYER_NAME_MAX_LENGTH = 9;
     const PLAYER_NAME_BLOCKED_CHARS = /[<>"'`/\\\u0000-\u001f\u007f]/g;
     const BLOCKED_RANKING_PLAYER_NAMES = new Set(["にんじん", "だいこん", "にら", "てんpc"]);
     const RANKING_DISPLAY_LIMIT = 20;

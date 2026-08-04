@@ -1,24 +1,32 @@
 {
+  "id": "/ensuku-drill-codex/",
   "name": "エンスクドリル",
   "short_name": "エンスクドリル",
   "description": "エンジョイスクールの麻雀ドリル",
-  "start_url": "./",
+  "start_url": "/ensuku-drill-codex/",
+  "scope": "/ensuku-drill-codex/",
   "display": "standalone",
   "background_color": "#06110f",
   "theme_color": "#0b2f28",
   "lang": "ja",
   "icons": [
     {
-      "src": "assets/icons/ensuku-192.png",
+      "src": "/ensuku-drill-codex/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/icons/ensuku-512.png",
+      "src": "/ensuku-drill-codex/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/ensuku-drill-codex/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

@@ -10,9 +10,10 @@
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="theme-color" content="#0b2f28" />
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/ensuku-192.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/ensuku-180.png" />
-  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/ensuku-drill-codex/icons/favicon-32.png?v=157" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/ensuku-drill-codex/icons/icon-192.png?v=157" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/ensuku-drill-codex/icons/apple-touch-icon-180.png?v=157" />
+  <link rel="manifest" href="/ensuku-drill-codex/manifest.webmanifest?v=157" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -1079,14 +1080,10 @@
 
   <script type="text/babel" data-presets="env,react">
     const { useEffect, useMemo, useRef, useState } = React;
-    const APP_VERSION = 155;
+    const APP_ID = "ensuku-drill-codex";
+    const APP_BASE_PATH = "/ensuku-drill-codex/";
+    const APP_VERSION = 157;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
-
-    if (new URLSearchParams(window.location.search).has("reset")) {
-      localStorage.clear();
-      sessionStorage.clear();
-      window.history.replaceState(null, "", window.location.pathname);
-    }
 
     const RAW_6 = `
 334556-347
@@ -1208,7 +1205,31 @@
 
     const SUIT_PREFIX = { m: "man", p: "pin", s: "sou", z: "ji" };
     const IMG_BASE = "tiles/";
+    const storageKey = (name) => `${APP_ID}:${name}`;
     const STORAGE = {
+      best6: storageKey("best6"),
+      best7: storageKey("best7"),
+      best1020: storageKey("best10_20"),
+      best10all: storageKey("best10_all"),
+      elapsed6: storageKey("elapsed6"),
+      elapsed7: storageKey("elapsed7"),
+      elapsed1020: storageKey("elapsed10_20"),
+      elapsed10all: storageKey("elapsed10_all"),
+      favorites: storageKey("favorites"),
+      review: storageKey("review_bucket"),
+      results: storageKey("results_history"),
+      dailySummary: storageKey("daily_summary"),
+      problemStats: storageKey("problem_stats"),
+      playerName: storageKey("player_name"),
+      answerPadSize: storageKey("answer_pad_size"),
+      answerPadAlign: storageKey("answer_pad_align"),
+      answerPadLayout: storageKey("answer_pad_layout"),
+      slideTouch: storageKey("slide_touch"),
+      soundVolume: storageKey("sound_volume"),
+      soundVolumeDefaulted: storageKey("sound_volume_defaulted_v2"),
+      deviceId: storageKey("device_id")
+    };
+    const LEGACY_STORAGE = {
       best6: "mahjong_best_6",
       best7: "mahjong_best_7",
       best1020: "mahjong_best_10_20",
@@ -1232,6 +1253,21 @@
       deviceId: "mahjong_device_id"
     };
     const BACKUP_STORAGE_KEYS = Object.values(STORAGE);
+
+    function migrateLegacyStorage() {
+      Object.entries(LEGACY_STORAGE).forEach(([name, legacyKey]) => {
+        const nextKey = STORAGE[name];
+        if (localStorage.getItem(nextKey) !== null) return;
+        const legacyValue = localStorage.getItem(legacyKey);
+        if (legacyValue !== null) localStorage.setItem(nextKey, legacyValue);
+      });
+    }
+
+    migrateLegacyStorage();
+    if (new URLSearchParams(window.location.search).has("reset")) {
+      Object.values(STORAGE).forEach((key) => localStorage.removeItem(key));
+      window.history.replaceState(null, "", window.location.pathname);
+    }
 
     const SUPABASE_CONFIG = {
       url: "https://kclkzevcgpfbavegwbnf.supabase.co",

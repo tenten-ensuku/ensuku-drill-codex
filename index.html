@@ -1082,7 +1082,7 @@
     const { useEffect, useMemo, useRef, useState } = React;
     const APP_ID = "ensuku-drill-codex";
     const APP_BASE_PATH = "/ensuku-drill-codex/";
-    const APP_VERSION = 159;
+    const APP_VERSION = 160;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     const RAW_6 = `
@@ -2796,7 +2796,7 @@
         <div className="app-pad menu-mincho mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-3">
           {unlockFlash && <UnlockFlash label={unlockFlash} onDone={onUnlockDone} />}
           <header className="relative mb-1 h-[72px] pt-0">
-            <h1 className="mt-[13px] inline-block whitespace-nowrap text-4xl font-black leading-tight tracking-normal text-[color:var(--cream)]">エンスクドリル</h1>
+            <h1 className="mt-[13px] inline-block whitespace-nowrap text-[1.65rem] font-black leading-tight tracking-normal text-[color:var(--cream)] sm:text-4xl">エンスクドリル</h1>
             <a
               className="absolute right-4 top-0 rounded-md px-1 py-0.5 text-[10px] font-extrabold leading-tight text-[color:var(--gold-2)]"
               href="https://note.com/tenteninvest/n/n94cbed4f0887?app_launch=false"
@@ -2806,16 +2806,17 @@
             >
               <span className="block whitespace-nowrap underline decoration-[color:var(--gold-2)] decoration-1 underline-offset-4">note⤴</span>
             </a>
-            <button className={`absolute right-1 top-4 flex h-14 w-14 flex-col items-center justify-center rounded-2xl p-0 text-[10px] font-extrabold leading-tight ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))} aria-label="設定">
-              <span className="block text-lg leading-none">⚙️</span>
-              <span className="mt-1 block whitespace-nowrap">設定</span>
+            <button className={`absolute right-1 top-4 flex h-12 w-12 flex-col items-center justify-center rounded-xl p-0 text-[9px] font-extrabold leading-tight ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))} aria-label="設定">
+              <span className="block text-base leading-none">⚙️</span>
+              <span className="mt-0.5 block whitespace-nowrap">設定</span>
             </button>
-            <button className={`absolute right-16 top-4 flex h-14 w-14 items-center justify-center rounded-2xl p-0 ${tab === "announcements" ? "btn-main" : "btn-quiet"}`} {...tap(() => {
+            <button className={`absolute right-[3.25rem] top-4 flex h-12 w-12 flex-col items-center justify-center rounded-xl p-0 text-[9px] font-extrabold leading-tight ${tab === "announcements" ? "btn-main" : "btn-quiet"}`} {...tap(() => {
               setTab(tab === "announcements" ? "modes" : "announcements");
               setReadAnnouncementIds(current => [...new Set([...current, ...unreadAnnouncements.map(item => item.id)])]);
             })} aria-label="アナウンス" title="アナウンス">
-              <span className="block text-2xl leading-none" aria-hidden="true">📣</span>
-              {unreadAnnouncements.length > 0 && <span className="absolute right-[-4px] top-[-6px] flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-black leading-none text-white shadow-lg">{unreadAnnouncements.length}</span>}
+              <span className="block text-xl leading-none" aria-hidden="true">📣</span>
+              <span className="mt-0.5 block whitespace-nowrap">お知らせ</span>
+              {unreadAnnouncements.length > 0 && <span className="absolute right-[-3px] top-[-5px] flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black leading-none text-white shadow-lg">{unreadAnnouncements.length}</span>}
             </button>
           </header>
 

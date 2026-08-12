@@ -1082,7 +1082,7 @@
     const { useEffect, useMemo, useRef, useState } = React;
     const APP_ID = "ensuku-drill-codex";
     const APP_BASE_PATH = "/ensuku-drill-codex/";
-    const APP_VERSION = 158;
+    const APP_VERSION = 159;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     const RAW_6 = `
@@ -2814,10 +2814,7 @@
               setTab(tab === "announcements" ? "modes" : "announcements");
               setReadAnnouncementIds(current => [...new Set([...current, ...unreadAnnouncements.map(item => item.id)])]);
             })} aria-label="アナウンス" title="アナウンス">
-              <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M4 10v4h3l7 4V6l-7 4H4Z" fill="currentColor" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-                <path d="M17 9.5c1.8 1.2 1.8 3.8 0 5M19 7c3.4 2.4 3.4 7.6 0 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
+              <span className="block text-2xl leading-none" aria-hidden="true">📣</span>
               {unreadAnnouncements.length > 0 && <span className="absolute right-[-4px] top-[-6px] flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-black leading-none text-white shadow-lg">{unreadAnnouncements.length}</span>}
             </button>
           </header>

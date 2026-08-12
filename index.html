@@ -1082,7 +1082,7 @@
     const { useEffect, useMemo, useRef, useState } = React;
     const APP_ID = "ensuku-drill-codex";
     const APP_BASE_PATH = "/ensuku-drill-codex/";
-    const APP_VERSION = 157;
+    const APP_VERSION = 158;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
 
     const RAW_6 = `
@@ -1227,7 +1227,8 @@
       slideTouch: storageKey("slide_touch"),
       soundVolume: storageKey("sound_volume"),
       soundVolumeDefaulted: storageKey("sound_volume_defaulted_v2"),
-      deviceId: storageKey("device_id")
+      deviceId: storageKey("device_id"),
+      announcementRead: storageKey("announcement_read")
     };
     const LEGACY_STORAGE = {
       best6: "mahjong_best_6",
@@ -1280,6 +1281,21 @@
     const RANKING_DISPLAY_LIMIT = 20;
     const RANKING_FETCH_LIMIT = 500;
 
+    const ANNOUNCEMENTS = [
+      {
+        id: "announcement-button-2026-08-12",
+        date: "2026-08-12",
+        title: "アナウンスボタンを実装しました",
+        body: "メニュー右上のメガホンボタンから、エンスクドリルの修正内容やお知らせを確認できます。"
+      },
+      {
+        id: "ten-god-thresholds-2026-08-12",
+        date: "2026-08-12",
+        title: "十枚形の神ランク基準を更新しました",
+        body: "十枚形20問は578pt以上、十枚形80問は2291pt以上で神ランクになります。"
+      }
+    ];
+
     const ANSWER_PAD_LAYOUTS = {
       default: [1, 2, 3, 4, 5, 6, 7, 8, 9],
       tenkey: [7, 8, 9, 4, 5, 6, 1, 2, 3]
@@ -1308,11 +1324,11 @@
         ["B+", 480], ["B", 470], ["B-", 460], ["C", 450], ["D", 440], ["E", -Infinity]
       ],
       "10_20": [
-        ["神", 574], ["SS", 530], ["S", 500], ["A+", 460], ["A", 420], ["A-", 385],
+        ["神", 578], ["SS", 530], ["S", 500], ["A+", 460], ["A", 420], ["A-", 385],
         ["B+", 350], ["B", 315], ["B-", 280], ["C", 230], ["D", 170], ["E", -Infinity]
       ],
       "10_all": [
-        ["神", 2277], ["SS", 2120], ["S", 2000], ["A+", 1800], ["A", 1600], ["A-", 1400],
+        ["神", 2291], ["SS", 2120], ["S", 2000], ["A+", 1800], ["A", 1600], ["A-", 1400],
         ["B+", 1200], ["B", 1000], ["B-", 800], ["C", 600], ["D", 400], ["E", -Infinity]
       ]
     };
@@ -1886,6 +1902,10 @@
       const [resultsHistory, setResultsHistory] = useState(() => readJson(STORAGE.results, []));
       const [dailySummary, setDailySummary] = useState(() => readJson(STORAGE.dailySummary, {}));
       const [problemStats, setProblemStats] = useState(() => readJson(STORAGE.problemStats, {}));
+      const [readAnnouncementIds, setReadAnnouncementIds] = useState(() => {
+        const saved = readJson(STORAGE.announcementRead, []);
+        return Array.isArray(saved) ? saved : [];
+      });
       const [unlockFlash, setUnlockFlash] = useState(null);
       const [unlockQueue, setUnlockQueue] = useState([]);
       const [unlockHighlight, setUnlockHighlight] = useState(null);
@@ -2008,6 +2028,10 @@
       useEffect(() => {
         localStorage.setItem(STORAGE.soundVolume, String(soundVolume));
       }, [soundVolume]);
+
+      useEffect(() => {
+        writeJson(STORAGE.announcementRead, readAnnouncementIds);
+      }, [readAnnouncementIds]);
 
       useEffect(() => {
         if (screen === "game") resetViewportScroll();
@@ -2148,6 +2172,8 @@
         setResultsHistory(readJson(STORAGE.results, []));
         setDailySummary(readJson(STORAGE.dailySummary, {}));
         setProblemStats(readJson(STORAGE.problemStats, {}));
+        const restoredAnnouncements = readJson(STORAGE.announcementRead, []);
+        setReadAnnouncementIds(Array.isArray(restoredAnnouncements) ? restoredAnnouncements : []);
         setPlayerName(sanitizePlayerNameInput(localStorage.getItem(STORAGE.playerName) || ""));
         const restoredSize = localStorage.getItem(STORAGE.answerPadSize);
         setAnswerPadSize(restoredSize === "small" ? "small" : "normal");
@@ -2646,6 +2672,8 @@
               resultsHistory={resultsHistory}
               dailySummary={dailySummary}
               problemStats={problemStats}
+              readAnnouncementIds={readAnnouncementIds}
+              setReadAnnouncementIds={setReadAnnouncementIds}
               isUnlocked={isUnlocked}
               startMode={startMode}
               addFavorite={addFavorite}
@@ -2729,10 +2757,11 @@
       );
     }
 
-    function Home({ records, favorites, review, resultsHistory, dailySummary, problemStats, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, answerPadAlign, setAnswerPadAlign, answerPadLayout, setAnswerPadLayout, slideTouch, setSlideTouch, playerName, setPlayerName, soundVolume, setSoundVolume, downloadBackupData, restoreBackupData, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
+    function Home({ records, favorites, review, resultsHistory, dailySummary, problemStats, readAnnouncementIds, setReadAnnouncementIds, isUnlocked, startMode, addFavorite, isFavorite, favoriteFlash, removeFavorite, removeReview, clearFavorites, clearReview, answerPadSize, setAnswerPadSize, answerPadAlign, setAnswerPadAlign, answerPadLayout, setAnswerPadLayout, slideTouch, setSlideTouch, playerName, setPlayerName, soundVolume, setSoundVolume, downloadBackupData, restoreBackupData, tone, tap, unlockFlash, unlockHighlight, onUnlockDone }) {
       const [tab, setTab] = useState("modes");
       const [backupStatus, setBackupStatus] = useState("");
       const restoreFileInputRef = useRef(null);
+      const unreadAnnouncements = ANNOUNCEMENTS.filter(item => !readAnnouncementIds.includes(item.id));
       const sizeOptions = [
         ["normal", "通常"],
         ["small", "小さめ"]
@@ -2777,9 +2806,19 @@
             >
               <span className="block whitespace-nowrap underline decoration-[color:var(--gold-2)] decoration-1 underline-offset-4">note⤴</span>
             </a>
-            <button className={`absolute right-1 top-4 flex h-14 w-14 flex-col items-center justify-center rounded-2xl p-0 text-[10px] font-extrabold leading-tight ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))}>
+            <button className={`absolute right-1 top-4 flex h-14 w-14 flex-col items-center justify-center rounded-2xl p-0 text-[10px] font-extrabold leading-tight ${tab === "settings" ? "btn-main" : "btn-quiet"}`} {...tap(() => setTab(tab === "settings" ? "modes" : "settings"))} aria-label="設定">
               <span className="block text-lg leading-none">⚙️</span>
               <span className="mt-1 block whitespace-nowrap">設定</span>
+            </button>
+            <button className={`absolute right-16 top-4 flex h-14 w-14 items-center justify-center rounded-2xl p-0 ${tab === "announcements" ? "btn-main" : "btn-quiet"}`} {...tap(() => {
+              setTab(tab === "announcements" ? "modes" : "announcements");
+              setReadAnnouncementIds(current => [...new Set([...current, ...unreadAnnouncements.map(item => item.id)])]);
+            })} aria-label="アナウンス" title="アナウンス">
+              <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 10v4h3l7 4V6l-7 4H4Z" fill="currentColor" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                <path d="M17 9.5c1.8 1.2 1.8 3.8 0 5M19 7c3.4 2.4 3.4 7.6 0 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              {unreadAnnouncements.length > 0 && <span className="absolute right-[-4px] top-[-6px] flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-black leading-none text-white shadow-lg">{unreadAnnouncements.length}</span>}
             </button>
           </header>
 
@@ -2968,6 +3007,24 @@
                 <label htmlFor="backup-restore-file" className="pressable btn-quiet mt-2 block w-full rounded-2xl px-4 py-3 text-center text-sm font-black">バックアップファイルから復元</label>
                 <p className="mt-2 text-[11px] font-bold leading-5 text-[color:var(--muted)]">LINEなどに長文を貼る必要はありません。保存したJSONファイルを新しい端末へ送り、このボタンから選んでください。</p>
                 {backupStatus && <p className="mt-2 text-xs font-black leading-5 text-[color:var(--gold-2)]">{backupStatus}</p>}
+              </div>
+            </section>
+          )}
+
+          {tab === "announcements" && (
+            <section className="panel rounded-3xl p-4" aria-live="polite">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-xl font-black">アナウンス</h2>
+                <button className="btn-quiet rounded-xl px-3 py-2 text-xs font-black" {...tap(() => setTab("modes"))}>閉じる</button>
+              </div>
+              <div className="mt-4 space-y-3">
+                {[...ANNOUNCEMENTS].reverse().map(item => (
+                  <article key={item.id} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-[11px] font-black text-[color:var(--gold-2)]">{item.date}</p>
+                    <h3 className="mt-1 text-base font-black">{item.title}</h3>
+                    <p className="mt-2 text-sm font-bold leading-6 text-[color:var(--muted)]">{item.body}</p>
+                  </article>
+                ))}
               </div>
             </section>
           )}

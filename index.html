@@ -1082,8 +1082,16 @@
     const { useEffect, useMemo, useRef, useState } = React;
     const APP_ID = "ensuku-drill-codex";
     const APP_BASE_PATH = "/ensuku-drill-codex/";
-    const APP_VERSION = 165;
+    const APP_VERSION = 166;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
+    const ONLINE_SERVICE_STATUS = Object.freeze({
+      enabled: true,
+      bannerTitle: "一部機能を一時停止しています",
+      bannerBody: "現在システム調整のため、成績送信・ランキング閲覧など一部のオンライン機能をご利用いただけません。問題演習・採点・ローカル履歴は引き続きご利用いただけます。",
+      recoveryNotice: "2026年9月6日以降、順次復旧予定です。",
+      submitNotice: "現在、成績送信機能は一時停止中です。2026年9月6日以降、順次復旧予定です。ご不便をおかけして申し訳ございません。",
+      viewNotice: "現在、成績・ランキングの閲覧機能は一時停止中です。2026年9月6日以降、順次復旧予定です。ご不便をおかけして申し訳ございません。"
+    });
 
     const RAW_6 = `
 334556-347
@@ -1530,7 +1538,7 @@
     }
 
     function isSupabaseReady() {
-      return Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey && window.supabase?.createClient);
+      return !ONLINE_SERVICE_STATUS.enabled && Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey && window.supabase?.createClient);
     }
 
     function getSupabaseClient() {
@@ -1539,6 +1547,23 @@
         window.__ensukuSupabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
       }
       return window.__ensukuSupabase;
+    }
+
+    function isSupabaseServiceUnavailable(error) {
+      const status = Number(error?.status || error?.statusCode || error?.code);
+      const message = String(error?.message || error || "").toLowerCase();
+      return [402, 429].includes(status)
+        || (status >= 500 && status <= 599)
+        || /quota exceeded|service restricted|payment required|failed to fetch|networkerror|fetch failed|supabase error/.test(message);
+    }
+
+    function supabaseUserMessage(error, kind = "submit") {
+      if (ONLINE_SERVICE_STATUS.enabled || isSupabaseServiceUnavailable(error)) {
+        return kind === "view" ? ONLINE_SERVICE_STATUS.viewNotice : ONLINE_SERVICE_STATUS.submitNotice;
+      }
+      return kind === "view"
+        ? "成績・ランキングを取得できませんでした。時間をおいてもう一度お試しください。"
+        : "成績を送信できませんでした。時間をおいてもう一度お試しください。";
     }
 
     function sanitizePlayerNameInput(name) {
@@ -1661,6 +1686,7 @@
     }
 
     async function submitRanking(result, name) {
+      if (ONLINE_SERVICE_STATUS.enabled) throw new Error(ONLINE_SERVICE_STATUS.submitNotice);
       const client = getSupabaseClient();
       if (!client) throw new Error("Supabaseが未設定です");
       if (isBlockedRankingName(name)) throw new Error("この名前では投稿できません");
@@ -1680,6 +1706,7 @@
     }
 
     async function fetchRankings(modeId, period) {
+      if (ONLINE_SERVICE_STATUS.enabled) throw new Error(ONLINE_SERVICE_STATUS.viewNotice);
       const client = getSupabaseClient();
       if (!client) return [];
       let query = client
@@ -1698,6 +1725,7 @@
     }
 
     async function fetchRankPosition(modeId, period, playerName) {
+      if (ONLINE_SERVICE_STATUS.enabled) throw new Error(ONLINE_SERVICE_STATUS.viewNotice);
       const client = getSupabaseClient();
       if (!client) return null;
       let query = client
@@ -2820,6 +2848,13 @@
             </button>
           </header>
 
+          {ONLINE_SERVICE_STATUS.enabled && (
+            <aside className="mb-3 rounded-2xl border border-[color:var(--gold)]/35 bg-black/20 px-4 py-3 text-sm leading-6" role="status" aria-live="polite">
+              <strong className="block text-[color:var(--gold-2)]">{ONLINE_SERVICE_STATUS.bannerTitle}</strong>
+              <p className="mt-1 text-xs font-bold text-[color:var(--muted)]">{ONLINE_SERVICE_STATUS.bannerBody} {ONLINE_SERVICE_STATUS.recoveryNotice} ご不便をおかけして申し訳ございません。</p>
+            </aside>
+          )}
+
           <div className="mb-3 grid grid-cols-5 gap-1 rounded-full bg-black/20 p-1">
             {[
               { id: "modes", label: "挑戦", icon: "⚡" },
@@ -3192,6 +3227,11 @@
         let live = true;
         async function load() {
           setError("");
+          if (ONLINE_SERVICE_STATUS.enabled) {
+            setRows([]);
+            setError(ONLINE_SERVICE_STATUS.viewNotice);
+            return;
+          }
           if (!isSupabaseReady()) {
             setRows([]);
             return;
@@ -3201,7 +3241,7 @@
             const data = await fetchRankings(modeId, period);
             if (live) setRows(data);
           } catch (err) {
-            if (live) setError(err.message || "ランキングを取得できませんでした");
+            if (live) setError(supabaseUserMessage(err, "view"));
           } finally {
             if (live) setLoading(false);
           }
@@ -3228,7 +3268,12 @@
             ))}
           </div>
 
-          {!isSupabaseReady() ? (
+          {ONLINE_SERVICE_STATUS.enabled ? (
+            <div className="mt-4 rounded-2xl border border-[color:var(--gold)]/35 bg-black/20 p-4 text-sm leading-6 text-[color:var(--muted)]" role="status" aria-live="polite">
+              <strong className="block text-[color:var(--gold-2)]">{ONLINE_SERVICE_STATUS.bannerTitle}</strong>
+              <span className="mt-1 block">{ONLINE_SERVICE_STATUS.viewNotice}</span>
+            </div>
+          ) : !isSupabaseReady() ? (
             <div className="mt-4 rounded-2xl border border-dashed border-white/15 bg-black/18 p-4 text-sm leading-6 text-[color:var(--muted)]">
               Supabase接続待ちです。プロジェクト作成後にURLとanon keyを設定すると、投稿とランキング表示が有効になります。
             </div>
@@ -3955,6 +4000,10 @@
       }
       async function postRanking() {
         if (rankingSubmitLockRef.current || submittingRanking || rankingSubmitted) return;
+        if (ONLINE_SERVICE_STATUS.enabled) {
+          setSubmitStatus(ONLINE_SERVICE_STATUS.submitNotice);
+          return;
+        }
         rankingSubmitLockRef.current = true;
         setSubmitStatus("送信中...");
         setSubmittingRanking(true);
@@ -3967,7 +4016,7 @@
           onRankingSubmitted?.(result);
           setSubmitStatus(rank ? `現在${rank}です` : "順位を取得できませんでした");
         } catch (err) {
-          setSubmitStatus(err.message || "投稿できませんでした");
+          setSubmitStatus(supabaseUserMessage(err, "submit"));
           rankingSubmitLockRef.current = false;
         } finally {
           setSubmittingRanking(false);
@@ -4087,7 +4136,13 @@
             {showPost && (
               <div className="mt-3 space-y-3">
                 <p className="text-sm leading-6 text-[color:var(--muted)]">設定で決めたニックネームで投稿されます</p>
-                {isSupabaseReady() ? (
+                {ONLINE_SERVICE_STATUS.enabled ? (
+                  <>
+                    <button className="w-full rounded-2xl px-4 py-3 text-sm font-black opacity-60" disabled>成績送信は一時停止中</button>
+                    <p className="text-center text-sm font-bold leading-5 text-[color:var(--gold-2)]" role="status">{ONLINE_SERVICE_STATUS.submitNotice}</p>
+                    <button className="btn-quiet w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(copyPayload)}>投稿データをコピー</button>
+                  </>
+                ) : isSupabaseReady() ? (
                   <button
                     className={`w-full rounded-2xl px-4 py-3 text-sm font-black ${rankingSubmitted ? "btn-quiet opacity-75" : "btn-main"}`}
                     disabled={submittingRanking || rankingSubmitted}

@@ -1082,15 +1082,16 @@
     const { useEffect, useMemo, useRef, useState } = React;
     const APP_ID = "ensuku-drill-codex";
     const APP_BASE_PATH = "/ensuku-drill-codex/";
-    const APP_VERSION = 167;
+    const APP_VERSION = 168;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
+    const RANKING_RECOVERY_NOTICE = "現在、ランキングへの反映のみ一時停止しており、復旧申請中です。近日中に復旧予定です。ご迷惑をおかけして申し訳ありません。";
     const ONLINE_SERVICE_STATUS = Object.freeze({
-      enabled: false,
-      bannerTitle: "一部機能を一時停止しています",
-      bannerBody: "現在システム調整のため、成績送信・ランキング閲覧など一部のオンライン機能をご利用いただけません。問題演習・採点・ローカル履歴は引き続きご利用いただけます。",
-      recoveryNotice: "2026年9月6日以降、順次復旧予定です。",
-      submitNotice: "現在、成績送信機能は一時停止中です。2026年9月6日以降、順次復旧予定です。ご不便をおかけして申し訳ございません。",
-      viewNotice: "現在、成績・ランキングの閲覧機能は一時停止中です。2026年9月6日以降、順次復旧予定です。ご不便をおかけして申し訳ございません。"
+      enabled: true,
+      bannerTitle: "ランキング機能の復旧申請中です",
+      bannerBody: "問題演習・採点・端末内の成績保存は引き続きご利用いただけます。",
+      recoveryNotice: RANKING_RECOVERY_NOTICE,
+      submitNotice: RANKING_RECOVERY_NOTICE,
+      viewNotice: RANKING_RECOVERY_NOTICE
     });
 
     const RAW_6 = `
@@ -1301,6 +1302,12 @@
         date: "2026-08-12",
         title: "十枚形の神ランク基準を更新しました",
         body: "十枚形20問は578pt以上、十枚形80問は2291pt以上で神ランクになります。"
+      },
+      {
+        id: "ranking-recovery-request-2026-09-09",
+        date: "2026-09-09",
+        title: "ランキング機能の復旧申請について",
+        body: RANKING_RECOVERY_NOTICE
       }
     ];
 
@@ -2851,7 +2858,7 @@
           {ONLINE_SERVICE_STATUS.enabled && (
             <aside className="mb-3 rounded-2xl border border-[color:var(--gold)]/35 bg-black/20 px-4 py-3 text-sm leading-6" role="status" aria-live="polite">
               <strong className="block text-[color:var(--gold-2)]">{ONLINE_SERVICE_STATUS.bannerTitle}</strong>
-              <p className="mt-1 text-xs font-bold text-[color:var(--muted)]">{ONLINE_SERVICE_STATUS.bannerBody} {ONLINE_SERVICE_STATUS.recoveryNotice} ご不便をおかけして申し訳ございません。</p>
+              <p className="mt-1 text-xs font-bold text-[color:var(--muted)]">{ONLINE_SERVICE_STATUS.recoveryNotice} {ONLINE_SERVICE_STATUS.bannerBody}</p>
             </aside>
           )}
 
@@ -4138,7 +4145,7 @@
                 <p className="text-sm leading-6 text-[color:var(--muted)]">設定で決めたニックネームで投稿されます</p>
                 {ONLINE_SERVICE_STATUS.enabled ? (
                   <>
-                    <button className="w-full rounded-2xl px-4 py-3 text-sm font-black opacity-60" disabled>成績送信は一時停止中</button>
+                    <button className="w-full rounded-2xl px-4 py-3 text-sm font-black opacity-60" disabled>ランキング送信は一時停止中</button>
                     <p className="text-center text-sm font-bold leading-5 text-[color:var(--gold-2)]" role="status">{ONLINE_SERVICE_STATUS.submitNotice}</p>
                     <button className="btn-quiet w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(copyPayload)}>投稿データをコピー</button>
                   </>

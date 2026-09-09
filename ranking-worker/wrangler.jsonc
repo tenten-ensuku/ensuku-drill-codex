@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ensuku-drill-ranking-api",
+  "main": "src/index.mjs",
+  "compatibility_date": "2026-09-09",
+  "account_id": "e5b748838ea561070abc576dea21577d",
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": { "ALLOWED_ORIGINS": "https://tenten-ensuku.github.io" },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "ensuku-drill-rankings",
+    "database_id": "45d02efd-415e-4e34-a622-f66cec6a2bcd",
+    "migrations_dir": "migrations"
+  }],
+  "ratelimits": [
+    { "name": "EDGE_LIMIT", "namespace_id": "20260910169", "simple": { "limit": 240, "period": 60 } },
+    { "name": "POST_LIMIT", "namespace_id": "20260910170", "simple": { "limit": 10, "period": 60 } }
+  ],
+  "observability": { "enabled": false }
+}

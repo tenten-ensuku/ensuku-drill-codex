@@ -1,1 +1,10 @@
 skills-stage/
+node_modules/
+.wrangler/
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+private-backups/
+ranking-worker/exports/
+ranking-worker/test-output/

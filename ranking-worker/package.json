@@ -1,0 +1,16 @@
+{
+  "name": "ensuku-drill-ranking-api",
+  "version": "169.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply ensuku-drill-rankings --remote"
+  },
+  "devDependencies": {
+    "wrangler": "4.129.0"
+  },
+  "engines": { "node": ">=24" }
+}

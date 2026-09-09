@@ -21,7 +21,6 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       color-scheme: dark;
@@ -1082,12 +1081,12 @@
     const { useEffect, useMemo, useRef, useState } = React;
     const APP_ID = "ensuku-drill-codex";
     const APP_BASE_PATH = "/ensuku-drill-codex/";
-    const APP_VERSION = 168;
+    const APP_VERSION = 169;
     const APP_PUBLIC_URL = "https://tenten-ensuku.github.io/ensuku-drill-codex/";
-    const RANKING_RECOVERY_NOTICE = "現在、ランキングへの反映のみ一時停止しており、復旧申請中です。近日中に復旧予定です。ご迷惑をおかけして申し訳ありません。";
+    const RANKING_RECOVERY_NOTICE = "現在、ランキングに接続できません。時間をおいてもう一度お試しください。問題演習・端末内の成績保存は引き続きご利用いただけます。";
     const ONLINE_SERVICE_STATUS = Object.freeze({
-      enabled: true,
-      bannerTitle: "ランキング機能の復旧申請中です",
+      enabled: false,
+      bannerTitle: "ランキング機能の一時停止について",
       bannerBody: "問題演習・採点・端末内の成績保存は引き続きご利用いただけます。",
       recoveryNotice: RANKING_RECOVERY_NOTICE,
       submitNotice: RANKING_RECOVERY_NOTICE,
@@ -1279,16 +1278,11 @@
       window.history.replaceState(null, "", window.location.pathname);
     }
 
-    const SUPABASE_CONFIG = {
-      url: "https://kclkzevcgpfbavegwbnf.supabase.co",
-      anonKey: "sb_publishable__8xy0NDda20OtQPc1zSEng_6440qlY2",
-      table: "ensuku_rankings"
-    };
+    const RANKING_API_URL = "https://ensuku-drill-ranking-api.naga-study.workers.dev";
     const PLAYER_NAME_MAX_LENGTH = 9;
     const PLAYER_NAME_BLOCKED_CHARS = /[<>"'`/\\\u0000-\u001f\u007f]/g;
     const BLOCKED_RANKING_PLAYER_NAMES = new Set(["にんじん", "だいこん", "にら", "てんpc"]);
     const RANKING_DISPLAY_LIMIT = 20;
-    const RANKING_FETCH_LIMIT = 500;
 
     const ANNOUNCEMENTS = [
       {
@@ -1306,8 +1300,14 @@
       {
         id: "ranking-recovery-request-2026-09-09",
         date: "2026-09-09",
-        title: "ランキング機能の復旧申請について",
-        body: RANKING_RECOVERY_NOTICE
+        title: "ランキング機能の一時停止について（復旧済み）",
+        body: "サーバーの利用制限によりランキングへの反映を一時停止していましたが、9月10日に復旧しました。ご不便をおかけして申し訳ありませんでした。"
+      },
+      {
+        id: "ranking-d1-restored-2026-09-10",
+        date: "2026-09-10",
+        title: "成績投稿・ランキングが復旧しました",
+        body: "ランキングの保存先を移行し、成績投稿とランキング表示を再開しました。過去のランキング記録は引き継いでいます。端末内の成績・設定・お気に入りはそのままです。古い画面を開いたままの場合は、再読み込みしてご利用ください。"
       }
     ];
 
@@ -1544,30 +1544,36 @@
       return order.indexOf(actual) >= order.indexOf(required);
     }
 
-    function isSupabaseReady() {
-      return !ONLINE_SERVICE_STATUS.enabled && Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey && window.supabase?.createClient);
+    function isRankingReady() {
+      return !ONLINE_SERVICE_STATUS.enabled && Boolean(RANKING_API_URL);
     }
 
-    function getSupabaseClient() {
-      if (!isSupabaseReady()) return null;
-      if (!window.__ensukuSupabase) {
-        window.__ensukuSupabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+    async function rankingRequest(path, options = {}) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000);
+      try {
+        const response = await fetch(`${RANKING_API_URL}${path}`, { ...options, signal: controller.signal, credentials: "omit" });
+        const body = await response.json();
+        if (!response.ok) {
+          const error = new Error(body.error || "service_unavailable");
+          error.status = response.status;
+          throw error;
+        }
+        return body;
+      } finally {
+        clearTimeout(timeout);
       }
-      return window.__ensukuSupabase;
     }
 
-    function isSupabaseServiceUnavailable(error) {
-      const status = Number(error?.status || error?.statusCode || error?.code);
-      const message = String(error?.message || error || "").toLowerCase();
-      return [402, 429].includes(status)
-        || (status >= 500 && status <= 599)
-        || /quota exceeded|service restricted|payment required|failed to fetch|networkerror|fetch failed|supabase error/.test(message);
-    }
-
-    function supabaseUserMessage(error, kind = "submit") {
-      if (ONLINE_SERVICE_STATUS.enabled || isSupabaseServiceUnavailable(error)) {
+    function rankingUserMessage(error, kind = "submit") {
+      if (ONLINE_SERVICE_STATUS.enabled) {
         return kind === "view" ? ONLINE_SERVICE_STATUS.viewNotice : ONLINE_SERVICE_STATUS.submitNotice;
       }
+      if (error?.status === 429) return "操作が続いています。1分ほど待ってから、もう一度お試しください。";
+      if (error?.message === "invalid_name") return "ニックネームを確認してください。この名前では投稿できません。";
+      if (error?.message === "invalid_period") return "端末の日付・時刻を確認して、もう一度お試しください。";
+      if (error?.status === 409) return "この成績はすでに送信されています。順位画面をご確認ください。";
+      if (error?.status === 400 || error?.status === 403) return "この成績は投稿できません。端末内の成績は保存されています。";
       return kind === "view"
         ? "成績・ランキングを取得できませんでした。時間をおいてもう一度お試しください。"
         : "成績を送信できませんでした。時間をおいてもう一度お試しください。";
@@ -1669,8 +1675,7 @@
         elapsed_seconds: result.elapsedSeconds,
         average_seconds: Number((result.elapsedSeconds / Math.max(1, result.questionCount)).toFixed(1)),
         question_count: result.questionCount,
-        client_version: `ver${APP_VERSION}`,
-        submitted_at: new Date().toISOString()
+        client_version: `ver${APP_VERSION}`
       };
     }
 
@@ -1694,63 +1699,37 @@
 
     async function submitRanking(result, name) {
       if (ONLINE_SERVICE_STATUS.enabled) throw new Error(ONLINE_SERVICE_STATUS.submitNotice);
-      const client = getSupabaseClient();
-      if (!client) throw new Error("Supabaseが未設定です");
+      if (!isRankingReady()) throw new Error("ランキングに接続できません");
       if (isBlockedRankingName(name)) throw new Error("この名前では投稿できません");
-      const { error } = await client.from(SUPABASE_CONFIG.table).insert(rankingPayload(result, name));
-      if (error) throw error;
+      const requestIdentity = `${APP_ID}:${getDeviceId()}:${result.finishedAt}:${result.modeId}:${result.variant}`;
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(requestIdentity));
+      const requestKey = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+      return rankingRequest(`/v1/scores?${new URLSearchParams({ start: periodStartIso("daily") })}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": requestKey },
+        body: JSON.stringify(rankingPayload(result, name))
+      });
     }
 
-    function dedupeRankingRows(rows, limit = RANKING_DISPLAY_LIMIT) {
-      const seenNames = new Set();
-      return (rows || []).filter(row => {
-        if (isBlockedRankingName(row.player_name)) return false;
-        const key = rankingNameKey(row.player_name);
-        if (seenNames.has(key)) return false;
-        seenNames.add(key);
-        return true;
-      }).slice(0, limit);
+    function rankingQueryParams(modeId, period) {
+      const params = new URLSearchParams({ mode: modeId, period });
+      const start = periodStartIso(period);
+      if (start) params.set("start", start);
+      return params;
     }
 
     async function fetchRankings(modeId, period) {
       if (ONLINE_SERVICE_STATUS.enabled) throw new Error(ONLINE_SERVICE_STATUS.viewNotice);
-      const client = getSupabaseClient();
-      if (!client) return [];
-      let query = client
-        .from(SUPABASE_CONFIG.table)
-        .select("player_name,mode_id,mode_label,score,rank,elapsed_seconds,average_seconds,submitted_at")
-        .eq("mode_id", modeId)
-        .order("score", { ascending: false })
-        .order("elapsed_seconds", { ascending: true })
-        .order("submitted_at", { ascending: true })
-        .limit(RANKING_FETCH_LIMIT);
-      const startIso = periodStartIso(period);
-      if (startIso) query = query.gte("submitted_at", startIso);
-      const { data, error } = await query;
-      if (error) throw error;
-      return dedupeRankingRows(data, RANKING_DISPLAY_LIMIT);
+      const data = await rankingRequest(`/v1/rankings?${rankingQueryParams(modeId, period)}`);
+      return data.rows;
     }
 
     async function fetchRankPosition(modeId, period, playerName) {
       if (ONLINE_SERVICE_STATUS.enabled) throw new Error(ONLINE_SERVICE_STATUS.viewNotice);
-      const client = getSupabaseClient();
-      if (!client) return null;
-      let query = client
-        .from(SUPABASE_CONFIG.table)
-        .select("player_name,mode_id,mode_label,score,rank,elapsed_seconds,average_seconds,submitted_at")
-        .eq("mode_id", modeId)
-        .order("score", { ascending: false })
-        .order("elapsed_seconds", { ascending: true })
-        .order("submitted_at", { ascending: true })
-        .limit(RANKING_FETCH_LIMIT);
-      const startIso = periodStartIso(period);
-      if (startIso) query = query.gte("submitted_at", startIso);
-      const { data, error } = await query;
-      if (error) throw error;
-      const rows = dedupeRankingRows(data, RANKING_FETCH_LIMIT);
-      const nameKey = rankingNameKey(playerName);
-      const index = rows.findIndex(row => rankingNameKey(row.player_name) === nameKey);
-      return index >= 0 ? rankingPlaceLabel(rows, index) : null;
+      const params = rankingQueryParams(modeId, period);
+      params.set("name", normalizePlayerName(playerName));
+      const data = await rankingRequest(`/v1/position?${params}`);
+      return data.position ? rankingMedalLabel(data.position) : null;
     }
 
     function rankingElapsedTenths(value) {
@@ -3239,7 +3218,7 @@
             setError(ONLINE_SERVICE_STATUS.viewNotice);
             return;
           }
-          if (!isSupabaseReady()) {
+          if (!isRankingReady()) {
             setRows([]);
             return;
           }
@@ -3248,7 +3227,7 @@
             const data = await fetchRankings(modeId, period);
             if (live) setRows(data);
           } catch (err) {
-            if (live) setError(supabaseUserMessage(err, "view"));
+            if (live) setError(rankingUserMessage(err, "view"));
           } finally {
             if (live) setLoading(false);
           }
@@ -3280,9 +3259,9 @@
               <strong className="block text-[color:var(--gold-2)]">{ONLINE_SERVICE_STATUS.bannerTitle}</strong>
               <span className="mt-1 block">{ONLINE_SERVICE_STATUS.viewNotice}</span>
             </div>
-          ) : !isSupabaseReady() ? (
+          ) : !isRankingReady() ? (
             <div className="mt-4 rounded-2xl border border-dashed border-white/15 bg-black/18 p-4 text-sm leading-6 text-[color:var(--muted)]">
-              Supabase接続待ちです。プロジェクト作成後にURLとanon keyを設定すると、投稿とランキング表示が有効になります。
+              ランキングに接続できません。時間をおいてもう一度お試しください。
             </div>
           ) : loading ? (
             <p className="py-8 text-center text-sm font-bold text-[color:var(--muted)]">読み込み中...</p>
@@ -4016,14 +3995,14 @@
         setSubmittingRanking(true);
         setCopied(false);
         try {
-          await submitRanking(result, playerName);
-          const rank = await fetchRankPosition(result.modeId, "daily", playerName);
+          const response = await submitRanking(result, playerName);
+          const rank = response.position ? rankingMedalLabel(response.position) : null;
           setPostedRank(rank);
           setRankingSubmitted(true);
           onRankingSubmitted?.(result);
-          setSubmitStatus(rank ? `現在${rank}です` : "順位を取得できませんでした");
+          setSubmitStatus(rank ? `現在${rank}です` : "送信しました。順位はランキング画面で確認できます。");
         } catch (err) {
-          setSubmitStatus(supabaseUserMessage(err, "submit"));
+          setSubmitStatus(rankingUserMessage(err, "submit"));
           rankingSubmitLockRef.current = false;
         } finally {
           setSubmittingRanking(false);
@@ -4149,7 +4128,7 @@
                     <p className="text-center text-sm font-bold leading-5 text-[color:var(--gold-2)]" role="status">{ONLINE_SERVICE_STATUS.submitNotice}</p>
                     <button className="btn-quiet w-full rounded-2xl px-4 py-3 text-sm font-black" {...tap(copyPayload)}>投稿データをコピー</button>
                   </>
-                ) : isSupabaseReady() ? (
+                ) : isRankingReady() ? (
                   <button
                     className={`w-full rounded-2xl px-4 py-3 text-sm font-black ${rankingSubmitted ? "btn-quiet opacity-75" : "btn-main"}`}
                     disabled={submittingRanking || rankingSubmitted}

@@ -81,7 +81,7 @@ https://tenten-ensuku.github.io/ensuku-drill-codex/
 
 ### 順位
 
-Supabase を使ったランキング機能です。  
+Cloudflare Workers + D1 を使ったランキング機能です。
 設定で決めたニックネームで投稿されます。
 
 ## 開発メモ
@@ -93,14 +93,14 @@ Supabase を使ったランキング機能です。
 - `index.html`: アプリ本体
 - `tiles/`: 麻雀牌画像
 - `assets/`: ロゴ、演出画像など
-- `supabase-schema.sql`: ランキング用テーブルの初期スキーマ
-- `supabase-migration-allow-all-ranks.sql`: ランキング投稿条件変更用SQL
-- `supabase-migration-add-device-id.sql`: 投稿端末識別用SQL
+- `ranking-worker/`: ランキングAPI、D1スキーマ、移行・検証スクリプト
+- `ranking-worker/README.md`: ランキングの運用・バックアップ・切り戻し手順
+- `supabase-*.sql`: 旧保存先のスキーマ・移行資料（現在のアプリからは接続しません）
 - `ensuku-note.html`: note記事プレビュー用HTML
 
 ## ローカルで開く
 
-静的HTMLなので、基本的には `index.html` をブラウザで開けば動作します。
+静的HTMLなので、問題演習は `index.html` をブラウザで開けば動作します。ランキングの閲覧・投稿は公開URLからご利用ください。
 
 例:
 
@@ -118,7 +118,9 @@ https://tenten-ensuku.github.io/ensuku-drill-codex/
 
 ユーザーの成績、復習、お気に入り、設定は主にブラウザの `localStorage` に保存されます。
 
-ランキング投稿データは Supabase に保存されます。
+ランキング投稿データは専用の Cloudflare D1 に保存され、専用 Worker API を通じて投稿・取得します。公開レスポンスに端末IDは含めません。端末ID・ニックネームは本人認証には使いません。
+
+2026年9月10日に旧Supabaseから移行しました。旧データは当面保全し、他アプリの保存先は変更していません。
 
 ## 麻雀牌画像について
 

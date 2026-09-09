@@ -117,7 +117,12 @@ async function route(request, env, ctx, url) {
   const cacheKey = new Request(cacheUrl);
   if (!isTest && cache) {
     const hit = await cache.match(cacheKey);
-    if (hit) return new Response(hit.body, { headers: { ...Object.fromEntries(hit.headers), 'Cache-Control': 'no-store', 'X-Ranking-Cache': 'hit' } });
+    if (hit) {
+      const response = new Response(hit.body, hit);
+      response.headers.set('Cache-Control', 'no-store');
+      response.headers.set('X-Ranking-Cache', 'hit');
+      return response;
+    }
   }
   const rows = await readRanking(env.DB, period, isTest);
   const response = json({ rows, version: VERSION });

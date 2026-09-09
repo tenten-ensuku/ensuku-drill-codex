@@ -105,3 +105,17 @@ test('database failure returns no SQL, internal error or data', async () => {
   assert.equal(response.status, 503);
   assert.deepEqual(await response.json(), { error: 'service_unavailable' });
 });
+
+test('cached responses replace cache headers without duplicate mixed-case values', async () => {
+  const oldCaches = globalThis.caches;
+  globalThis.caches = { default: { match: async () => new Response('{"rows":[]}', { headers: {
+    'content-type': 'application/json', 'cache-control': 'public, max-age=15', 'x-ranking-cache': 'miss'
+  } }) } };
+  try {
+    const env = environment({ prepare() { throw new Error('Unexpected cache miss'); } });
+    const response = await worker.fetch(new Request('https://rank.test/v1/rankings?mode=6&period=all'), env, ctx);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.equal(response.headers.get('x-ranking-cache'), 'hit');
+  } finally { globalThis.caches = oldCaches; }
+});
